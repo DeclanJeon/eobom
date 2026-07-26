@@ -60,3 +60,18 @@ nginx 예시는 `deploy/nginx-eobom.conf` 를 참고하세요.
 2. `.env`에 `MIMO_API_KEY` 입력 후 `sudo systemctl restart eobom`
 3. 서버 경로: `/home/declan/apps/eobom`
 4. 서비스: `sudo systemctl status eobom`
+
+## SSL 자동 갱신
+
+운영 서버(`ponslink`)는 Let's Encrypt `certbot.timer`(1일 2회)가 enabled/active 상태다.
+- 인증서: `/etc/letsencrypt/live/eobom.ponslink.com/`
+- renew conf: `authenticator=nginx`, `installer=nginx`, `renew_before_expiry = 30 days`
+- deploy hook: `/etc/letsencrypt/renewal-hooks/deploy/00-reload-nginx.sh` (갱신 후 `nginx -t && systemctl reload nginx`)
+- 만료 전 30일 이내면 자동 갱신되며, 만료되어도 timer가 계속 시도한다.
+
+확인:
+```bash
+ssh ponslink 'systemctl status certbot.timer --no-pager'
+ssh ponslink 'sudo certbot certificates | sed -n "/eobom/,+8p"'
+ssh ponslink 'sudo certbot renew --cert-name eobom.ponslink.com --dry-run'
+```
