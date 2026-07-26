@@ -1,0 +1,84 @@
+{
+  "active": true,
+  "version": 2,
+  "current_phase": "active",
+  "skill": "ultragoal",
+  "cwd": "/home/declan/Documents/Develop/Project/linkview",
+  "updated_at": "2026-07-26T15:19:06.466Z",
+  "session_id": "019f9ef7-716b-7000-a963-5abf271053d3",
+  "receipt": {
+    "version": 1,
+    "skill": "ultragoal",
+    "owner": "gjc-runtime",
+    "command": "gjc ultragoal (reconcile)",
+    "state_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/state/skill-active-state.json",
+    "storage_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/state/ultragoal-state.json",
+    "mutated_at": "2026-07-26T15:19:06.466Z",
+    "fresh_until": "2026-07-26T15:49:06.466Z",
+    "status": "fresh",
+    "mutation_id": "ultragoal:reconcile:2026-07-26T15:19:06.466Z",
+    "verb": "reconcile",
+    "from_phase": "active",
+    "to_phase": "active",
+    "forced": true,
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "87c7e374f42522b0a0c418389dbd57e9029c88d7e3430c71637dc7570456dcde",
+      "covered_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/state/ultragoal-state.json",
+      "computed_at": "2026-07-26T15:19:06.468Z"
+    }
+  },
+  "status": "active",
+  "goals": [
+    {
+      "id": "G001",
+      "title": "Bootstrap app from UI reference",
+      "status": "active"
+    },
+    {
+      "id": "G002",
+      "title": "Auth Google OAuth and durable sessions",
+      "status": "pending"
+    },
+    {
+      "id": "G003",
+      "title": "Core journal pages and personal QR routes",
+      "status": "pending"
+    },
+    {
+      "id": "G004",
+      "title": "AI reviews MiMo contact and community MVP",
+      "status": "pending"
+    },
+    {
+      "id": "G005",
+      "title": "Verify GitHub push and production deploy",
+      "status": "pending"
+    }
+  ],
+  "counts": {
+    "pending": 4,
+    "active": 1,
+    "complete": 0,
+    "failed": 0,
+    "blocked": 0,
+    "review_blocked": 0,
+    "superseded": 0
+  },
+  "active_goal_id": "G001",
+  "ledger_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/ultragoal/ledger.jsonl",
+  "brief_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/ultragoal/brief.md",
+  "goals_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/ultragoal/goals.json",
+  "gjc_objective": "Complete the durable ultragoal plan in .gjc/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .gjc/ultragoal/ledger.jsonl as the audit trail.",
+  "nudge_budget": 10,
+  "nudge_count": 0,
+  "nudge_remaining": 10,
+  "nudge_goal_id": "G001",
+  "nudge_target_kind": "story",
+  "latestLedgerEvent": {
+    "event": "goal_started",
+    "goalId": "G001",
+    "timestamp": "2026-07-26T15:18:50.573Z"
+  },
+  "state_revision": 5
+}

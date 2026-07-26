@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "active": true,
+  "skill": "ultragoal",
+  "phase": "active",
+  "updated_at": "2026-07-26T15:18:50.610Z",
+  "session_id": "019f9ef7-716b-7000-a963-5abf271053d3",
+  "active_skills": [
+    {
+      "skill": "ultragoal",
+      "phase": "active",
+      "active": true,
+      "activated_at": "2026-07-26T15:18:50.610Z",
+      "updated_at": "2026-07-26T15:18:50.610Z",
+      "session_id": "019f9ef7-716b-7000-a963-5abf271053d3",
+      "hud": {
+        "version": 1,
+        "chips": [
+          {
+            "label": "goals",
+            "value": "0/5",
+            "priority": 10
+          },
+          {
+            "label": "current",
+            "value": "G001:Bootstrap app from UI reference",
+            "priority": 20
+          },
+          {
+            "label": "status",
+            "value": "active",
+            "priority": 30
+          },
+          {
+            "label": "ledger",
+            "value": "goal_started:G001",
+            "priority": 35
+          }
+        ],
+        "updated_at": "2026-07-26T15:18:50.602Z"
+      },
+      "receipt": {
+        "version": 1,
+        "skill": "ultragoal",
+        "owner": "gjc-runtime",
+        "command": "gjc ultragoal (reconcile)",
+        "state_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/state/skill-active-state.json",
+        "storage_path": "/home/declan/Documents/Develop/Project/linkview/.gjc/_session-019f9ef7-716b-7000-a963-5abf271053d3/state/ultragoal-state.json",
+        "mutated_at": "2026-07-26T15:18:50.588Z",
+        "fresh_until": "2026-07-26T15:48:50.588Z",
+        "status": "fresh",
+        "mutation_id": "ultragoal:reconcile:2026-07-26T15:18:50.588Z",
+        "verb": "reconcile",
+        "forced": true,
+        "from_phase": "pending",
+        "to_phase": "active"
+      },
+      "source_state_revision": 2,
+      "state_revision": 2
+    }
+  ],
+  "active_subskills": [],
+  "source_state_revision": 6,
+  "state_revision": 6
+}
