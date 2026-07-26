@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { generateUniquePersonalSlug } from "@/lib/slug";
 
 const ONE_YEAR = 365 * 24 * 60 * 60;
+const useHttps = (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
@@ -17,21 +18,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: {
+    // Database sessions for durable login; middleware only checks cookie presence.
     strategy: "database",
     maxAge: ONE_YEAR,
     updateAge: 24 * 60 * 60,
   },
+  useSecureCookies: useHttps,
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
+      name: useHttps
+        ? "__Secure-next-auth.session-token"
+        : "next-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        secure: useHttps,
         maxAge: ONE_YEAR,
       },
     },
@@ -59,15 +61,27 @@ export const authOptions: NextAuthOptions = {
         session.user.displayName =
           dbUser?.displayName || dbUser?.name || session.user.name || "";
         if (dbUser?.profileImageUrl || dbUser?.image) {
-          session.user.image = dbUser.profileImageUrl || dbUser.image || session.user.image;
+          session.user.image =
+            dbUser.profileImageUrl || dbUser.image || session.user.image;
         }
         session.user.aiProcessingConsent = dbUser?.aiProcessingConsent ?? false;
       }
       return session;
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user }) {
       if (!user.email) return false;
       return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Prevent open redirects and absolute external bounce loops.
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        const target = new URL(url);
+        if (target.origin === baseUrl) return url;
+      } catch {
+        // fall through
+      }
+      return baseUrl;
     },
   },
   events: {
