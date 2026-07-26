@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { Noto_Serif_KR } from "next/font/google";
+import { Manrope, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 
-const notoSerif = Noto_Serif_KR({
-  variable: "--font-noto-serif",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
+  subsets: ["latin"],
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {
@@ -20,13 +26,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100",
   ),
-  openGraph: {
-    title: "이어봄",
-    description: "개인 묵상 기록과 근거 기반 AI 회고",
-    siteName: "이어봄",
-    locale: "ko_KR",
-    type: "website",
-  },
 };
 
 export default function RootLayout({
@@ -35,15 +34,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
-        />
-      </head>
+    <html lang="ko" className="light" suppressHydrationWarning>
       <body
-        className={`${notoSerif.variable} min-h-dvh bg-background font-sans text-foreground antialiased`}
+        className={`${manrope.variable} ${sourceSerif.variable} min-h-dvh bg-background font-ui text-text-main antialiased`}
       >
         <Providers>
           {children}

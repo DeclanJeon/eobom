@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { TogetherActions } from "@/components/together-actions";
@@ -5,7 +6,6 @@ import { ShareForm } from "@/components/share-form";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { formatDateShort, parseJsonArray } from "@/lib/utils";
-import Link from "next/link";
 
 export const metadata = { title: "함께" };
 
@@ -31,12 +31,16 @@ export default async function TogetherPage({
   });
 
   return (
-    <AppShell title="함께">
-      <SurfaceCard className="mb-5">
-        <h2 className="font-serif text-xl">나누기</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          원문은 공개되지 않습니다. 나누고 싶은 문장만 적어 주세요.
+    <AppShell bare>
+      <header className="mb-6">
+        <h1 className="text-display-lg text-primary">함께</h1>
+        <p className="mt-2 text-body-md text-text-muted">
+          원문은 공개되지 않습니다. 나누고 싶은 문장만 남겨 주세요.
         </p>
+      </header>
+
+      <SurfaceCard className="mb-5 bg-surface-shared">
+        <h2 className="text-headline-sm text-primary">나누기</h2>
         <div className="mt-4">
           <ShareForm
             sourceEntryId={source?.id}
@@ -64,20 +68,20 @@ export default async function TogetherPage({
               counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
             }
             return (
-              <SurfaceCard key={item.id}>
+              <SurfaceCard key={item.id} className="bg-surface-shared/60">
                 <Link href={`/together/${item.id}`} className="block">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium">
+                    <p className="text-label-md text-primary">
                       {item.pseudonym || "익명의 순례자"}
                     </p>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-label-sm text-text-muted">
                       {formatDateShort(item.publishedAt)}
                     </span>
                     {parseJsonArray(item.scriptureRefs).map((ref) => (
                       <SoftBadge key={ref}>{ref}</SoftBadge>
                     ))}
                   </div>
-                  <p className="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-7">
+                  <p className="mt-3 line-clamp-5 whitespace-pre-wrap text-body-md">
                     {item.publicBody}
                   </p>
                 </Link>

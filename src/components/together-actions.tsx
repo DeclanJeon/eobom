@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const LABELS: Record<string, string> = {
-  empathize: "공감해요",
-  pray: "함께 기도할게요",
-  same_scripture: "나도 이 말씀을",
+  empathize: "공감",
+  pray: "기도",
+  same_scripture: "같은 말씀",
   bookmark: "저장",
 };
 
@@ -39,7 +39,7 @@ export function TogetherActions({
           type="button"
           disabled={pending === key}
           onClick={() => toggle(key)}
-          className="rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs text-foreground transition hover:bg-secondary"
+          className="rounded-full border border-[#E0DDD7] bg-white px-3 py-1.5 text-label-sm text-text-muted transition hover:border-accent-terracotta/40 hover:text-accent-terracotta"
         >
           {label}
           {counts[key] ? ` ${counts[key]}` : ""}

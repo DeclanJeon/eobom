@@ -42,7 +42,12 @@ export function EntryForm({
   );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showMore, setShowMore] = useState(false);
+  const [open, setOpen] = useState({
+    gratitude: false,
+    question: false,
+    prayer: false,
+    action: false,
+  });
 
   const canSave = useMemo(() => {
     const hasBody = Boolean(values.reflectionBody.trim());
@@ -86,76 +91,106 @@ export function EntryForm({
     router.refresh();
   }
 
-  function field(
-    key: keyof EntryFormValues,
+  function optionalBlock(
+    key: keyof typeof open,
     label: string,
-    opts?: { textarea?: boolean; placeholder?: string; rows?: number },
+    field: keyof EntryFormValues,
+    placeholder: string,
   ) {
-    const common = {
-      id: key,
-      value: values[key] || "",
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      ) => setValues((v) => ({ ...v, [key]: e.target.value })),
-      placeholder: opts?.placeholder,
-      className:
-        "mt-1.5 w-full rounded-2xl border border-border bg-white/80 px-3 py-3 text-sm outline-none ring-primary/25 transition focus:ring-2",
-    };
+    const isOpen = open[key];
     return (
-      <label className="block text-sm">
-        <span className="font-medium text-foreground">{label}</span>
-        {opts?.textarea ? (
-          <textarea {...common} rows={opts.rows ?? 3} />
-        ) : (
-          <input {...common} type={key === "entryDate" ? "date" : "text"} />
-        )}
-      </label>
+      <div className="rounded-2xl border border-[#E0DDD7] bg-surface-low/80">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => ({ ...v, [key]: !v[key] }))}
+          className="flex w-full items-center justify-between px-4 py-3.5 text-left text-label-md text-text-main"
+        >
+          <span>{label}</span>
+          <span className="text-text-muted">{isOpen ? "▴" : "▾"}</span>
+        </button>
+        {isOpen ? (
+          <div className="px-4 pb-4">
+            <textarea
+              value={values[field] || ""}
+              onChange={(e) =>
+                setValues((v) => ({ ...v, [field]: e.target.value }))
+              }
+              rows={3}
+              placeholder={placeholder}
+              className="w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-2.5 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
+            />
+          </div>
+        ) : null}
+      </div>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {field("scriptureRefsText", "성구", {
-        placeholder: "예: 빌립보서 1:6",
-      })}
-      {field("title", "제목", { placeholder: "없어도 됩니다 (성구가 있으면)" })}
-      {field("reflectionBody", "묵상", {
-        textarea: true,
-        rows: 10,
-        placeholder: "마음에 남은 것을 자유롭게 적어 주세요.",
-      })}
+    <form onSubmit={onSubmit} className="space-y-5">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-label-md text-text-muted"
+        >
+          닫기
+        </button>
+        <h1 className="text-headline-sm text-primary">
+          {entryId ? "기록 수정" : "오늘의 묵상"}
+        </h1>
+        <button
+          type="submit"
+          disabled={!canSave || saving}
+          className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground disabled:opacity-40"
+        >
+          {saving ? "…" : "저장"}
+        </button>
+      </div>
 
-      <button
-        type="button"
-        onClick={() => setShowMore((v) => !v)}
-        className="text-sm text-muted-foreground underline-offset-2 hover:underline"
-      >
-        {showMore ? "간단히" : "기도·결단 더 쓰기"}
-      </button>
+      <div>
+        <p className="mb-2 text-label-md text-accent-gold">성구</p>
+        <input
+          value={values.scriptureRefsText || ""}
+          onChange={(e) =>
+            setValues((v) => ({ ...v, scriptureRefsText: e.target.value }))
+          }
+          placeholder="말씀 구절을 적어보세요 (예: 시편 23:1)"
+          className="w-full border-0 border-b border-[#E0DDD7] bg-transparent py-3 text-body-lg text-text-main outline-none placeholder:text-text-muted/70 focus:border-accent-gold"
+        />
+      </div>
 
-      {showMore ? (
-        <div className="space-y-3 rounded-2xl border border-border/70 bg-secondary/30 p-4">
-          {field("entryDate", "날짜")}
-          {field("prayer", "기도", { textarea: true })}
-          {field("actionStep", "결단", { textarea: true })}
-          {field("gratitude", "감사", { textarea: true })}
-          {field("question", "질문", { textarea: true })}
+      <div>
+        <input
+          value={values.title || ""}
+          onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
+          placeholder="제목 (선택)"
+          className="mb-3 w-full border-0 bg-transparent py-1 text-headline-sm text-primary outline-none placeholder:text-text-muted/60"
+        />
+        <div className="writing-margin">
+          <textarea
+            value={values.reflectionBody}
+            onChange={(e) =>
+              setValues((v) => ({ ...v, reflectionBody: e.target.value }))
+            }
+            rows={12}
+            placeholder="이곳에 당신의 깊은 묵상을 자유롭게 남겨보세요…"
+            className="w-full resize-none border-0 bg-transparent text-body-lg text-text-main outline-none placeholder:text-text-muted/60"
+          />
         </div>
-      ) : null}
+      </div>
+
+      <div className="space-y-3">
+        {optionalBlock("gratitude", "감사의 제목", "gratitude", "감사한 마음을 적어 주세요")}
+        {optionalBlock("question", "하나님께 드리는 질문", "question", "마음에 남은 질문")}
+        {optionalBlock("prayer", "오늘의 기도", "prayer", "기도문을 적어 주세요")}
+        {optionalBlock("action", "삶으로의 결단", "actionStep", "작게 실천할 한 가지")}
+      </div>
 
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
           {error}
         </p>
       ) : null}
-
-      <button
-        type="submit"
-        disabled={!canSave || saving}
-        className="w-full rounded-full bg-foreground px-5 py-4 text-base font-medium text-background transition active:scale-[0.99] disabled:opacity-40"
-      >
-        {saving ? "저장 중…" : entryId ? "수정 저장" : "저장"}
-      </button>
     </form>
   );
 }

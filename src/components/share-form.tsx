@@ -48,34 +48,30 @@ export function ShareForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <label className="block text-sm">
-        <span className="font-medium">내용</span>
+      <label className="block text-label-md">
+        <span className="text-primary">내용</span>
         <textarea
           value={publicBody}
           onChange={(e) => setPublicBody(e.target.value)}
           rows={5}
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
+          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
           placeholder="나누고 싶은 문장만"
         />
       </label>
-      <label className="block text-sm">
-        <span className="font-medium">성구</span>
+      <label className="block text-label-md">
+        <span className="text-primary">성구</span>
         <input
           value={scriptureRefsText}
           onChange={(e) => setScriptureRefsText(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
+          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </label>
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background disabled:opacity-50"
-      >
+      <button type="submit" disabled={loading} className="cta-primary w-full">
         {loading ? "게시 중…" : "게시"}
       </button>
     </form>

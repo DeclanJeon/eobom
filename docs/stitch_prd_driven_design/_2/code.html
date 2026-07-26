@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        
+        /* Custom writing scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #E0DDD7;
+            border-radius: 10px;
+        }
+
+        /* Ambient Glow for AI/Saving states as per Style Guidance */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; filter: blur(8px); }
+            50% { opacity: 0.6; filter: blur(12px); }
+        }
+        .saving-glow {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        /* Collapsible Transition */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+            opacity: 0;
+        }
+        .collapsible-content.active {
+            max-height: 500px;
+            opacity: 1;
+        }
+    </style>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffd9dc",
+                    "tertiary": "#271013",
+                    "secondary-fixed-dim": "#c9c6c0",
+                    "accent-gold": "#C5A059",
+                    "on-tertiary-fixed": "#2d1417",
+                    "primary-container": "#1b3022",
+                    "text-main": "#2D2D2D",
+                    "inverse-primary": "#b4cdb8",
+                    "primary-fixed": "#d0e9d4",
+                    "on-tertiary-fixed-variant": "#5d3f42",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#364c3c",
+                    "surface-shared": "#F0F4F2",
+                    "surface-variant": "#e3e2e0",
+                    "accent-terracotta": "#B36A5E",
+                    "surface-container-low": "#f5f3f0",
+                    "tertiary-container": "#3f2427",
+                    "primary-fixed-dim": "#b4cdb8",
+                    "text-muted": "#6B6B6B",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434843",
+                    "on-secondary-container": "#666460",
+                    "surface-container-highest": "#e3e2e0",
+                    "surface-container-high": "#e9e8e5",
+                    "surface-dim": "#dbdad7",
+                    "inverse-surface": "#30312f",
+                    "on-surface": "#1b1c1a",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#484743",
+                    "on-primary-fixed": "#0b2013",
+                    "on-tertiary-container": "#b0898c",
+                    "on-primary-container": "#819986",
+                    "on-primary": "#ffffff",
+                    "primary": "#061b0e",
+                    "secondary-container": "#e6e2dc",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "background": "#fbf9f6",
+                    "error": "#ba1a1a",
+                    "surface": "#fbf9f6",
+                    "inverse-on-surface": "#f2f1ee",
+                    "secondary": "#605e5a",
+                    "outline-variant": "#c3c8c1",
+                    "safety-blue": "#4A6FA5",
+                    "on-background": "#1b1c1a",
+                    "surface-container": "#efeeeb",
+                    "secondary-fixed": "#e6e2dc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#4d6453",
+                    "tertiary-fixed-dim": "#e7bcbf",
+                    "surface-bright": "#fbf9f6",
+                    "on-secondary-fixed": "#1c1c18",
+                    "outline": "#737973"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-mobile": "20px",
+                    "stack-lg": "48px",
+                    "gutter": "16px",
+                    "stack-sm": "12px",
+                    "stack-md": "24px",
+                    "container-padding-desktop": "40px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["manrope"],
+                    "label-sm": ["manrope"],
+                    "body-lg-mobile": ["Source Serif 4"],
+                    "body-lg": ["Source Serif 4"],
+                    "body-md": ["Source Serif 4"],
+                    "title-journal": ["Source Serif 4"],
+                    "headline-sm": ["manrope"],
+                    "label-md": ["manrope"],
+                    "headline-md": ["manrope"]
+            },
+            "fontSize": {
+                    "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-lg-mobile": ["17px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "32px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "title-journal": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md text-body-md overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-background dark:bg-background z-50 transition-shadow duration-300" id="header">
+<div class="flex justify-between items-center px-container-padding-mobile py-4 max-w-[1024px] mx-auto w-full">
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-secondary active:scale-95 transition-transform" data-icon="close">close</button>
+<h1 class="font-title-journal text-title-journal text-primary dark:text-inverse-primary">오늘의 묵상</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5 opacity-0 transition-opacity duration-500" id="save-status">
+<div class="w-1.5 h-1.5 rounded-full bg-accent-gold saving-glow"></div>
+<span class="font-label-sm text-label-sm text-secondary">자동 저장됨</span>
+</div>
+<button class="bg-primary text-on-primary px-5 py-2 rounded-xl font-label-md text-label-md hover:opacity-80 active:scale-95 transition-all">
+                    저장
+                </button>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 w-full max-w-[720px] mx-auto px-container-padding-mobile pt-stack-md pb-32">
+<!-- Writing Area Container -->
+<article class="flex flex-col gap-stack-md">
+<!-- Scripture Reference Section -->
+<section class="group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-accent-gold text-[18px]" data-icon="auto_stories">auto_stories</span>
+<label class="font-label-md text-label-md text-secondary" for="scripture">성구</label>
+</div>
+<input class="w-full bg-transparent border-none focus:ring-0 p-0 font-title-journal text-title-journal text-primary placeholder:text-secondary-fixed-dim transition-colors" id="scripture" placeholder="말씀 구절을 적어보세요 (예: 시편 23:1)" type="text"/>
+</section>
+<!-- Divider line like notebook paper as per style guidance -->
+<div class="h-[1px] w-full bg-secondary-container opacity-50"></div>
+<!-- Meditation Body -->
+<section class="relative min-h-[353px]">
+<div class="absolute left-0 top-0 bottom-0 w-[1px] bg-accent-gold opacity-20"></div>
+<div class="pl-6">
+<label class="sr-only" for="meditation">자유 묵상</label>
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-0 font-body-lg text-body-lg text-main placeholder:text-secondary-fixed-dim leading-relaxed resize-none custom-scrollbar min-h-[300px]" id="meditation" oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'; triggerAutoSave()" placeholder="이곳에 당신의 깊은 묵상을 자유롭게 남겨보세요..."></textarea>
+</div>
+</section>
+<!-- Optional/Collapsible Sections -->
+<div class="flex flex-col gap-4 mt-stack-md">
+<!-- Section: 감사 -->
+<div class="bg-secondary-container/30 rounded-xl overflow-hidden transition-all duration-300">
+<button class="w-full flex items-center justify-between p-4 hover:bg-secondary-container/50 transition-colors" onclick="toggleCollapsible('thanks')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-accent-terracotta" data-icon="favorite">favorite</span>
+<span class="font-headline-sm text-label-md text-primary">감사의 제목</span>
+</div>
+<span class="material-symbols-outlined text-secondary transition-transform duration-300" data-icon="expand_more" id="icon-thanks">expand_more</span>
+</button>
+<div class="collapsible-content" id="content-thanks">
+<div class="px-4 pb-4">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-2 font-body-md text-body-md text-secondary placeholder:text-secondary-fixed-dim resize-none" placeholder="오늘 하루 감사했던 순간들을 기록해보세요."></textarea>
+</div>
+</div>
+</div>
+<!-- Section: 질문 -->
+<div class="bg-secondary-container/30 rounded-xl overflow-hidden transition-all duration-300">
+<button class="w-full flex items-center justify-between p-4 hover:bg-secondary-container/50 transition-colors" onclick="toggleCollapsible('questions')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-safety-blue" data-icon="help">help</span>
+<span class="font-headline-sm text-label-md text-primary">하나님께 드리는 질문</span>
+</div>
+<span class="material-symbols-outlined text-secondary transition-transform duration-300" data-icon="expand_more" id="icon-questions">expand_more</span>
+</button>
+<div class="collapsible-content" id="content-questions">
+<div class="px-4 pb-4">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-2 font-body-md text-body-md text-secondary placeholder:text-secondary-fixed-dim resize-none" placeholder="말씀을 보며 생긴 궁금증이나 기도의 제목을 적어보세요."></textarea>
+</div>
+</div>
+</div>
+<!-- Section: 기도 -->
+<div class="bg-secondary-container/30 rounded-xl overflow-hidden transition-all duration-300">
+<button class="w-full flex items-center justify-between p-4 hover:bg-secondary-container/50 transition-colors" onclick="toggleCollapsible('prayer')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-accent-gold" data-icon="back_hand">back_hand</span>
+<span class="font-headline-sm text-label-md text-primary">오늘의 기도</span>
+</div>
+<span class="material-symbols-outlined text-secondary transition-transform duration-300" data-icon="expand_more" id="icon-prayer">expand_more</span>
+</button>
+<div class="collapsible-content" id="content-prayer">
+<div class="px-4 pb-4">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-2 font-body-md text-body-md text-secondary placeholder:text-secondary-fixed-dim resize-none" placeholder="마음을 담아 기도를 적어보세요."></textarea>
+</div>
+</div>
+</div>
+<!-- Section: 결단 -->
+<div class="bg-secondary-container/30 rounded-xl overflow-hidden transition-all duration-300">
+<button class="w-full flex items-center justify-between p-4 hover:bg-secondary-container/50 transition-colors" onclick="toggleCollapsible('commit')">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container" data-icon="priority_high">priority_high</span>
+<span class="font-headline-sm text-label-md text-primary">삶으로의 결단</span>
+</div>
+<span class="material-symbols-outlined text-secondary transition-transform duration-300" data-icon="expand_more" id="icon-commit">expand_more</span>
+</button>
+<div class="collapsible-content" id="content-commit">
+<div class="px-4 pb-4">
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-2 font-body-md text-body-md text-secondary placeholder:text-secondary-fixed-dim resize-none" placeholder="오늘 삶 속에서 실천할 구체적인 행동을 결단해보세요."></textarea>
+</div>
+</div>
+</div>
+</div>
+</article>
+</main>
+<!-- BottomNavBar (Hidden during focused writing if preferred, but shown here per context) -->
+<!-- Applying "Shell Suppression" logic: In a focused task screen (Writing), we might suppress this. 
+         However, for navigation back, we'll keep it simple but ensure the active state is null as this is a sub-page. -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center pt-2 pb-6 px-4 bg-surface dark:bg-surface shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)]">
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">오늘</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary after:content-[''] after:w-1 after:h-1 after:bg-accent-terracotta after:rounded-full after:mt-1 active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-label-sm text-label-sm">기록</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+<span class="font-label-sm text-label-sm">회고</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm">함께</span>
+</div>
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary transition-colors active:scale-90 duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">내 정보</span>
+</div>
+</nav>
+<script>
+        // Collapsible Logic
+        function toggleCollapsible(id) {
+            const content = document.getElementById('content-' + id);
+            const icon = document.getElementById('icon-' + id);
+            
+            content.classList.toggle('active');
+            
+            if (content.classList.contains('active')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Auto Save Indicator Logic
+        let saveTimeout;
+        const saveStatus = document.getElementById('save-status');
+
+        function triggerAutoSave() {
+            // Show "saving" effect
+            saveStatus.classList.remove('opacity-0');
+            saveStatus.classList.add('opacity-100');
+            
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                // Fade out after 2 seconds of inactivity
+                saveStatus.classList.replace('opacity-100', 'opacity-0');
+            }, 3000);
+        }
+
+        // Scroll shadow logic for header
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-sm');
+            } else {
+                header.classList.remove('shadow-sm');
+            }
+        });
+
+        // Initialize text area height
+        document.getElementById('meditation').addEventListener('keydown', (e) => {
+            triggerAutoSave();
+        });
+    </script>
+</body></html>

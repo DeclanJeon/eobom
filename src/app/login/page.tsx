@@ -15,19 +15,23 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-6">
-      <div className="pointer-events-none absolute inset-0 paper-grain" />
-      <div className="relative w-full max-w-sm text-center">
-        <Link href="/" className="font-serif text-2xl text-primary">
-          이어봄
-        </Link>
-        <h1 className="mt-8 font-serif text-3xl tracking-tight">로그인</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
+    <div className="relative flex min-h-dvh items-center justify-center px-5">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-8 flex items-center justify-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+            ✿
+          </span>
+          <Link href="/" className="font-journal text-title-journal text-primary">
+            이어봄
+          </Link>
+        </div>
+        <h1 className="text-display-lg text-primary">로그인</h1>
+        <p className="mt-3 text-body-md text-text-muted">
           Google로 바로 기록을 시작합니다.
         </p>
 
         {params.error ? (
-          <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
             로그인에 실패했습니다. 다시 시도해 주세요.
           </p>
         ) : null}
@@ -36,7 +40,7 @@ export default async function LoginPage({
           <LoginButton callbackUrl={params.callbackUrl || "/today"} />
         </div>
 
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-6 text-label-sm text-text-muted">
           <Link href="/" className="hover:underline">
             돌아가기
           </Link>

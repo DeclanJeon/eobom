@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffd9dc",
+                    "tertiary": "#271013",
+                    "secondary-fixed-dim": "#c9c6c0",
+                    "accent-gold": "#C5A059",
+                    "on-tertiary-fixed": "#2d1417",
+                    "primary-container": "#1b3022",
+                    "text-main": "#2D2D2D",
+                    "inverse-primary": "#b4cdb8",
+                    "primary-fixed": "#d0e9d4",
+                    "on-tertiary-fixed-variant": "#5d3f42",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#364c3c",
+                    "surface-shared": "#F0F4F2",
+                    "surface-variant": "#e3e2e0",
+                    "accent-terracotta": "#B36A5E",
+                    "surface-container-low": "#f5f3f0",
+                    "tertiary-container": "#3f2427",
+                    "primary-fixed-dim": "#b4cdb8",
+                    "text-muted": "#6B6B6B",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434843",
+                    "on-secondary-container": "#666460",
+                    "surface-container-highest": "#e3e2e0",
+                    "surface-container-high": "#e9e8e5",
+                    "surface-dim": "#dbdad7",
+                    "inverse-surface": "#30312f",
+                    "on-surface": "#1b1c1a",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#484743",
+                    "on-primary-fixed": "#0b2013",
+                    "on-tertiary-container": "#b0898c",
+                    "on-primary-container": "#819986",
+                    "on-primary": "#ffffff",
+                    "primary": "#061b0e",
+                    "secondary-container": "#e6e2dc",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "background": "#fbf9f6",
+                    "error": "#ba1a1a",
+                    "surface": "#fbf9f6",
+                    "inverse-on-surface": "#f2f1ee",
+                    "secondary": "#605e5a",
+                    "outline-variant": "#c3c8c1",
+                    "safety-blue": "#4A6FA5",
+                    "on-background": "#1b1c1a",
+                    "surface-container": "#efeeeb",
+                    "secondary-fixed": "#e6e2dc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#4d6453",
+                    "tertiary-fixed-dim": "#e7bcbf",
+                    "surface-bright": "#fbf9f6",
+                    "on-secondary-fixed": "#1c1c18",
+                    "outline": "#737973"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-mobile": "20px",
+                    "stack-lg": "48px",
+                    "gutter": "16px",
+                    "stack-sm": "12px",
+                    "stack-md": "24px",
+                    "container-padding-desktop": "40px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["manrope"],
+                    "label-sm": ["manrope"],
+                    "body-lg-mobile": ["sourceSerif4"],
+                    "body-lg": ["sourceSerif4"],
+                    "body-md": ["sourceSerif4"],
+                    "title-journal": ["sourceSerif4"],
+                    "headline-sm": ["manrope"],
+                    "label-md": ["manrope"],
+                    "headline-md": ["manrope"]
+            },
+            "fontSize": {
+                    "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-lg-mobile": ["17px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "32px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "title-journal": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #fbf9f6;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(224, 221, 215, 0.5);
+        }
+        .writing-margin {
+            position: relative;
+        }
+        .writing-margin::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #C5A059;
+            opacity: 0.3;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+        .glow-soft {
+            animation: pulse-soft 3s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-text-main selection:bg-accent-gold/20">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky z-40 bg-background dark:bg-background">
+<div class="flex justify-between items-center px-container-padding-mobile py-4 max-w-[1024px] mx-auto w-full">
+<div class="flex items-center gap-2 transition-transform duration-200 active:scale-95">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary" data-icon="spa">spa</span>
+<h1 class="font-title-journal text-title-journal text-primary dark:text-inverse-primary">이어봄</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden hover:opacity-80 transition-opacity active:scale-95 duration-200 cursor-pointer">
+<img class="w-full h-full object-cover" data-alt="A serene close-up portrait of a Korean woman with a calm expression, soft natural lighting coming from a nearby window, minimalist aesthetic, warm skin tones, high-quality professional photography for a wellness app profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3c7oWacc3adb--fp687wnTOgSKIAt_FwzTUkYDDv_pTJTJm9TRWd9BTzC0WNf3TE7PZT-0ZRPDOP64LpKYYmufJtiP9t7QJqeKSo0lkVUHSA0YF24uwXp7cKVw5GaoGiEYGcqTh2DemODdj-mrFoTVXHi6-dHTv-ZM19GagyOa6SGDSuJVnzw6UlKNp2uFEm7-TgcP0VCGh3fBxVd8kclSGGe_O-to-YX-8D7MHaYOITc4WMd21GEsSqrP3MkajanWOHqa4UDaogB"/>
+</div>
+</div>
+</header>
+<main class="max-w-[1024px] mx-auto px-container-padding-mobile pb-32">
+<!-- Greeting Section -->
+<section class="mt-stack-md mb-stack-lg">
+<h2 class="font-title-journal text-display-lg text-primary leading-tight">
+                오늘의 묵상을<br/>시작해볼까요?
+            </h2>
+<p class="text-text-muted font-body-md mt-2">당신만의 평온한 공간, 이어봄입니다.</p>
+</section>
+<!-- Primary Action: Start Meditation -->
+<section class="mb-stack-md">
+<button class="w-full group relative overflow-hidden bg-primary text-on-primary rounded-xl p-8 flex flex-col items-start gap-4 transition-transform duration-300 active:scale-[0.98] shadow-sm">
+<div class="absolute top-0 right-0 w-32 h-32 bg-on-primary/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+<div class="flex items-center justify-center w-12 h-12 rounded-full bg-on-primary/10 mb-2">
+<span class="material-symbols-outlined text-on-primary" data-icon="edit_note" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+</div>
+<div class="text-left">
+<h3 class="font-headline-sm text-headline-sm mb-1">묵상 기록하기</h3>
+<p class="font-label-md text-label-md opacity-80">오늘 주신 말씀을 마음에 새깁니다</p>
+</div>
+<div class="mt-4 flex items-center gap-2 font-label-md">
+<span>기록 시작하기</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</button>
+</section>
+<!-- Secondary/Contextual Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Draft/Resume Card -->
+<section>
+<div class="bg-secondary-container/30 border border-outline-variant/30 rounded-xl p-6 h-full flex flex-col justify-between group hover:border-accent-gold/40 transition-colors cursor-pointer active:scale-[0.99] duration-200">
+<div>
+<div class="flex justify-between items-start mb-4">
+<span class="bg-white/80 px-3 py-1 rounded-full text-accent-gold font-label-sm border border-accent-gold/20">임시 저장됨</span>
+<span class="text-text-muted font-label-sm">오전 10:24</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">최근 기록 이어쓰기</h3>
+<p class="text-text-muted font-body-md line-clamp-2 italic">"시편 23편을 묵상하며 느꼈던 목자의 따뜻한 손길은..."</p>
+</div>
+<div class="mt-6 flex items-center text-primary font-label-md gap-1">
+<span>계속 적기</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- One Year Ago Card -->
+<section>
+<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-6 h-full flex flex-col writing-margin">
+<div class="ml-4">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-accent-terracotta text-[20px]" data-icon="history">history</span>
+<span class="font-label-md text-accent-terracotta">과거의 오늘 · 1년 전</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-3">믿음의 발걸음</h3>
+<p class="text-text-main font-body-md leading-relaxed mb-4">
+                            작은 일에도 감사할 수 있는 마음을 달라고 기도했던 날. 구름 사이로 비치는 햇살이 마치 응답처럼 느껴졌다.
+                        </p>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-white border border-outline-variant/20 rounded text-label-sm text-text-muted">#감사</span>
+<span class="px-2 py-1 bg-white border border-outline-variant/20 rounded text-label-sm text-text-muted">#시편</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Atmospheric Visual Element (AI Inspired) -->
+<section class="mt-stack-lg relative rounded-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9]">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover" data-alt="A peaceful, minimalist landscape of a misty forest at dawn, with soft rays of golden sunlight filtering through tall green trees. The overall tone is calm, spiritual, and serene, utilizing a forest green and soft linen white color palette. No people, just quiet nature." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDa9llZ83I071BpqvWuDT0OP3wSjO29p6c2ygHDVT8dPO9Z0mYvZwZ6hmQvPL2RykbTkfdA3Qxtsjy4eIhUs5yz90CiWirMcYEjTcLXzBQWfaEfBXUwqv9OfuXNnpL12-_KyBOYhTH4fJAvIcWhbHROuVFsMUReOcSnTy6arNMO0uqUpN5p4UaI2hYeVCOJQ38mMgyx2FFvSLVWSPn8gM-kS1oqJunwiflsSmUw76FZyzXlLymOSY3u5hjaitQP-xNKXM5bQCfc8BGt"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+</div>
+<div class="relative z-10 p-8 h-full flex flex-col justify-end">
+<div class="glow-soft inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white font-label-sm mb-2 w-fit">AI Insight</div>
+<h4 class="text-white font-headline-md text-headline-md">"가장 깊은 평온은 비움에서 시작됩니다."</h4>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center pt-2 pb-safe px-4 bg-surface dark:bg-surface shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)]">
+<!-- 오늘 (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary after:content-[''] after:w-1 after:h-1 after:bg-accent-terracotta after:rounded-full after:mt-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">오늘</span>
+</a>
+<!-- 기록 -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-label-sm text-label-sm">기록</span>
+</a>
+<!-- 회고 -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+<span class="font-label-sm text-label-sm">회고</span>
+</a>
+<!-- 함께 -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm">함께</span>
+</a>
+<!-- 내 정보 -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">내 정보</span>
+</a>
+</nav>
+<script>
+        // Micro-interactions and soft loading states
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('button, a, div[cursor-pointer]');
+            
+            cards.forEach(card => {
+                card.addEventListener('touchstart', () => {
+                    card.style.opacity = '0.9';
+                });
+                card.addEventListener('touchend', () => {
+                    card.style.opacity = '1';
+                });
+            });
+
+            // Smooth scroll for internal links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body></html>

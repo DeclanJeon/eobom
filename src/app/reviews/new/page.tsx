@@ -13,9 +13,7 @@ export default async function NewReviewPage() {
 
   return (
     <AppShell title="회고 만들기">
-      <p className="mb-4 text-sm text-muted-foreground">
-        보관 중인 기록 {count}개
-      </p>
+      <p className="mb-4 text-label-md text-text-muted">보관 중인 기록 {count}개</p>
       <ReviewCreateForm entryCount={count} />
     </AppShell>
   );

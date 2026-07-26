@@ -45,16 +45,22 @@ export default async function PersonalJournalPage({
     : [];
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-6 py-10">
-      <div className="pointer-events-none absolute inset-0 paper-grain" />
-      <div className="relative w-full max-w-md text-center">
-        <Link href="/" className="font-serif text-2xl text-primary">
-          이어봄
-        </Link>
-        <h1 className="mt-8 font-serif text-3xl tracking-tight">
-          {display}의 묵상기록지
+    <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md text-center">
+        <div className="mb-8 flex items-center justify-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+            ✿
+          </span>
+          <Link href="/" className="font-journal text-title-journal text-primary">
+            이어봄
+          </Link>
+        </div>
+        <h1 className="text-display-lg text-primary">
+          {display}의
+          <br />
+          묵상기록지
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 text-body-md text-text-muted">
           {isOwner
             ? "나만의 입구입니다."
             : viewer
@@ -64,23 +70,17 @@ export default async function PersonalJournalPage({
 
         <div className="mt-10">
           {isOwner ? (
-            <Link
-              href="/entries/new"
-              className="inline-flex w-full items-center justify-center rounded-full bg-foreground px-6 py-4 text-base font-medium text-background"
-            >
+            <Link href="/entries/new" className="cta-primary w-full py-4">
               기록하기
             </Link>
           ) : viewer ? (
-            <Link
-              href="/today"
-              className="inline-flex w-full items-center justify-center rounded-full bg-foreground px-6 py-4 text-base font-medium text-background"
-            >
+            <Link href="/today" className="cta-primary w-full py-4">
               내 홈으로
             </Link>
           ) : (
             <Link
               href={`/login?callbackUrl=${encodeURIComponent(`/j/${slug}`)}`}
-              className="inline-flex w-full items-center justify-center rounded-full bg-foreground px-6 py-4 text-base font-medium text-background"
+              className="cta-primary w-full py-4"
             >
               로그인
             </Link>
@@ -89,22 +89,22 @@ export default async function PersonalJournalPage({
 
         {isOwner && recent.length > 0 ? (
           <section className="mt-10 space-y-2 text-left">
-            <h2 className="text-sm font-medium text-muted-foreground">최근</h2>
+            <h2 className="text-label-md text-text-muted">최근</h2>
             {recent.map((entry) => (
               <Link
                 key={entry.id}
                 href={`/entries/${entry.id}`}
-                className="block rounded-2xl border border-border/80 bg-card/90 p-4"
+                className="paper-card mb-2 block p-4"
               >
-                <p className="text-xs text-muted-foreground">
+                <p className="text-label-sm text-text-muted">
                   {formatDateKo(entry.entryDate)}
                 </p>
-                <h3 className="mt-1 font-serif text-lg">
+                <h3 className="mt-1 text-headline-sm text-primary">
                   {entry.title ||
                     parseJsonArray(entry.scriptureRefs)[0] ||
                     "제목 없음"}
                 </h3>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-body-md text-text-muted">
                   {excerpt(entry.reflectionBody, 80)}
                 </p>
               </Link>

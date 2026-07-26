@@ -27,7 +27,7 @@ export default async function EntryDetailPage({
       action={
         <Link
           href={`/entries/${entry.id}/edit`}
-          className="rounded-full border border-border bg-card px-4 py-2 text-sm"
+          className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground"
         >
           수정
         </Link>
@@ -35,10 +35,10 @@ export default async function EntryDetailPage({
     >
       <article className="space-y-4">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-label-sm text-text-muted">
             {formatDateKo(entry.entryDate)}
           </p>
-          <h1 className="mt-2 font-serif text-3xl tracking-tight">
+          <h1 className="mt-2 font-journal text-display-lg text-primary">
             {entry.title || "제목 없음"}
           </h1>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -52,57 +52,52 @@ export default async function EntryDetailPage({
         </div>
 
         {entry.scriptureExcerpt ? (
-          <SurfaceCard className="border-l-4 border-l-primary/40">
-            <p className="font-serif text-lg leading-relaxed">
+          <SurfaceCard className="writing-margin border-l-0">
+            <p className="text-body-lg text-text-main">
               “{entry.scriptureExcerpt}”
             </p>
           </SurfaceCard>
         ) : null}
 
         <SurfaceCard>
-          <p className="whitespace-pre-wrap text-[15px] leading-8">
+          <p className="writing-margin whitespace-pre-wrap text-body-lg text-text-main">
             {entry.reflectionBody}
           </p>
         </SurfaceCard>
 
         {entry.gratitude ? (
           <SurfaceCard>
-            <h2 className="text-sm font-medium text-muted-foreground">감사</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-7">
+            <h2 className="text-label-md text-text-muted">감사</h2>
+            <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.gratitude}
             </p>
           </SurfaceCard>
         ) : null}
         {entry.question ? (
           <SurfaceCard>
-            <h2 className="text-sm font-medium text-muted-foreground">질문</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-7">
+            <h2 className="text-label-md text-text-muted">질문</h2>
+            <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.question}
             </p>
           </SurfaceCard>
         ) : null}
         {entry.prayer ? (
           <SurfaceCard>
-            <h2 className="text-sm font-medium text-muted-foreground">기도</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-7">
-              {entry.prayer}
-            </p>
+            <h2 className="text-label-md text-text-muted">기도</h2>
+            <p className="mt-2 whitespace-pre-wrap text-body-md">{entry.prayer}</p>
           </SurfaceCard>
         ) : null}
         {entry.actionStep ? (
           <SurfaceCard>
-            <h2 className="text-sm font-medium text-muted-foreground">결단</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-7">
+            <h2 className="text-label-md text-text-muted">결단</h2>
+            <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.actionStep}
             </p>
           </SurfaceCard>
         ) : null}
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link
-            href={`/together?from=${entry.id}`}
-            className="rounded-full border border-border bg-card px-4 py-2 text-sm"
-          >
+          <Link href={`/together?from=${entry.id}`} className="cta-secondary">
             공유
           </Link>
           <DeleteEntryButton id={entry.id} />

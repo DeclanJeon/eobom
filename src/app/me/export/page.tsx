@@ -9,20 +9,14 @@ export default async function ExportPage() {
   return (
     <AppShell title="내보내기">
       <SurfaceCard>
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-body-md text-text-muted">
           원문, 회고, 공유 묵상을 파일로 받습니다.
         </p>
         <div className="mt-5 flex flex-col gap-3">
-          <a
-            href="/api/export?format=json"
-            className="inline-flex items-center justify-center rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background"
-          >
+          <a href="/api/export?format=json" className="cta-primary">
             JSON 받기
           </a>
-          <a
-            href="/api/export?format=markdown"
-            className="inline-flex items-center justify-center rounded-full border border-border bg-card px-5 py-3 text-sm font-medium"
-          >
+          <a href="/api/export?format=markdown" className="cta-secondary">
             Markdown 받기
           </a>
         </div>

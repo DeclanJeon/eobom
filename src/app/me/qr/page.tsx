@@ -13,8 +13,8 @@ export default async function QrPage() {
     margin: 1,
     width: 320,
     color: {
-      dark: "#2f3d32",
-      light: "#fffdf8",
+      dark: "#061b0e",
+      light: "#fbf9f6",
     },
   });
 
@@ -25,15 +25,15 @@ export default async function QrPage() {
         <img
           src={qrDataUrl}
           alt="개인 묵상기록지 QR 코드"
-          className="h-64 w-64 rounded-2xl border border-border bg-white p-3"
+          className="h-64 w-64 rounded-2xl border border-[#E0DDD7] bg-white p-3"
         />
-        <p className="mt-4 break-all font-mono text-xs text-muted-foreground">
+        <p className="mt-4 break-all font-mono text-label-sm text-text-muted">
           {url}
         </p>
         <a
           href={qrDataUrl}
           download={`eobom-${user.personalSlug}.png`}
-          className="mt-5 rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background"
+          className="cta-primary mt-5"
         >
           저장
         </a>

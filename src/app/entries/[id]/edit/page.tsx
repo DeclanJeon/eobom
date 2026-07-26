@@ -17,24 +17,26 @@ export default async function EditEntryPage({
   if (!entry) notFound();
 
   return (
-    <AppShell title="수정">
-      <EntryForm
-        entryId={entry.id}
-        initial={{
-          entryDate: new Date(entry.entryDate).toISOString().slice(0, 10),
-          title: entry.title || "",
-          scriptureRefsText: entry.scriptureRefs.join(", "),
-          scriptureExcerpt: entry.scriptureExcerpt || "",
-          reflectionBody: entry.reflectionBody,
-          gratitude: entry.gratitude || "",
-          question: entry.question || "",
-          prayer: entry.prayer || "",
-          actionStep: entry.actionStep || "",
-          emotionsText: entry.emotions.join(", "),
-          tagsText: entry.tags.join(", "),
-          templateType: entry.templateType,
-        }}
-      />
+    <AppShell bare>
+      <div className="mx-auto max-w-2xl">
+        <EntryForm
+          entryId={entry.id}
+          initial={{
+            entryDate: new Date(entry.entryDate).toISOString().slice(0, 10),
+            title: entry.title || "",
+            scriptureRefsText: entry.scriptureRefs.join(", "),
+            scriptureExcerpt: entry.scriptureExcerpt || "",
+            reflectionBody: entry.reflectionBody,
+            gratitude: entry.gratitude || "",
+            question: entry.question || "",
+            prayer: entry.prayer || "",
+            actionStep: entry.actionStep || "",
+            emotionsText: entry.emotions.join(", "),
+            tagsText: entry.tags.join(", "),
+            templateType: entry.templateType,
+          }}
+        />
+      </div>
     </AppShell>
   );
 }

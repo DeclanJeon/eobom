@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffd9dc",
+                    "tertiary": "#271013",
+                    "secondary-fixed-dim": "#c9c6c0",
+                    "accent-gold": "#C5A059",
+                    "on-tertiary-fixed": "#2d1417",
+                    "primary-container": "#1b3022",
+                    "text-main": "#2D2D2D",
+                    "inverse-primary": "#b4cdb8",
+                    "primary-fixed": "#d0e9d4",
+                    "on-tertiary-fixed-variant": "#5d3f42",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed-variant": "#364c3c",
+                    "surface-shared": "#F0F4F2",
+                    "surface-variant": "#e3e2e0",
+                    "accent-terracotta": "#B36A5E",
+                    "surface-container-low": "#f5f3f0",
+                    "tertiary-container": "#3f2427",
+                    "primary-fixed-dim": "#b4cdb8",
+                    "text-muted": "#6B6B6B",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#434843",
+                    "on-secondary-container": "#666460",
+                    "surface-container-highest": "#e3e2e0",
+                    "surface-container-high": "#e9e8e5",
+                    "surface-dim": "#dbdad7",
+                    "inverse-surface": "#30312f",
+                    "on-surface": "#1b1c1a",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#484743",
+                    "on-primary-fixed": "#0b2013",
+                    "on-tertiary-container": "#b0898c",
+                    "on-primary": "#ffffff",
+                    "primary": "#061b0e",
+                    "secondary-container": "#e6e2dc",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "background": "#fbf9f6",
+                    "error": "#ba1a1a",
+                    "surface": "#fbf9f6",
+                    "inverse-on-surface": "#f2f1ee",
+                    "secondary": "#605e5a",
+                    "outline-variant": "#c3c8c1",
+                    "safety-blue": "#4A6FA5",
+                    "on-background": "#1b1c1a",
+                    "surface-container": "#efeeeb",
+                    "secondary-fixed": "#e6e2dc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#4d6453",
+                    "tertiary-fixed-dim": "#e7bcbf",
+                    "surface-bright": "#fbf9f6",
+                    "on-secondary-fixed": "#1c1c18",
+                    "outline": "#737973"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding-mobile": "20px",
+                    "stack-lg": "48px",
+                    "gutter": "16px",
+                    "stack-sm": "12px",
+                    "stack-md": "24px",
+                    "container-padding-desktop": "40px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["manrope"],
+                    "label-sm": ["manrope"],
+                    "body-lg-mobile": ["Source Serif 4"],
+                    "body-lg": ["Source Serif 4"],
+                    "body-md": ["Source Serif 4"],
+                    "title-journal": ["Source Serif 4"],
+                    "headline-sm": ["manrope"],
+                    "label-md": ["manrope"],
+                    "headline-md": ["manrope"]
+            },
+            "fontSize": {
+                    "display-lg": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "body-lg-mobile": ["17px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "32px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "title-journal": ["22px", {"lineHeight": "30px", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        -webkit-tap-highlight-color: transparent;
+        background-color: #fbf9f6;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-size: 24px;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e6e2dc;
+        border-radius: 10px;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-text-main overflow-x-hidden min-h-screen">
+<!-- Top Navigation Anchor -->
+<header class="w-full top-0 sticky bg-background dark:bg-background z-50">
+<div class="flex justify-between items-center px-container-padding-mobile py-4 max-w-[1024px] mx-auto w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="spa">spa</span>
+<h1 class="font-title-journal text-title-journal text-primary">이어봄</h1>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant active:scale-95 transition-transform duration-200">
+<img class="w-full h-full object-cover" data-alt="A serene, high-quality portrait profile photo of a person with a peaceful expression, in a minimalist studio setting with soft linen textures and warm natural light. The aesthetic is clean and grounded, using a palette of soft beiges and forest greens to match the spiritual reflective brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfyT8q3NulTSiVyakNgmUjxzp45A_EHDJwZrxJIUYyBHt7cGVdadu5efxL58MvknaYGNMGJEtARKOJwQ1mjFdvdpiNSjCZRjB99yX86xoKfl4Tqxz7UNXOmjJZwL5QwynG5I1VII5oTq4ZimNlvflZLVbzggW3qSXAfUW0HH9-10WxIcAV--pwZ6sYScaw89_hTNslA5RxymcGQJ0UjVrZ775JtuD7Jtg7xSo0qSTRF5bofKknUuBWVgJINoqWV_sdFd-jykbTE0aK"/>
+</div>
+</div>
+</header>
+<main class="max-w-[1024px] mx-auto px-container-padding-mobile pb-32">
+<!-- Header & Search -->
+<section class="mt-stack-md">
+<h2 class="font-headline-md text-headline-md text-primary mb-stack-sm">기록</h2>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-low border-none rounded-xl focus:ring-1 focus:ring-primary font-label-md text-label-md text-on-surface" placeholder="키워드나 성경 구절로 검색" type="text"/>
+</div>
+</section>
+<!-- Filter Chips -->
+<section class="mt-stack-md flex gap-2 overflow-x-auto pb-2 custom-scrollbar no-scrollbar">
+<button class="px-5 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md whitespace-nowrap active:scale-95 transition-transform">전체</button>
+<button class="px-5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md whitespace-nowrap hover:bg-outline-variant transition-colors active:scale-95">기도</button>
+<button class="px-5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md whitespace-nowrap hover:bg-outline-variant transition-colors active:scale-95">결단</button>
+<button class="px-5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md whitespace-nowrap hover:bg-outline-variant transition-colors active:scale-95">공유됨</button>
+</section>
+<!-- Timeline / Entry Cards -->
+<div class="mt-stack-lg relative">
+<!-- Timeline Line -->
+<div class="absolute left-[7px] top-4 bottom-4 w-[1px] bg-outline-variant"></div>
+<div class="flex flex-col gap-stack-lg">
+<!-- Entry 1 -->
+<div class="relative pl-8">
+<!-- Dot -->
+<div class="absolute left-0 top-2 w-4 h-4 rounded-full bg-accent-gold shadow-sm border-2 border-background z-10"></div>
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">2024년 5월 12일</span>
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="more_horiz">more_horiz</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">빌립보서 1:6</h3>
+<p class="font-body-md text-body-md text-text-muted mb-4 line-clamp-2">
+                            착한 일을 시작하신 이가 그리스도 예수의 날까지 이루실 줄을 확신합니다. 오늘 하루도 나의 부족함보다 그분의 일하심을 신뢰하며 나아갑니다...
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full">#신뢰</span>
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full">#기도</span>
+</div>
+</div>
+</div>
+<!-- Entry 2 -->
+<div class="relative pl-8">
+<!-- Dot -->
+<div class="absolute left-0 top-2 w-4 h-4 rounded-full bg-accent-terracotta shadow-sm border-2 border-background z-10"></div>
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">2024년 5월 10일</span>
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="more_horiz">more_horiz</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">시편 23:1</h3>
+<p class="font-body-md text-body-md text-text-muted mb-4 line-clamp-2">
+                            여호와는 나의 목자시니 내게 부족함이 없으리로다. 물질적인 부족함이 아닌 영적인 풍성함을 누리는 삶이 되기를 기도합니다.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full">#평안</span>
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full">#공유됨</span>
+</div>
+</div>
+</div>
+<!-- Entry 3 -->
+<div class="relative pl-8">
+<!-- Dot -->
+<div class="absolute left-0 top-2 w-4 h-4 rounded-full bg-outline-variant shadow-sm border-2 border-background z-10"></div>
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-xl hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">2024년 5월 8일</span>
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="more_horiz">more_horiz</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-2">로마서 8:28</h3>
+<p class="font-body-md text-body-md text-text-muted mb-4 line-clamp-2">
+                            모든 것이 합력하여 선을 이룬다는 말씀을 기억하며, 오늘의 시련 또한 하나님께서 선한 길로 인도하실 것을 믿습니다.
+                        </p>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm rounded-full">#결단</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State Hint -->
+<div class="mt-stack-lg py-12 flex flex-col items-center justify-center opacity-40">
+<span class="material-symbols-outlined text-4xl mb-2" data-icon="history_edu">history_edu</span>
+<p class="font-label-md text-label-md">과거의 묵상들이 당신의 성장을 비춥니다.</p>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center pt-2 pb-safe px-4 bg-surface dark:bg-surface shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)]">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">오늘</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary after:content-[''] after:w-1 after:h-1 after:bg-accent-terracotta after:rounded-full after:mt-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+<span class="font-label-sm text-label-sm">기록</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+<span class="font-label-sm text-label-sm">회고</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm">함께</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">내 정보</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction: Filter Chip selection
+        const filterChips = document.querySelectorAll('section:nth-of-type(2) button');
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                filterChips.forEach(c => {
+                    c.classList.remove('bg-primary', 'text-on-primary');
+                    c.classList.add('bg-secondary-container', 'text-on-secondary-container');
+                });
+                chip.classList.remove('bg-secondary-container', 'text-on-secondary-container');
+                chip.classList.add('bg-primary', 'text-on-primary');
+            });
+        });
+
+        // Add subtle parallax/scroll behavior to the timeline
+        window.addEventListener('scroll', () => {
+            const dots = document.querySelectorAll('.relative.pl-8 > div:first-child');
+            const triggerHeight = window.innerHeight * 0.8;
+            dots.forEach(dot => {
+                const rect = dot.getBoundingClientRect();
+                if (rect.top < triggerHeight) {
+                    dot.style.transform = 'scale(1.2)';
+                    dot.style.transition = 'transform 0.4s ease-out';
+                } else {
+                    dot.style.transform = 'scale(1)';
+                }
+            });
+        });
+    </script>
+</body></html>

@@ -41,7 +41,7 @@ export function ContactForm({
 
   if (status === "ok") {
     return (
-      <div className="rounded-2xl bg-sage-light/50 px-4 py-5 text-sm leading-relaxed">
+      <div className="rounded-2xl bg-surface-low px-4 py-5 text-body-md text-text-main">
         문의가 접수되었습니다. 확인 후 이메일로 답변드리겠습니다.
       </div>
     );
@@ -49,54 +49,40 @@ export function ContactForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <label className="block text-sm">
-        <span className="font-medium">이름</span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
-        />
-      </label>
-      <label className="block text-sm">
-        <span className="font-medium">이메일</span>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
-        />
-      </label>
-      <label className="block text-sm">
-        <span className="font-medium">제목</span>
-        <input
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          required
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
-        />
-      </label>
-      <label className="block text-sm">
-        <span className="font-medium">내용</span>
+      {(
+        [
+          ["이름", name, setName, "text"],
+          ["이메일", email, setEmail, "email"],
+          ["제목", subject, setSubject, "text"],
+        ] as const
+      ).map(([label, value, setter, type]) => (
+        <label key={label} className="block text-label-md">
+          <span className="text-primary">{label}</span>
+          <input
+            type={type}
+            value={value}
+            onChange={(e) => setter(e.target.value)}
+            required
+            className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          />
+        </label>
+      ))}
+      <label className="block text-label-md">
+        <span className="text-primary">내용</span>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           required
           rows={6}
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
+          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </label>
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
-      >
+      <button type="submit" disabled={loading} className="cta-primary w-full py-4">
         {loading ? "전송 중…" : "문의 보내기"}
       </button>
     </form>

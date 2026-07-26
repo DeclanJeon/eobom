@@ -30,12 +30,12 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <label className="block text-sm">
-        <span className="font-medium">기간</span>
+      <label className="block text-label-md">
+        <span className="text-primary">기간</span>
         <select
           value={reportType}
           onChange={(e) => setReportType(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
+          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
         >
           <option value="15d">15일 (최소 5개)</option>
           <option value="monthly">한 달 (최소 8개)</option>
@@ -44,20 +44,16 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
         </select>
       </label>
 
-      <p className="text-sm text-muted-foreground">기록 {entryCount}개</p>
+      <p className="text-label-md text-text-muted">기록 {entryCount}개</p>
 
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
           {error}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background disabled:opacity-50"
-      >
-        {loading ? "만드는 중…" : "만들기"}
+      <button type="submit" disabled={loading} className="cta-primary w-full py-4">
+        {loading ? "만드는 중…" : "회고 생성하기"}
       </button>
     </form>
   );

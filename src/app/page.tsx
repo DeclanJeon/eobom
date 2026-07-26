@@ -7,26 +7,42 @@ export default async function LandingPage() {
   if (user) redirect("/today");
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-6">
-      <div className="pointer-events-none absolute inset-0 paper-grain" />
-      <main className="relative w-full max-w-md text-center">
-        <p className="font-serif text-2xl tracking-tight text-primary">이어봄</p>
-        <h1 className="mt-8 font-serif text-3xl leading-snug tracking-tight text-foreground sm:text-4xl">
+    <div className="relative flex min-h-dvh items-center justify-center px-5">
+      <main className="w-full max-w-md">
+        <div className="mb-10 flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+            ✿
+          </span>
+          <p className="font-journal text-title-journal text-primary">이어봄</p>
+        </div>
+
+        <h1 className="text-display-lg text-primary">
           오늘의 묵상을
           <br />
-          남겨 보세요
+          시작해볼까요?
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-          기록만 하면 됩니다. 나머지는 필요할 때.
+        <p className="mt-3 text-body-md text-text-muted">
+          당신만의 평온한 공간, 이어봄입니다.
         </p>
+
         <Link
           href="/login"
-          className="mt-10 inline-flex w-full items-center justify-center rounded-full bg-foreground px-6 py-4 text-base font-medium text-background transition active:scale-[0.99]"
+          className="mt-10 flex w-full flex-col items-start gap-3 rounded-2xl bg-primary p-8 text-primary-foreground shadow-sm transition duration-200 active:scale-[0.98]"
         >
-          기록하기
+          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-xl">
+            ✎
+          </span>
+          <span>
+            <span className="block text-headline-sm">묵상 기록하기</span>
+            <span className="mt-1 block text-label-md opacity-80">
+              오늘 주신 말씀을 마음에 새깁니다
+            </span>
+          </span>
+          <span className="mt-2 text-label-md">기록 시작하기 →</span>
         </Link>
-        <p className="mt-6 text-xs text-muted-foreground">
-          <Link href="/contact" className="underline-offset-2 hover:underline">
+
+        <p className="mt-8 text-center text-label-sm text-text-muted">
+          <Link href="/contact" className="hover:underline">
             문의
           </Link>
         </p>

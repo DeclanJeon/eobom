@@ -8,17 +8,16 @@ export default async function ContactPage() {
   const user = await getOptionalUser();
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-6 py-10">
-      <div className="pointer-events-none absolute inset-0 paper-grain" />
-      <div className="relative w-full max-w-md">
+    <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
+      <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link
             href={user ? "/today" : "/"}
-            className="font-serif text-2xl text-primary"
+            className="font-journal text-title-journal text-primary"
           >
             이어봄
           </Link>
-          <h1 className="mt-6 font-serif text-3xl tracking-tight">문의</h1>
+          <h1 className="mt-6 text-display-lg text-primary">문의</h1>
         </div>
         <ContactForm
           defaultName={user?.displayName || user?.name || ""}

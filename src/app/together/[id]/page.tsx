@@ -28,10 +28,12 @@ export default async function TogetherDetailPage({
 
   return (
     <AppShell title="공유 묵상">
-      <SurfaceCard>
+      <SurfaceCard className="bg-surface-shared/70">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium">{item.pseudonym || "익명의 순례자"}</p>
-          <span className="text-xs text-muted-foreground">
+          <p className="text-label-md text-primary">
+            {item.pseudonym || "익명의 순례자"}
+          </p>
+          <span className="text-label-sm text-text-muted">
             {formatDateKo(item.publishedAt)}
           </span>
         </div>
@@ -43,9 +45,7 @@ export default async function TogetherDetailPage({
             <SoftBadge key={tag}>#{tag}</SoftBadge>
           ))}
         </div>
-        <p className="mt-5 whitespace-pre-wrap text-[15px] leading-8">
-          {item.publicBody}
-        </p>
+        <p className="mt-5 whitespace-pre-wrap text-body-lg">{item.publicBody}</p>
         <div className="mt-6">
           <TogetherActions id={item.id} counts={counts} />
         </div>

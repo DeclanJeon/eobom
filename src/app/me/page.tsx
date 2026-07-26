@@ -10,15 +10,15 @@ export default async function MePage() {
   const user = await requireUser();
 
   return (
-    <AppShell title="나">
-      <div className="mb-6">
-        <h1 className="font-serif text-2xl tracking-tight">
+    <AppShell bare>
+      <header className="mb-8">
+        <h1 className="text-display-lg text-primary">
           {user.displayName || user.name || "사용자"}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
-      </div>
+        <p className="mt-2 text-label-md text-text-muted">{user.email}</p>
+      </header>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {[
           { href: "/me/qr", label: "내 QR · 개인 주소" },
           { href: "/me/settings", label: "설정" },
@@ -26,12 +26,11 @@ export default async function MePage() {
           { href: "/contact", label: "문의" },
         ].map((item) => (
           <Link key={item.href} href={item.href}>
-            <SurfaceCard className="transition hover:border-primary/25">
-              <p className="font-medium">{item.label}</p>
+            <SurfaceCard className="mb-2 transition hover:border-accent-gold/30">
+              <p className="text-label-md text-primary">{item.label}</p>
             </SurfaceCard>
           </Link>
         ))}
-
         <div className="pt-2">
           <SignOutButton />
         </div>
