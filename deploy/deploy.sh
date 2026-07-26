@@ -37,4 +37,4 @@ if [[ -f deploy/nginx-eobom.conf ]]; then
   sudo systemctl reload nginx
 fi
 
-echo "Deployed eobom on port 3100"
+echo "Deployed eobom on port 3120"

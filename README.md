@@ -2,7 +2,7 @@
 
 흩어진 묵상을 이어, 어제의 믿음이 오늘의 방향이 되게 하는 개인 묵상 기록 웹 서비스.
 
-- 프로덕션: `https://eobom.ponslink.com`
+- 프로덕션: `https://eobom.ponslink.com` (app port 3120 behind nginx)
 - 스택: Next.js 16, Tailwind, shadcn/ui, Prisma (SQLite), NextAuth Google OAuth, MiMo V2.5
 
 ## 로컬 실행
@@ -51,3 +51,12 @@ MiMo:
 ```
 
 nginx 예시는 `deploy/nginx-eobom.conf` 를 참고하세요.
+
+## 운영 체크리스트
+
+1. Google Cloud Console OAuth 승인된 리디렉션 URI에 추가:
+   - `https://eobom.ponslink.com/api/auth/callback/google`
+   - `http://localhost:3100/api/auth/callback/google`
+2. `.env`에 `MIMO_API_KEY` 입력 후 `sudo systemctl restart eobom`
+3. 서버 경로: `/home/declan/apps/eobom`
+4. 서비스: `sudo systemctl status eobom`

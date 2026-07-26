@@ -7,7 +7,7 @@ Type=simple
 User=deploy
 WorkingDirectory=/var/www/eobom
 Environment=NODE_ENV=production
-Environment=PORT=3100
+Environment=PORT=3120
 Environment=HOSTNAME=127.0.0.1
 EnvironmentFile=/var/www/eobom/.env
 ExecStart=/usr/bin/bun /var/www/eobom/.next/standalone/server.js
