@@ -5,18 +5,18 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   CircleUserRound,
-  Home,
+  PenLine,
   Sparkles,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/today", label: "오늘", icon: Home },
+  { href: "/today", label: "홈", icon: PenLine },
   { href: "/entries", label: "기록", icon: BookOpen },
   { href: "/reviews", label: "회고", icon: Sparkles },
   { href: "/together", label: "함께", icon: Users },
-  { href: "/me", label: "내 정보", icon: CircleUserRound },
+  { href: "/me", label: "나", icon: CircleUserRound },
 ];
 
 export function AppShell({
@@ -29,28 +29,36 @@ export function AppShell({
   action?: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const showHeader = Boolean(title || action);
 
   return (
     <div className="min-h-dvh bg-[var(--cream)] text-foreground">
-      <div className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col">
-        <header className="sticky top-0 z-20 border-b border-border/70 bg-[color-mix(in_oklab,var(--cream)_92%,white)]/90 px-4 py-3 backdrop-blur-md">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <Link href="/today" className="font-serif text-lg tracking-tight text-primary">
-                이어봄
-              </Link>
-              {title ? (
-                <p className="mt-0.5 text-sm text-muted-foreground">{title}</p>
-              ) : null}
+      <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
+        {showHeader ? (
+          <header className="sticky top-0 z-20 border-b border-border/60 bg-[color-mix(in_oklab,var(--cream)_94%,white)]/95 px-4 py-3 backdrop-blur-md">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <Link
+                  href="/today"
+                  className="font-serif text-lg tracking-tight text-primary"
+                >
+                  이어봄
+                </Link>
+                {title ? (
+                  <p className="mt-0.5 text-sm text-muted-foreground">{title}</p>
+                ) : null}
+              </div>
+              {action}
             </div>
-            {action}
-          </div>
-        </header>
+          </header>
+        ) : null}
 
-        <main className="flex-1 px-4 py-5 pb-28">{children}</main>
+        <main className={cn("flex-1 px-4 pb-28", showHeader ? "py-5" : "pt-6")}>
+          {children}
+        </main>
 
-        <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border/80 bg-[color-mix(in_oklab,var(--cream)_94%,white)]/95 backdrop-blur-md">
-          <div className="mx-auto grid max-w-3xl grid-cols-5 gap-1 px-2 py-2">
+        <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border/70 bg-[color-mix(in_oklab,var(--cream)_96%,white)]/95 backdrop-blur-md">
+          <div className="mx-auto grid max-w-xl grid-cols-5 gap-1 px-1 py-2">
             {nav.map((item) => {
               const active =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
