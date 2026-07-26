@@ -7,11 +7,7 @@ import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
 import { formatDateKo } from "@/lib/utils";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export async function generateMetadata() {
   return { title: "기록 상세" };
 }
 
@@ -27,7 +23,7 @@ export default async function EntryDetailPage({
 
   return (
     <AppShell
-      title="기록 상세"
+      title="기록"
       action={
         <Link
           href={`/entries/${entry.id}/edit`}
@@ -64,8 +60,7 @@ export default async function EntryDetailPage({
         ) : null}
 
         <SurfaceCard>
-          <h2 className="text-sm font-medium text-muted-foreground">묵상</h2>
-          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-8">
+          <p className="whitespace-pre-wrap text-[15px] leading-8">
             {entry.reflectionBody}
           </p>
         </SurfaceCard>
@@ -108,7 +103,7 @@ export default async function EntryDetailPage({
             href={`/together?from=${entry.id}`}
             className="rounded-full border border-border bg-card px-4 py-2 text-sm"
           >
-            공유용 묵상 만들기
+            공유
           </Link>
           <DeleteEntryButton id={entry.id} />
         </div>

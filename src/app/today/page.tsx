@@ -36,12 +36,9 @@ export default async function TodayPage() {
 
         {recent.length > 0 ? (
           <section className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-sm font-medium text-muted-foreground">최근</h2>
-              <Link href="/entries" className="text-sm text-primary">
-                더보기
-              </Link>
-            </div>
+            <h2 className="px-1 text-sm font-medium text-muted-foreground">
+              최근
+            </h2>
             {recent.map((entry) => (
               <Link key={entry.id} href={`/entries/${entry.id}`}>
                 <SurfaceCard className="mb-2 transition hover:border-primary/25">
@@ -50,7 +47,9 @@ export default async function TodayPage() {
                       {formatDateKo(entry.entryDate)}
                     </p>
                     {parseJsonArray(entry.scriptureRefs)[0] ? (
-                      <SoftBadge>{parseJsonArray(entry.scriptureRefs)[0]}</SoftBadge>
+                      <SoftBadge>
+                        {parseJsonArray(entry.scriptureRefs)[0]}
+                      </SoftBadge>
                     ) : null}
                   </div>
                   <h3 className="mt-1.5 font-serif text-lg">

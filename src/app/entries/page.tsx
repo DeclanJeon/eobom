@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, PageIntro, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { listEntries } from "@/lib/entries";
 import { excerpt, formatDateKo } from "@/lib/utils";
@@ -22,38 +22,25 @@ export default async function EntriesPage({
       action={
         <Link
           href="/entries/new"
-          className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          className="rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background"
         >
-          새 기록
+          기록하기
         </Link>
       }
     >
-      <PageIntro
-        title="묵상 기록"
-        description="성구, 키워드, 태그로 과거 기록을 다시 만날 수 있습니다."
-      />
-
-      <form className="mb-5">
+      <form className="mb-4">
         <input
           name="q"
           defaultValue={q || ""}
-          placeholder="성구, 키워드, 태그 검색"
+          placeholder="검색"
           className="w-full rounded-full border border-border bg-white/80 px-4 py-3 text-sm outline-none ring-primary/20 focus:ring-2"
         />
       </form>
 
       {entries.length === 0 ? (
         <EmptyState
-          title={q ? "검색 결과가 없습니다" : "기록이 비어 있습니다"}
-          description="오늘의 묵상을 남기면 타임라인이 시작됩니다."
-          action={
-            <Link
-              href="/entries/new"
-              className="rounded-full bg-primary px-4 py-2 text-sm text-primary-foreground"
-            >
-              기록하기
-            </Link>
-          }
+          title={q ? "검색 결과가 없습니다" : "아직 기록이 없습니다"}
+          description="위의 기록하기로 첫 묵상을 남겨 보세요."
         />
       ) : (
         <div className="space-y-3">

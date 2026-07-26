@@ -31,24 +31,20 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="block text-sm">
-        <span className="font-medium">회고 기간 유형</span>
+        <span className="font-medium">기간</span>
         <select
           value={reportType}
           onChange={(e) => setReportType(e.target.value)}
           className="mt-1.5 w-full rounded-xl border border-border bg-white/80 px-3 py-2.5 text-sm"
         >
-          <option value="15d">15일 회고 (최소 5개)</option>
-          <option value="monthly">월간 회고 (최소 8개)</option>
-          <option value="quarterly">분기 회고 (최소 15개)</option>
-          <option value="yearly">연간 회고 (최소 30개)</option>
+          <option value="15d">15일 (최소 5개)</option>
+          <option value="monthly">한 달 (최소 8개)</option>
+          <option value="quarterly">분기 (최소 15개)</option>
+          <option value="yearly">1년 (최소 30개)</option>
         </select>
       </label>
 
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        현재 기록 {entryCount}개. MiMo API 키가 없으면 로컬 근거 기반 초안을
-        만들고, 키가 있으면 MiMo V2.5로 생성합니다. 결과는 하나님의 뜻을
-        판정하지 않습니다.
-      </p>
+      <p className="text-sm text-muted-foreground">기록 {entryCount}개</p>
 
       {error ? (
         <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -59,9 +55,9 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className="w-full rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background disabled:opacity-50"
       >
-        {loading ? "회고 생성 중…" : "회고 초안 만들기"}
+        {loading ? "만드는 중…" : "만들기"}
       </button>
     </form>
   );
