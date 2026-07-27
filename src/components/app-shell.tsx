@@ -46,7 +46,7 @@ export function AppShell({
       <header className="sticky top-0 z-40 hidden border-b border-[#E0DDD7]/80 bg-background/90 backdrop-blur-md md:block">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-8">
-            <Link href="/today" className="flex shrink-0 items-center gap-2.5">
+            <Link href="/" className="flex shrink-0 items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo.svg"
@@ -100,7 +100,7 @@ export function AppShell({
       {/* Mobile top bar (brand only — primary nav is bottom) */}
       <header className="sticky top-0 z-40 border-b border-[#E0DDD7]/70 bg-background/95 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link href="/today" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.svg"
