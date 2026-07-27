@@ -2,19 +2,20 @@ import { NextResponse } from "next/server";
 import {
   CLAIM_COOKIE,
   CLAIM_COOKIE_MAX_AGE,
-  isSeatSlug,
+  isKeyringSlug,
   normalizeSeatSlug,
 } from "@/lib/seats";
 
+/** Only keyring addresses e01–e10000 may be stored as claim intent. */
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as { slug?: string };
     const slug = normalizeSeatSlug(body.slug || "");
-    if (!slug || !isSeatSlug(slug)) {
-      // allow non eXX for future but require simple pattern
-      if (!/^[a-z0-9][a-z0-9-]{1,31}$/.test(slug)) {
-        return NextResponse.json({ error: "invalid slug" }, { status: 400 });
-      }
+    if (!slug || !isKeyringSlug(slug)) {
+      return NextResponse.json(
+        { error: "invalid keyring slug" },
+        { status: 400 },
+      );
     }
 
     const res = NextResponse.json({ ok: true, slug });

@@ -1,3 +1,4 @@
+import { customAlphabet } from "nanoid";
 import { db } from "@/lib/db";
 
 export type SeatStatus = "unclaimed" | "claimed" | "revoked";
@@ -19,170 +20,82 @@ export class ClaimError extends Error {
 export const CLAIM_COOKIE = "eobom_claim_slug";
 export const CLAIM_COOKIE_MAX_AGE = 600;
 
-/** e01, e13, e100 … (at least 2 digits) */
-const SLUG_RE = /^e\d{2,}$/;
+/** Physical QR keyring inventory: /j/e01 … /j/e10000 */
+export const KEYRING_MIN = 1;
+export const KEYRING_MAX = 10000;
 
-export function isSeatSlug(slug: string): boolean {
-  return SLUG_RE.test(slug);
-}
+const WEB_SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+const webNano = customAlphabet(WEB_SLUG_ALPHABET, 8);
 
 export function normalizeSeatSlug(slug: string): string {
   return slug.trim().toLowerCase();
 }
 
-/** Format sequential number: 1 → e01, 14 → e14, 100 → e100 */
+/** Format keyring number: 1 → e01, 14 → e14, 100 → e100, 10000 → e10000 */
 export function formatNumberedSlug(n: number): string {
-  if (!Number.isInteger(n) || n < 1) {
-    throw new Error("invalid seat number");
+  if (!Number.isInteger(n) || n < KEYRING_MIN || n > KEYRING_MAX) {
+    throw new Error("invalid keyring number");
   }
-  return n < 100 ? `e${String(n).padStart(2, "0")}` : `e${n}`;
+  if (n < 100) return `e${String(n).padStart(2, "0")}`;
+  return `e${n}`;
 }
 
-function parseNumberedSlug(slug: string): number | null {
+export function parseNumberedSlug(slug: string): number | null {
   const m = normalizeSeatSlug(slug).match(/^e(\d+)$/);
   if (!m) return null;
   const n = Number(m[1]);
   return Number.isInteger(n) && n >= 1 ? n : null;
 }
 
-/** Keyring print batch: e01–e13 stay reserved until QR claim. */
-export const KEYRING_RESERVED_MAX = 13;
+/** True for keyring addresses e01–e10000 only. */
+export function isKeyringSlug(slug: string): boolean {
+  const n = parseNumberedSlug(slug);
+  return n != null && n >= KEYRING_MIN && n <= KEYRING_MAX;
+}
 
-export function isReservedKeyringNumber(n: number): boolean {
-  return Number.isInteger(n) && n >= 1 && n <= KEYRING_RESERVED_MAX;
+/** @deprecated use isKeyringSlug — kept for call-site compatibility */
+export function isSeatSlug(slug: string): boolean {
+  return isKeyringSlug(slug);
+}
+
+export function isWebUserSlug(slug: string): boolean {
+  return /^u[a-z0-9]{8}$/.test(normalizeSeatSlug(slug));
 }
 
 /**
- * Next free short slug for general Google signup.
- * - Never takes a slug already owned by a user
- * - Never takes a claimed seat
- * - Never takes reserved keyring seats e01–e13 while unclaimed (QR inventory)
- * - Reuses unclaimed WEB seats (e14+) if present, else creates the next number
+ * Unique address for general Google signup (not keyring).
+ * Pattern: u + 8 chars, e.g. /j/u3k9m2x7a
+ * Never collides with e01–e10000 keyring namespace.
+ */
+export async function allocateWebUserSlug(): Promise<string> {
+  for (let i = 0; i < 24; i += 1) {
+    const slug = `u${webNano()}`;
+    if (isKeyringSlug(slug)) continue;
+    const [userHit, seatHit] = await Promise.all([
+      db.user.findUnique({
+        where: { personalSlug: slug },
+        select: { id: true },
+      }),
+      db.journalSeat.findUnique({ where: { slug }, select: { id: true } }),
+    ]);
+    if (!userHit && !seatHit) return slug;
+  }
+  throw new Error("failed to allocate web user slug");
+}
+
+/**
+ * @deprecated Web users no longer use eNN. Kept as alias of allocateWebUserSlug
+ * so older imports keep working during deploy.
  */
 export async function allocateNextNumberedSlug(): Promise<string> {
-  const [users, seats] = await Promise.all([
-    db.user.findMany({
-      where: { personalSlug: { startsWith: "e" } },
-      select: { personalSlug: true },
-    }),
-    db.journalSeat.findMany({
-      select: { slug: true, status: true, seatCode: true, label: true },
-    }),
-  ]);
-
-  const owned = new Set<string>();
-  for (const u of users) {
-    const s = normalizeSeatSlug(u.personalSlug);
-    if (s) owned.add(s);
-  }
-
-  const seatBySlug = new Map(seats.map((s) => [normalizeSeatSlug(s.slug), s]));
-
-  let max = KEYRING_RESERVED_MAX;
-  for (const u of users) {
-    const n = parseNumberedSlug(u.personalSlug);
-    if (n != null) max = Math.max(max, n);
-  }
-  for (const s of seats) {
-    const n = parseNumberedSlug(s.slug);
-    if (n != null) max = Math.max(max, n);
-  }
-
-  // Start after keyring block so web users get e14+ while e02–e13 stay for QR.
-  for (let n = KEYRING_RESERVED_MAX + 1; n < max + 5000; n += 1) {
-    const slug = formatNumberedSlug(n);
-    if (owned.has(slug)) continue;
-    const seat = seatBySlug.get(slug);
-    if (seat?.status === "claimed") continue;
-    if (seat?.status === "revoked") continue;
-    // unclaimed WEB / missing seat → available
-    if (!seat || seat.status === "unclaimed") {
-      // never auto-assign reserved keyring range (loop starts at 14 anyway)
-      if (isReservedKeyringNumber(n) && seat?.seatCode?.startsWith("KEYRING")) {
-        continue;
-      }
-      return slug;
-    }
-  }
-
-  throw new Error("failed to allocate numbered slug");
-}
-
-/** Ensure the next web signup slot (e14+) exists as an unclaimed seat row. */
-export async function ensureNextWebSeatProvisioned(): Promise<string> {
-  const slug = await allocateNextNumberedSlug();
-  const existing = await db.journalSeat.findUnique({ where: { slug } });
-  if (existing) return slug;
-  const num = parseNumberedSlug(slug);
-  if (num == null) return slug;
-  try {
-    await db.journalSeat.create({
-      data: {
-        slug,
-        seatCode: `WEB-${String(num).padStart(2, "0")}`,
-        label: "web-signup-pool",
-        status: "unclaimed",
-      },
-    });
-  } catch {
-    // race ok
-  }
-  return slug;
-}
-
-/**
- * Create a claimed seat row for an auto-assigned web signup slug.
- * Idempotent if the seat already belongs to this user.
- */
-export async function ensureClaimedSeatForUser(input: {
-  userId: string;
-  email: string;
-  slug: string;
-}) {
-  const slug = normalizeSeatSlug(input.slug);
-  const num = parseNumberedSlug(slug);
-  if (num == null) return null;
-
-  const existing = await db.journalSeat.findUnique({ where: { slug } });
-  if (existing) {
-    if (existing.claimedUserId === input.userId) return existing;
-    if (existing.status === "claimed") return existing;
-  }
-
-  const seatCode = `WEB-${String(num).padStart(2, "0")}`;
-  try {
-    if (existing) {
-      return await db.journalSeat.update({
-        where: { id: existing.id },
-        data: {
-          status: "claimed",
-          claimedUserId: input.userId,
-          claimedEmail: input.email,
-          claimedAt: new Date(),
-        },
-      });
-    }
-    return await db.journalSeat.create({
-      data: {
-        slug,
-        seatCode,
-        label: "web-signup",
-        status: "claimed",
-        claimedUserId: input.userId,
-        claimedEmail: input.email,
-        claimedAt: new Date(),
-      },
-    });
-  } catch {
-    // unique race — ignore
-    return db.journalSeat.findUnique({ where: { slug } });
-  }
+  return allocateWebUserSlug();
 }
 
 export async function getSeatBySlug(slug: string) {
   const s = normalizeSeatSlug(slug);
   if (!s) return null;
-  return db.journalSeat.findUnique({
+
+  let seat = await db.journalSeat.findUnique({
     where: { slug: s },
     include: {
       claimedUser: {
@@ -195,6 +108,38 @@ export async function getSeatBySlug(slug: string) {
       },
     },
   });
+
+  // Lazy-create keyring inventory row so e01–e10000 work without pre-inserting 10k rows.
+  if (!seat && isKeyringSlug(s)) {
+    const num = parseNumberedSlug(s)!;
+    try {
+      await db.journalSeat.create({
+        data: {
+          slug: s,
+          seatCode: `KEYRING-${String(num).padStart(2, "0")}`,
+          label: "keyring",
+          status: "unclaimed",
+        },
+      });
+    } catch {
+      // race: another request created it
+    }
+    seat = await db.journalSeat.findUnique({
+      where: { slug: s },
+      include: {
+        claimedUser: {
+          select: {
+            id: true,
+            displayName: true,
+            name: true,
+            personalSlug: true,
+          },
+        },
+      },
+    });
+  }
+
+  return seat;
 }
 
 export async function listSeats() {
@@ -208,20 +153,26 @@ export async function listSeats() {
   });
 }
 
+/**
+ * Pre-create keyring seats e01…eN (default 13 for physical batch).
+ * Does not create all 10000 rows; remaining keyrings are lazy-created on first open/claim.
+ */
 export async function provisionSeats(opts?: {
   count?: number;
   prefix?: string;
   force?: boolean;
 }) {
-  const count = opts?.count ?? 13;
+  const count = Math.min(opts?.count ?? 13, KEYRING_MAX);
   const prefix = opts?.prefix ?? "e";
+  if (prefix !== "e") {
+    throw new Error("only prefix e is supported for keyring seats");
+  }
   const created: string[] = [];
   const skipped: string[] = [];
 
   for (let i = 1; i <= count; i += 1) {
-    const num = String(i).padStart(2, "0");
-    const slug = `${prefix}${num}`;
-    const seatCode = `KEYRING-${num}`;
+    const slug = formatNumberedSlug(i);
+    const seatCode = `KEYRING-${String(i).padStart(2, "0")}`;
     const existing = await db.journalSeat.findUnique({ where: { slug } });
     if (existing) {
       skipped.push(slug);
@@ -231,6 +182,7 @@ export async function provisionSeats(opts?: {
       data: {
         slug,
         seatCode,
+        label: "keyring",
         status: "unclaimed",
       },
     });
@@ -241,7 +193,7 @@ export async function provisionSeats(opts?: {
 }
 
 /**
- * Bind Google user to a pre-provisioned seat slug.
+ * Bind Google user to a keyring seat slug (e01–e10000).
  * Idempotent if already claimed by same user.
  */
 export async function claimSeat(
@@ -250,7 +202,10 @@ export async function claimSeat(
   rawSlug: string,
 ) {
   const slug = normalizeSeatSlug(rawSlug);
-  if (!slug) throw new ClaimError("invalid");
+  if (!slug || !isKeyringSlug(slug)) throw new ClaimError("invalid");
+
+  // Ensure seat row exists (lazy inventory).
+  await getSeatBySlug(slug);
 
   return db.$transaction(async (tx) => {
     const seat = await tx.journalSeat.findUnique({ where: { slug } });
@@ -259,7 +214,6 @@ export async function claimSeat(
 
     if (seat.status === "claimed") {
       if (seat.claimedUserId === userId) {
-        // ensure user slug matches
         await tx.user.update({
           where: { id: userId },
           data: {
@@ -281,14 +235,23 @@ export async function claimSeat(
     });
     if (other) throw new ClaimError("user_has_other_seat");
 
-    // free personalSlug if another user somehow holds this slug string
+    // User already has a web slug or another personalSlug that is a different keyring
+    const me = await tx.user.findUnique({
+      where: { id: userId },
+      select: { personalSlug: true },
+    });
+    if (
+      me?.personalSlug &&
+      isKeyringSlug(me.personalSlug) &&
+      me.personalSlug !== slug
+    ) {
+      throw new ClaimError("user_has_other_seat");
+    }
+
     const slugOwner = await tx.user.findFirst({
       where: { personalSlug: slug, NOT: { id: userId } },
     });
-    if (slugOwner) {
-      // should not happen for unclaimed seat; block
-      throw new ClaimError("already_claimed");
-    }
+    if (slugOwner) throw new ClaimError("already_claimed");
 
     const updated = await tx.journalSeat.update({
       where: { id: seat.id },

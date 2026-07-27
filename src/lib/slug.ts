@@ -1,12 +1,13 @@
-import { allocateNextNumberedSlug } from "@/lib/seats";
+import { allocateWebUserSlug } from "@/lib/seats";
 
 /**
- * Personal journal slug for new users.
- * Web Google signup: next free eNN starting at e14 (e14, e15, …).
- * Keyring QR seats e01–e13 stay reserved until claimed via /j/eNN.
+ * Personal journal slug for general Google signup.
+ *
+ * - Keyring QR: e01–e10000 (reserved, claim only via /j/eNN)
+ * - Web signup: u + 8 random chars, e.g. /j/u3k9m2x7a
  */
 export async function generateUniquePersonalSlug(
   _email?: string,
 ): Promise<string> {
-  return allocateNextNumberedSlug();
+  return allocateWebUserSlug();
 }

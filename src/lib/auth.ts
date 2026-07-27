@@ -6,11 +6,11 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import {
   CLAIM_COOKIE,
-  allocateNextNumberedSlug,
+  allocateWebUserSlug,
   claimSeat,
   ClaimError,
-  ensureClaimedSeatForUser,
   getSeatBySlug,
+  isKeyringSlug,
   normalizeSeatSlug,
 } from "@/lib/seats";
 
@@ -27,14 +27,16 @@ async function readClaimSlugFromCookie(): Promise<string | null> {
   }
 }
 
-async function applyClaimIfNeeded(userId: string, email: string | null | undefined) {
+async function applyClaimIfNeeded(
+  userId: string,
+  email: string | null | undefined,
+) {
   if (!email) return;
   const slug = await readClaimSlugFromCookie();
-  if (!slug) return;
+  if (!slug || !isKeyringSlug(slug)) return;
   try {
     await claimSeat(userId, email, slug);
   } catch (e) {
-    // leave cookie for /j page to show error
     if (!(e instanceof ClaimError)) {
       console.error("claim on signIn failed", e);
     }
@@ -122,8 +124,8 @@ export const authOptions: NextAuthOptions = {
       let personalSlug: string | null = null;
       let viaKeyring = false;
 
-      // Keyring QR claim: bind the scanned seat when still free.
-      if (claimSlug) {
+      // Keyring QR only: e01–e10000 when still free.
+      if (claimSlug && isKeyringSlug(claimSlug)) {
         const seat = await getSeatBySlug(claimSlug);
         if (seat && seat.status === "unclaimed") {
           const taken = await db.user.findFirst({
@@ -136,10 +138,9 @@ export const authOptions: NextAuthOptions = {
         }
       }
 
-      // General Google signup: next free short number (e14, e15, …).
-      // Keyring inventory e02–e13 stays reserved for QR until claimed.
+      // General Google signup: unique web address (u + 8 chars), never eNN.
       if (!personalSlug) {
-        personalSlug = await allocateNextNumberedSlug();
+        personalSlug = await allocateWebUserSlug();
       }
 
       await db.user.update({
@@ -148,23 +149,16 @@ export const authOptions: NextAuthOptions = {
           personalSlug,
           displayName: user.name ?? null,
           profileImageUrl: user.image ?? null,
-          seatClaimedAt: new Date(),
+          seatClaimedAt: viaKeyring ? new Date() : null,
         },
       });
 
-      try {
-        if (viaKeyring && claimSlug) {
+      if (viaKeyring && claimSlug) {
+        try {
           await claimSeat(user.id, user.email, claimSlug);
-        } else {
-          // Immediately match Google email ↔ e14/e15… seat row
-          await ensureClaimedSeatForUser({
-            userId: user.id,
-            email: user.email,
-            slug: personalSlug,
-          });
+        } catch (e) {
+          if (!(e instanceof ClaimError)) console.error("signup keyring claim", e);
         }
-      } catch (e) {
-        if (!(e instanceof ClaimError)) console.error("signup seat bind", e);
       }
     },
     async signIn({ user }) {
