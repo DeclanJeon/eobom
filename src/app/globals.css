@@ -331,3 +331,110 @@
     color: var(--accent-gold-ink);
   }
 }
+
+/* MDXEditor: calm, high-contrast journal surface */
+.eobom-editor {
+  --baseTextContrast: #2d2d2d;
+  --basePageBg: #ffffff;
+  --baseBase: #f5f3f0;
+  --baseBgSubtle: #f5f3f0;
+  --baseBgHover: #efeeeb;
+  --baseBgActive: #e6e2dc;
+  --accentBase: #f7f0e2;
+  --accentBgSubtle: #f7f0e2;
+  --accentBgHover: #eee1c7;
+  --accentTextContrast: #061b0e;
+  --accentSolid: #7a5a24;
+  color: #2d2d2d;
+  background: #ffffff;
+  border: 1px solid #e0ddd7;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.eobom-editor [role="toolbar"] {
+  border-bottom: 1px solid #e0ddd7;
+  background: #f7f6f3;
+  color: #2d2d2d;
+}
+
+.eobom-editor-content {
+  min-height: 22rem;
+  padding: 1rem 1.125rem 4rem;
+  color: #2d2d2d;
+  background: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.eobom-editor-content:focus {
+  outline: none;
+}
+
+.eobom-editor-content img,
+.entry-markdown img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.25rem auto;
+  border-radius: 0.75rem;
+}
+
+.entry-markdown {
+  color: var(--text-main);
+  font-size: 1rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.entry-markdown > * + * {
+  margin-top: 1rem;
+}
+
+.entry-markdown h1,
+.entry-markdown h2,
+.entry-markdown h3 {
+  color: var(--primary);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.entry-markdown h1 { font-size: 1.75rem; }
+.entry-markdown h2 { font-size: 1.4rem; }
+.entry-markdown h3 { font-size: 1.15rem; }
+
+.entry-markdown ul,
+.entry-markdown ol {
+  padding-left: 1.5rem;
+}
+
+.entry-markdown ul { list-style: disc; }
+.entry-markdown ol { list-style: decimal; }
+
+.entry-markdown blockquote {
+  border-left: 3px solid var(--accent-gold);
+  padding-left: 1rem;
+  color: var(--text-muted);
+}
+
+.entry-markdown a {
+  color: #295c3b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.entry-markdown code {
+  border-radius: 0.25rem;
+  background: var(--surface-low);
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 767px) {
+  .eobom-editor-content {
+    min-height: 18rem;
+    padding-inline: 0.875rem;
+  }
+}

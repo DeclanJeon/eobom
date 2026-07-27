@@ -1,12 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { ScriptureBinding } from "@/lib/bible";
 import { ScriptureChipList } from "@/components/scripture/scripture-chip-list";
 import { ScripturePicker } from "@/components/scripture/scripture-picker";
 import { ScripturePreviewCard } from "@/components/scripture/scripture-preview-card";
 import { ScriptureQuickInput } from "@/components/scripture/scripture-quick-input";
+
+const ReflectionEditor = dynamic(
+  () =>
+    import("@/components/reflection-editor").then(
+      (module) => module.ReflectionEditor,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[320px] animate-pulse rounded-xl bg-surface-low" />
+    ),
+  },
+);
 
 export type EntryFormValues = {
   entryDate?: string;
@@ -39,6 +53,9 @@ export function EntryForm({
   entryId?: string;
 }) {
   const router = useRouter();
+  const draftKey = `eobom-entry-draft:${entryId || "new"}`;
+  const draftLoaded = useRef(false);
+  const [draftMessage, setDraftMessage] = useState("");
   const [values, setValues] = useState<EntryFormValues>(
     initial || {
       entryDate: new Date().toISOString().slice(0, 10),
@@ -60,6 +77,57 @@ export function EntryForm({
     prayer: false,
     action: false,
   });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const draft = JSON.parse(raw) as {
+          values?: EntryFormValues;
+          bindings?: ScriptureBinding[];
+          open?: typeof open;
+          savedAt?: number;
+        };
+        if (draft.values) setValues(draft.values);
+        if (draft.bindings) setBindings(draft.bindings);
+        if (draft.open) setOpen(draft.open);
+        if (draft.savedAt) {
+          setDraftMessage("이전에 작성하던 초안을 복구했습니다.");
+        }
+      }
+    } catch {
+      localStorage.removeItem(draftKey);
+    } finally {
+      draftLoaded.current = true;
+    }
+  // Restore only once for this entry.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftLoaded.current) return;
+    const timer = window.setTimeout(() => {
+      const hasContent =
+        Boolean(values.reflectionBody.trim()) ||
+        Boolean(values.title?.trim()) ||
+        bindings.length > 0 ||
+        Boolean(values.gratitude?.trim()) ||
+        Boolean(values.question?.trim()) ||
+        Boolean(values.prayer?.trim()) ||
+        Boolean(values.actionStep?.trim());
+      if (!hasContent) {
+        localStorage.removeItem(draftKey);
+        setDraftMessage("");
+        return;
+      }
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ values, bindings, open, savedAt: Date.now() }),
+      );
+      setDraftMessage("초안이 이 기기에 자동 저장되었습니다.");
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [bindings, draftKey, open, values]);
 
   const canSave = useMemo(() => {
     const hasBody = Boolean(values.reflectionBody.trim());
@@ -111,6 +179,8 @@ export function EntryForm({
       setError(data.error || "저장에 실패했습니다.");
       return;
     }
+    localStorage.removeItem(draftKey);
+    setDraftMessage("");
     router.push(`/entries/${data.entry.id}`);
     router.refresh();
   }
@@ -172,6 +242,12 @@ export function EntryForm({
           </button>
         </div>
 
+        {draftMessage ? (
+          <p className="text-center text-label-sm text-text-muted" role="status">
+            {draftMessage}
+          </p>
+        ) : null}
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-label-md text-gold-ink">성구</p>
@@ -217,16 +293,17 @@ export function EntryForm({
             className="mb-3 w-full border-0 bg-transparent py-1 text-headline-sm text-primary outline-none placeholder:text-zinc-500"
           />
           <div className="writing-margin">
-            <textarea
-              value={values.reflectionBody}
-              onChange={(e) =>
-                setValues((v) => ({ ...v, reflectionBody: e.target.value }))
+            <ReflectionEditor
+              markdown={values.reflectionBody}
+              onChange={(reflectionBody) =>
+                setValues((value) => ({ ...value, reflectionBody }))
               }
-              rows={12}
-              placeholder="이곳에 당신의 깊은 묵상을 자유롭게 남겨보세요…"
-              className="w-full resize-none border-0 bg-transparent text-body-lg text-text-main outline-none placeholder:text-zinc-500"
+              placeholder="이곳에 당신의 묵상을 자유롭게 남겨보세요."
             />
           </div>
+          <p className="mt-2 text-label-sm text-text-muted">
+            이미지 드래그앤드롭과 붙여넣기를 지원합니다. 상단 전환 버튼에서 Markdown 원문을 편집할 수 있습니다.
+          </p>
         </div>
 
         <div className="space-y-3">

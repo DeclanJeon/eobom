@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
@@ -81,9 +82,9 @@ export default async function EntryDetailPage({
             : null}
 
         <SurfaceCard>
-          <p className="writing-margin whitespace-pre-wrap text-body-lg text-text-main">
-            {entry.reflectionBody}
-          </p>
+          <div className="writing-margin entry-markdown">
+            <ReactMarkdown>{entry.reflectionBody}</ReactMarkdown>
+          </div>
         </SurfaceCard>
 
         {entry.gratitude ? (
