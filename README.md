@@ -1,77 +1,137 @@
-# 이어봄 (eobom)
+<p align="center">
+  <img src="docs/readme/logo.png" width="112" alt="이어봄 로고" />
+</p>
 
-흩어진 묵상을 이어, 어제의 믿음이 오늘의 방향이 되게 하는 개인 묵상 기록 웹 서비스.
+<h1 align="center">이어봄</h1>
 
-- 프로덕션: `https://eobom.ponslink.com` (app port 3120 behind nginx)
-- 스택: Next.js 16, Tailwind, shadcn/ui, Prisma (SQLite), NextAuth Google OAuth, MiMo V2.5
+<p align="center">
+  <strong>흩어진 묵상을 이어, 어제의 믿음이 오늘의 방향이 되게 합니다.</strong>
+</p>
 
-## 로컬 실행
+<p align="center">
+  개인 묵상·큐티 기록 · AI 성찰 회고 · 익명 나눔
+</p>
+
+<p align="center">
+  <a href="https://eobom.ponslink.com"><img alt="Live" src="https://img.shields.io/badge/live-eobom.ponslink.com-061b0e?style=for-the-badge" /></a>
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs" />
+  <img alt="Bun" src="https://img.shields.io/badge/Bun-runtime-fbf0df?style=for-the-badge&logo=bun&logoColor=000" />
+  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-SQLite-2D3748?style=for-the-badge&logo=prisma&logoColor=white" />
+</p>
+
+<p align="center">
+  <img src="docs/readme/og.png" width="720" alt="이어봄 브랜드 이미지" />
+</p>
+
+---
+
+## 소개
+
+이어봄은 성경 묵상을 **대신 써 주는 AI 앱이 아닙니다.**  
+이미 남긴 성구·생각·기도·결단을 안전하게 쌓고, 흐름을 다시 연결해 주는 **개인 신앙 기록 공간**입니다.
+
+| 원칙 | 설명 |
+|:---|:---|
+| 원문 비공개 | 묵상 원문은 기본 비공개입니다 |
+| AI는 거울 | 요약·연결·질문만 — 하나님의 뜻·신앙 등급·소명을 판정하지 않습니다 |
+| 익명 나눔 | 원할 때만 별도 공유본을 `함께` 피드에 올립니다 |
+| 조용한 UX | 점수화·랭킹·게이미피케이션 없음 |
+
+## 주요 기능
+
+- **오늘의 묵상** — 성구 선택(책·장·절), 본문 미리보기, 자유 기록
+- **기록함** — 날짜·성구·태그로 지난 묵상 다시 읽기
+- **AI 회고** — 기간별 테마·감정·결단 흐름을 근거와 함께 정리
+- **함께** — 익명 나눔, 성구 선택, AI 주제 태그, 공감·기도 반응
+- **내 기록지** — QR 키링 입구(`/j/{slug}`), 설정·내보내기
+
+## 미리보기
+
+<p align="center">
+  <img src="docs/readme/today.png" width="180" alt="오늘 화면" />
+  &nbsp;
+  <img src="docs/readme/entries.png" width="180" alt="기록 화면" />
+  &nbsp;
+  <img src="docs/readme/together.png" width="180" alt="함께 화면" />
+  &nbsp;
+  <img src="docs/readme/review.png" width="180" alt="AI 회고 화면" />
+</p>
+
+<p align="center">
+  <sub>오늘 · 기록 · 함께 · AI 회고</sub>
+</p>
+
+## 스택
+
+- **App** — Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Auth** — NextAuth (Google OAuth)
+- **Data** — Prisma + SQLite
+- **AI** — MiMo (`mimo-v2.5-pro`) 회고·주제 태그
+- **Runtime** — Bun
+
+## 시작하기
 
 ```bash
 bun install
 cp .env.example .env
-# GOOGLE_*, NEXTAUTH_SECRET, SMTP_*, MIMO_API_KEY 설정
+# GOOGLE_CLIENT_ID / SECRET, NEXTAUTH_SECRET, MIMO_API_KEY 등 입력
 bun run db:push
 bun run dev
 ```
 
-앱은 `http://localhost:3100` 에서 실행됩니다.
+로컬: [http://localhost:3100](http://localhost:3100)
 
-## 주요 경로
+### Google OAuth 콜백
 
-| 경로 | 설명 |
-|------|------|
-| `/` | 랜딩 |
-| `/login` | Google 로그인 |
-| `/today` | 오늘 홈 |
-| `/entries` | 기록 목록/작성/상세 |
-| `/reviews` | AI 회고 |
-| `/together` | 익명 공유 |
-| `/me` | 내 정보/설정/QR/내보내기 |
-| `/j/[slug]` | 개인 묵상기록지 (QR 대상) |
-| `/contact` | 문의하기 |
+| 환경 | Redirect URI |
+|:---|:---|
+| 로컬 | `http://localhost:3100/api/auth/callback/google` |
+| 운영 | `https://eobom.ponslink.com/api/auth/callback/google` |
 
-## 환경 변수
+필수 환경 변수는 [`.env.example`](.env.example)을 참고하세요.
 
-`.env.example` 참고. Google OAuth 콜백:
+### 스크립트
 
-- 로컬: `http://localhost:3100/api/auth/callback/google`
-- 운영: `https://eobom.ponslink.com/api/auth/callback/google`
+| 명령 | 설명 |
+|:---|:---|
+| `bun run dev` | 개발 서버 (3100) |
+| `bun run build` | 프로덕션 빌드 |
+| `bun run test` | 단위 테스트 |
+| `bun run db:push` | 스키마 반영 |
+| `./deploy/deploy.sh` | 운영 배포 |
 
-MiMo:
+## 앱 구조
 
-- `MIMO_BASE_URL=https://api.xiaomimimo.com/v1`
-- `MIMO_MODEL=mimo-v2.5-pro`
-- `MIMO_API_KEY=` (사용자 입력)
+```text
+/                랜딩
+/login           Google 로그인
+/today           오늘 홈
+/entries         묵상 기록
+/reviews         AI 회고
+/together        익명 나눔
+/me              내 정보 · QR · 내보내기
+/j/[slug]        개인 키링 입구
+/contact         문의
+```
 
 ## 배포
+
+프로덕션: **[eobom.ponslink.com](https://eobom.ponslink.com)**
 
 ```bash
 ./deploy/deploy.sh
 ```
 
-nginx 예시는 `deploy/nginx-eobom.conf` 를 참고하세요.
+`deploy/eobom.service`, `deploy/nginx-eobom.conf`에 systemd·nginx 설정이 있습니다.
 
-## 운영 체크리스트
+## 설계 원칙 (한 줄)
 
-1. Google Cloud Console OAuth 승인된 리디렉션 URI에 추가:
-   - `https://eobom.ponslink.com/api/auth/callback/google`
-   - `http://localhost:3100/api/auth/callback/google`
-2. `.env`에 `MIMO_API_KEY` 입력 후 `sudo systemctl restart eobom`
-3. 서버 경로: `/home/declan/apps/eobom`
-4. 서비스: `sudo systemctl status eobom`
+> AI는 판정하지 않고, 기록이 스스로 말하게 돕는다.
 
-## SSL 자동 갱신
+---
 
-운영 서버(`ponslink`)는 Let's Encrypt `certbot.timer`(1일 2회)가 enabled/active 상태다.
-- 인증서: `/etc/letsencrypt/live/eobom.ponslink.com/`
-- renew conf: `authenticator=nginx`, `installer=nginx`, `renew_before_expiry = 30 days`
-- deploy hook: `/etc/letsencrypt/renewal-hooks/deploy/00-reload-nginx.sh` (갱신 후 `nginx -t && systemctl reload nginx`)
-- 만료 전 30일 이내면 자동 갱신되며, 만료되어도 timer가 계속 시도한다.
-
-확인:
-```bash
-ssh ponslink 'systemctl status certbot.timer --no-pager'
-ssh ponslink 'sudo certbot certificates | sed -n "/eobom/,+8p"'
-ssh ponslink 'sudo certbot renew --cert-name eobom.ponslink.com --dry-run'
-```
+<p align="center">
+  <img src="docs/readme/logo-mark.png" width="40" alt="" />
+  <br />
+  <sub>© PonsLink · <a href="https://eobom.ponslink.com/contact">문의</a></sub>
+</p>
