@@ -34,6 +34,7 @@
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
   --color-accent-gold: var(--accent-gold);
+  --color-accent-gold-ink: var(--accent-gold-ink);
   --color-accent-terracotta: var(--accent-terracotta);
   --color-safety-blue: var(--safety-blue);
   --color-outline: var(--outline);
@@ -63,17 +64,18 @@
   --surface-low: #f5f3f0;
   --surface-shared: #f0f4f2;
   --text-main: #2d2d2d;
-  --text-muted: #6b6b6b;
+  --text-muted: #4b5563;
   --primary: #061b0e;
   --primary-foreground: #ffffff;
   --primary-container: #1b3022;
   --secondary: #e6e2dc;
   --secondary-foreground: #1c1c18;
   --muted: #efeeeb;
-  --muted-foreground: #6b6b6b;
+  --muted-foreground: #4b5563;
   --accent: #f5f3f0;
   --accent-foreground: #061b0e;
   --accent-gold: #c5a059;
+  --accent-gold-ink: #7a5a24;
   --accent-terracotta: #b36a5e;
   --safety-blue: #4a6fa5;
   --destructive: #ba1a1a;
@@ -115,6 +117,17 @@
 
   ::selection {
     background: color-mix(in oklab, var(--accent-gold) 25%, transparent);
+    color: var(--text-main);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #6b7280;
+    opacity: 1;
+  }
+
+  a {
+    color: inherit;
   }
 }
 
@@ -207,7 +220,7 @@
     justify-content: center;
     border-radius: 1rem;
     background: var(--primary);
-    color: var(--primary-foreground);
+    color: #ffffff;
     padding: 0.875rem 1.25rem;
     font-size: 0.875rem;
     font-weight: 500;
@@ -249,10 +262,51 @@
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1rem;
-    color: var(--text-muted);
+    color: #3f3f46;
   }
 
   .pb-safe {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  /* Readable gold on light surfaces (AA-ish vs linen) */
+  .text-gold-ink {
+    color: var(--accent-gold-ink);
+  }
+
+  /* Text on deep forest / dark cards */
+  .text-on-dark {
+    color: #ffffff;
+  }
+
+  .text-on-dark-soft {
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .text-on-dark-muted {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  /* Eyebrow labels on light bg: use ink gold, not pale gold */
+  .text-eyebrow {
+    color: var(--accent-gold-ink);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .chip-gold {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--accent-gold-ink) 28%, #e0ddd7);
+    background: #f7f0e2;
+    padding: 0.25rem 0.625rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    color: var(--accent-gold-ink);
   }
 }

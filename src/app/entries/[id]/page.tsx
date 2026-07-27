@@ -57,7 +57,7 @@ export default async function EntryDetailPage({
         {entry.scriptureBindings?.length
           ? entry.scriptureBindings.map((b) => (
               <SurfaceCard key={b.slug} className="writing-margin border-l-0">
-                <p className="text-label-md text-accent-gold">{b.display}</p>
+                <p className="text-label-md text-gold-ink">{b.display}</p>
                 {b.excerpt ? (
                   <p className="mt-2 text-body-lg text-text-main">“{b.excerpt}”</p>
                 ) : null}

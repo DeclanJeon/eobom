@@ -33,7 +33,7 @@ export default async function TogetherPage({
   return (
     <AppShell wide bare>
       <section className="mb-8 max-w-2xl md:mb-10">
-        <p className="text-label-sm text-accent-gold">익명 나눔</p>
+        <p className="text-eyebrow">익명 나눔</p>
         <h1 className="mt-2 text-display-lg text-primary md:text-4xl">함께</h1>
         <p className="mt-3 text-body-md text-text-muted">
           원문은 공개되지 않습니다. 나누고 싶은 문장만 남겨 주세요.

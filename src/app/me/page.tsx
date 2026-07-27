@@ -15,7 +15,7 @@ export default async function MePage() {
     <AppShell wide bare>
       <section className="mb-8 max-w-3xl md:mb-10 md:grid md:grid-cols-[1fr_auto] md:items-end md:gap-10">
         <div>
-          <p className="text-label-sm text-accent-gold">계정</p>
+          <p className="text-eyebrow">계정</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
             {user.displayName || user.name || "사용자"}
           </h1>

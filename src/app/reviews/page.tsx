@@ -17,7 +17,7 @@ export default async function ReviewsPage() {
   return (
     <AppShell wide bare>
       <section className="mb-8 max-w-2xl md:mb-10">
-        <p className="text-label-sm text-accent-gold">AI 회고</p>
+        <p className="text-eyebrow">AI 회고</p>
         <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
           그간의 여정을 갈무리합니다
         </h1>

@@ -47,7 +47,7 @@ export default async function TodayPage() {
     <AppShell wide bare>
       <section className="mb-8 md:mb-12 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] md:items-end md:gap-12">
         <div>
-          <p className="text-label-sm text-accent-gold">{formatDateKo(now)}</p>
+          <p className="text-eyebrow">{formatDateKo(now)}</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
             {greeting}님,
             <span className="mt-1 block md:mt-0 md:inline md:ml-2">
@@ -69,13 +69,13 @@ export default async function TodayPage() {
 
         <div className="mt-8 hidden md:block">
           <SurfaceCard className="bg-primary text-primary-foreground">
-            <p className="text-label-sm text-white/70">빠른 시작</p>
+            <p className="text-label-sm text-on-dark-muted">빠른 시작</p>
             <p className="mt-2 font-journal text-xl leading-snug">
               성구를 고르고, 마음에 남는 한 줄을 적으세요.
             </p>
             <Link
               href="/entries/new"
-              className="mt-5 inline-flex text-label-md text-white/90 underline-offset-4 hover:underline"
+              className="mt-5 inline-flex text-label-md text-on-dark-soft underline-offset-4 hover:underline"
             >
               지금 쓰기 →
             </Link>
@@ -88,7 +88,7 @@ export default async function TodayPage() {
         <SurfaceCard className="flex min-h-[140px] flex-col justify-between bg-primary text-primary-foreground">
           <div>
             <p className="text-headline-sm">묵상 기록하기</p>
-            <p className="mt-2 text-label-md opacity-80">
+            <p className="mt-2 text-label-md text-on-dark-muted">
               오늘 주신 말씀을 마음에 새깁니다
             </p>
           </div>
@@ -101,7 +101,7 @@ export default async function TodayPage() {
           <Link href={`/entries/${latest.id}`}>
             <SurfaceCard className="h-full border border-[#E0DDD7]/80 bg-secondary/40 transition hover:border-accent-gold/40">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="chip border-accent-gold/20 text-accent-gold">
+                <span className="chip-gold">
                   최근 기록
                 </span>
                 <span className="text-label-sm text-text-muted">
@@ -166,7 +166,7 @@ export default async function TodayPage() {
               <p className="mt-3 font-journal text-xl leading-snug md:text-2xl">
                 “{latestReview.summary || "기록이 당신의 여정을 비춥니다."}”
               </p>
-              <p className="mt-4 text-label-md text-white/75">회고 보기 →</p>
+              <p className="mt-4 text-label-md text-on-dark-soft">회고 보기 →</p>
             </section>
           </Link>
         ) : null}

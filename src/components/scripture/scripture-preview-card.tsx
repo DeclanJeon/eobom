@@ -11,7 +11,7 @@ export function ScripturePreviewCard({
 }) {
   return (
     <div className="paper-card writing-margin p-4">
-      <p className="text-label-md text-accent-gold">{binding.display}</p>
+      <p className="text-label-md text-gold-ink">{binding.display}</p>
       {binding.excerpt ? (
         <p className="mt-2 text-body-lg text-text-main">“{binding.excerpt}”</p>
       ) : null}

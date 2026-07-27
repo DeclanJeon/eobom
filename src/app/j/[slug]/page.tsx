@@ -160,7 +160,7 @@ export default async function PersonalJournalPage({
   // Guest + unclaimed seat — primary QR first-run
   return (
     <Shell>
-      <p className="text-label-sm text-accent-gold">키링 {slug.toUpperCase()}</p>
+      <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
       <h1 className="mt-2 text-display-lg text-primary">
         나의
         <br />

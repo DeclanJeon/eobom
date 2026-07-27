@@ -188,7 +188,7 @@ export function ScripturePicker({
               ).map(([label, list]) =>
                 list.length ? (
                   <div key={label}>
-                    <p className="mb-2 text-label-sm text-accent-gold">{label}</p>
+                    <p className="mb-2 text-eyebrow">{label}</p>
                     <div className="grid grid-cols-3 gap-2">
                       {list.map((b) => (
                         <button
@@ -261,7 +261,7 @@ export function ScripturePicker({
               </div>
               {startVerse != null ? (
                 <div className="paper-card writing-margin p-4">
-                  <p className="text-label-md text-accent-gold">
+                  <p className="text-label-md text-gold-ink">
                     {book?.name} {chapter}:
                     {endVerse && endVerse !== startVerse
                       ? `${startVerse}-${endVerse}`

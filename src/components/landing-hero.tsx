@@ -75,14 +75,14 @@ export function LandingHero({
         ? floatWords.map((word, i) => (
             <motion.span
               key={word}
-              className="pointer-events-none absolute hidden select-none font-journal text-sm text-primary/15 md:block"
+              className="pointer-events-none absolute hidden select-none font-journal text-sm text-primary/30 md:block"
               style={{
                 left: `${12 + i * 16}%`,
                 top: `${22 + (i % 2) * 48}%`,
               }}
               initial={{ opacity: 0, y: 12 }}
               animate={{
-                opacity: [0.12, 0.28, 0.12],
+                opacity: [0.2, 0.35, 0.2],
                 y: [0, -14, 0],
               }}
               transition={{
@@ -171,7 +171,7 @@ export function LandingHero({
                 </span>
                 <span className="mt-3 block overflow-hidden">
                   <motion.span
-                    className="block text-[clamp(1.35rem,3.6vw,2rem)] font-medium leading-snug text-primary/90"
+                    className="block text-[clamp(1.35rem,3.6vw,2rem)] font-medium leading-snug text-primary"
                     initial={reduce ? false : { y: "110%", opacity: 0 }}
                     animate={{ y: "0%", opacity: 1 }}
                     transition={{ duration: 0.8, delay: 0.28, ease }}
@@ -295,7 +295,7 @@ export function LandingHero({
                 transition={{ type: "spring", stiffness: 220, damping: 22 }}
               >
                 <div className="writing-margin">
-                  <p className="text-label-sm text-accent-gold">오늘의 한 줄</p>
+                  <p className="text-eyebrow">오늘의 한 줄</p>
                   <TypeLine
                     text="어제의 기록이 오늘의 방향을 비춥니다."
                     reduce={!!reduce}
@@ -337,7 +337,7 @@ export function LandingHero({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.15 }}
                 >
-                  <p className="font-journal text-sm text-primary/80">이어봄</p>
+                  <p className="font-journal text-sm text-primary">이어봄</p>
                   <motion.span
                     className="text-label-sm text-text-muted"
                     animate={reduce ? undefined : { opacity: [0.45, 1, 0.45] }}

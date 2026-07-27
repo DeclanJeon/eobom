@@ -174,7 +174,7 @@ export function EntryForm({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-label-md text-accent-gold">성구</p>
+            <p className="text-label-md text-gold-ink">성구</p>
             <button
               type="button"
               disabled={bindings.length >= 5}
@@ -214,7 +214,7 @@ export function EntryForm({
             value={values.title || ""}
             onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
             placeholder="제목 (선택)"
-            className="mb-3 w-full border-0 bg-transparent py-1 text-headline-sm text-primary outline-none placeholder:text-text-muted/60"
+            className="mb-3 w-full border-0 bg-transparent py-1 text-headline-sm text-primary outline-none placeholder:text-zinc-500"
           />
           <div className="writing-margin">
             <textarea
@@ -224,7 +224,7 @@ export function EntryForm({
               }
               rows={12}
               placeholder="이곳에 당신의 깊은 묵상을 자유롭게 남겨보세요…"
-              className="w-full resize-none border-0 bg-transparent text-body-lg text-text-main outline-none placeholder:text-text-muted/60"
+              className="w-full resize-none border-0 bg-transparent text-body-lg text-text-main outline-none placeholder:text-zinc-500"
             />
           </div>
         </div>
