@@ -10,8 +10,9 @@ WorkingDirectory=/home/declan/apps/eobom
 Environment=NODE_ENV=production
 Environment=PORT=3120
 Environment=HOSTNAME=127.0.0.1
+Environment=PATH=/home/declan/.bun/bin:/usr/local/bin:/usr/bin:/bin
 EnvironmentFile=/home/declan/apps/eobom/.env
-ExecStart=/usr/bin/bun /home/declan/apps/eobom/.next/standalone/server.js
+ExecStart=/home/declan/.bun/bin/bun /home/declan/apps/eobom/.next/standalone/server.js
 Restart=always
 RestartSec=5
 
