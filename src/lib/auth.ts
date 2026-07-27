@@ -120,19 +120,24 @@ export const authOptions: NextAuthOptions = {
       if (!user.id || !user.email) return;
       const claimSlug = await readClaimSlugFromCookie();
       let personalSlug: string | null = null;
+      let viaKeyring = false;
 
-      // Keyring QR claim: use the pre-provisioned seat slug when still free.
+      // Keyring QR claim: bind the scanned seat when still free.
       if (claimSlug) {
         const seat = await getSeatBySlug(claimSlug);
         if (seat && seat.status === "unclaimed") {
           const taken = await db.user.findFirst({
             where: { personalSlug: claimSlug, NOT: { id: user.id } },
           });
-          if (!taken) personalSlug = claimSlug;
+          if (!taken) {
+            personalSlug = claimSlug;
+            viaKeyring = true;
+          }
         }
       }
 
-      // General Google signup: sequential short slug e14, e15, …
+      // General Google signup: next free short number (e14, e15, …).
+      // Keyring inventory e02–e13 stays reserved for QR until claimed.
       if (!personalSlug) {
         personalSlug = await allocateNextNumberedSlug();
       }
@@ -147,22 +152,19 @@ export const authOptions: NextAuthOptions = {
         },
       });
 
-      if (claimSlug && personalSlug === claimSlug) {
-        try {
+      try {
+        if (viaKeyring && claimSlug) {
           await claimSeat(user.id, user.email, claimSlug);
-        } catch (e) {
-          if (!(e instanceof ClaimError)) console.error(e);
-        }
-      } else {
-        try {
+        } else {
+          // Immediately match Google email ↔ e14/e15… seat row
           await ensureClaimedSeatForUser({
             userId: user.id,
             email: user.email,
             slug: personalSlug,
           });
-        } catch (e) {
-          console.error("ensureClaimedSeatForUser", e);
         }
+      } catch (e) {
+        if (!(e instanceof ClaimError)) console.error("signup seat bind", e);
       }
     },
     async signIn({ user }) {

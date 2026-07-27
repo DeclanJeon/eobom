@@ -25,30 +25,43 @@ describe("seat slug", () => {
 });
 
 describe("allocateNextNumberedSlug", () => {
-  test("continues after highest eNN among users and seats", async () => {
+  test("web signup gets e14+ while keyring e02-e13 stay free", async () => {
     await provisionSeats({ count: 13, prefix: "e" });
-    // ensure at least e13 exists as seat
+    // clean leftover web seats from previous runs
+    await db.journalSeat.deleteMany({
+      where: { seatCode: { startsWith: "WEB-" } },
+    });
+    await db.user.deleteMany({
+      where: { email: { contains: "@alloc.test" } },
+    });
+
     const next = await allocateNextNumberedSlug();
-    const n = Number(next.replace(/^e/, ""));
-    expect(n).toBeGreaterThanOrEqual(14);
+    expect(next).toBe("e14");
     expect(isSeatSlug(next)).toBe(true);
 
-    // simulate taking that slug
-    const email = `alloc-${next}@test.local`;
-    await db.user.deleteMany({ where: { email } });
+    const email = "u14@alloc.test";
     const u = await db.user.create({
-      data: { email, personalSlug: next, name: "Alloc" },
+      data: { email, personalSlug: next, name: "Alloc14" },
     });
-    await ensureClaimedSeatForUser({
+    const seat = await ensureClaimedSeatForUser({
       userId: u.id,
       email,
       slug: next,
     });
+    expect(seat?.status).toBe("claimed");
+    expect(seat?.claimedEmail).toBe(email);
+    expect(seat?.claimedUserId).toBe(u.id);
 
     const next2 = await allocateNextNumberedSlug();
-    expect(Number(next2.replace(/^e/, ""))).toBe(n + 1);
+    expect(next2).toBe("e15");
 
-    await db.journalSeat.deleteMany({ where: { slug: { in: [next, next2] } } });
+    // keyring seats still unclaimed
+    const e02 = await db.journalSeat.findUnique({ where: { slug: "e02" } });
+    expect(e02?.status).toBe("unclaimed");
+
+    await db.journalSeat.deleteMany({
+      where: { slug: { in: ["e14", "e15"] } },
+    });
     await db.user.deleteMany({ where: { email } });
   });
 });

@@ -45,9 +45,19 @@ function parseNumberedSlug(slug: string): number | null {
   return Number.isInteger(n) && n >= 1 ? n : null;
 }
 
+/** Keyring print batch: e01–e13 stay reserved until QR claim. */
+export const KEYRING_RESERVED_MAX = 13;
+
+export function isReservedKeyringNumber(n: number): boolean {
+  return Number.isInteger(n) && n >= 1 && n <= KEYRING_RESERVED_MAX;
+}
+
 /**
- * Next free short slug in the eNN sequence.
- * Considers both User.personalSlug and JournalSeat.slug.
+ * Next free short slug for general Google signup.
+ * - Never takes a slug already owned by a user
+ * - Never takes a claimed seat
+ * - Never takes reserved keyring seats e01–e13 while unclaimed (QR inventory)
+ * - Reuses unclaimed WEB seats (e14+) if present, else creates the next number
  */
 export async function allocateNextNumberedSlug(): Promise<string> {
   const [users, seats] = await Promise.all([
@@ -55,10 +65,20 @@ export async function allocateNextNumberedSlug(): Promise<string> {
       where: { personalSlug: { startsWith: "e" } },
       select: { personalSlug: true },
     }),
-    db.journalSeat.findMany({ select: { slug: true } }),
+    db.journalSeat.findMany({
+      select: { slug: true, status: true, seatCode: true, label: true },
+    }),
   ]);
 
-  let max = 0;
+  const owned = new Set<string>();
+  for (const u of users) {
+    const s = normalizeSeatSlug(u.personalSlug);
+    if (s) owned.add(s);
+  }
+
+  const seatBySlug = new Map(seats.map((s) => [normalizeSeatSlug(s.slug), s]));
+
+  let max = KEYRING_RESERVED_MAX;
   for (const u of users) {
     const n = parseNumberedSlug(u.personalSlug);
     if (n != null) max = Math.max(max, n);
@@ -68,16 +88,46 @@ export async function allocateNextNumberedSlug(): Promise<string> {
     if (n != null) max = Math.max(max, n);
   }
 
-  for (let n = Math.max(1, max + 1); n < max + 5000; n += 1) {
+  // Start after keyring block so web users get e14+ while e02–e13 stay for QR.
+  for (let n = KEYRING_RESERVED_MAX + 1; n < max + 5000; n += 1) {
     const slug = formatNumberedSlug(n);
-    const [userHit, seatHit] = await Promise.all([
-      db.user.findUnique({ where: { personalSlug: slug }, select: { id: true } }),
-      db.journalSeat.findUnique({ where: { slug }, select: { id: true } }),
-    ]);
-    if (!userHit && !seatHit) return slug;
+    if (owned.has(slug)) continue;
+    const seat = seatBySlug.get(slug);
+    if (seat?.status === "claimed") continue;
+    if (seat?.status === "revoked") continue;
+    // unclaimed WEB / missing seat → available
+    if (!seat || seat.status === "unclaimed") {
+      // never auto-assign reserved keyring range (loop starts at 14 anyway)
+      if (isReservedKeyringNumber(n) && seat?.seatCode?.startsWith("KEYRING")) {
+        continue;
+      }
+      return slug;
+    }
   }
 
   throw new Error("failed to allocate numbered slug");
+}
+
+/** Ensure the next web signup slot (e14+) exists as an unclaimed seat row. */
+export async function ensureNextWebSeatProvisioned(): Promise<string> {
+  const slug = await allocateNextNumberedSlug();
+  const existing = await db.journalSeat.findUnique({ where: { slug } });
+  if (existing) return slug;
+  const num = parseNumberedSlug(slug);
+  if (num == null) return slug;
+  try {
+    await db.journalSeat.create({
+      data: {
+        slug,
+        seatCode: `WEB-${String(num).padStart(2, "0")}`,
+        label: "web-signup-pool",
+        status: "unclaimed",
+      },
+    });
+  } catch {
+    // race ok
+  }
+  return slug;
 }
 
 /**
