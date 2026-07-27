@@ -17,7 +17,7 @@ model User {
   profileImageUrl           String?
   locale                    String    @default("ko")
   timezone                  String    @default("Asia/Seoul")
-  preferredBibleTranslation String    @default("개역개정")
+  preferredBibleTranslation String    @default("한국어 성경 (Open Bibles)")
   personalSlug              String    @unique @default(cuid())
   aiProcessingConsent       Boolean   @default(false)
   communityEnabled          Boolean   @default(false)
@@ -86,6 +86,7 @@ model ReflectionEntry {
   title            String?
   scriptureRefs    String    @default("[]")
   scriptureExcerpt String?
+  scriptureBindings String    @default("[]")
   reflectionBody   String
   gratitude        String?
   question         String?

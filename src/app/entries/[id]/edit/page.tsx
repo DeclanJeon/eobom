@@ -26,6 +26,7 @@ export default async function EditEntryPage({
             title: entry.title || "",
             scriptureRefsText: entry.scriptureRefs.join(", "),
             scriptureExcerpt: entry.scriptureExcerpt || "",
+            scriptureBindings: entry.scriptureBindings || [],
             reflectionBody: entry.reflectionBody,
             gratitude: entry.gratitude || "",
             question: entry.question || "",

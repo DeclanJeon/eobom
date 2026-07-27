@@ -42,7 +42,10 @@ export default async function EntryDetailPage({
             {entry.title || "제목 없음"}
           </h1>
           <div className="mt-3 flex flex-wrap gap-2">
-            {entry.scriptureRefs.map((ref) => (
+            {(entry.scriptureBindings?.length
+              ? entry.scriptureBindings.map((b) => b.display)
+              : entry.scriptureRefs
+            ).map((ref) => (
               <SoftBadge key={ref}>{ref}</SoftBadge>
             ))}
             {entry.tags.map((tag) => (
@@ -51,13 +54,31 @@ export default async function EntryDetailPage({
           </div>
         </div>
 
-        {entry.scriptureExcerpt ? (
-          <SurfaceCard className="writing-margin border-l-0">
-            <p className="text-body-lg text-text-main">
-              “{entry.scriptureExcerpt}”
-            </p>
-          </SurfaceCard>
-        ) : null}
+        {entry.scriptureBindings?.length
+          ? entry.scriptureBindings.map((b) => (
+              <SurfaceCard key={b.slug} className="writing-margin border-l-0">
+                <p className="text-label-md text-accent-gold">{b.display}</p>
+                {b.excerpt ? (
+                  <p className="mt-2 text-body-lg text-text-main">“{b.excerpt}”</p>
+                ) : null}
+                <p className="mt-2 text-label-sm text-text-muted">
+                  {b.translation === "ko-open-bible"
+                    ? "한국어 성경 (Open Bibles) · 개역개정 아님"
+                    : b.translation === "user-typed"
+                      ? "사용자 입력 인용"
+                      : b.translation}
+                </p>
+              </SurfaceCard>
+            ))
+          : entry.scriptureExcerpt
+            ? (
+              <SurfaceCard className="writing-margin border-l-0">
+                <p className="text-body-lg text-text-main">
+                  “{entry.scriptureExcerpt}”
+                </p>
+              </SurfaceCard>
+            )
+            : null}
 
         <SurfaceCard>
           <p className="writing-margin whitespace-pre-wrap text-body-lg text-text-main">
