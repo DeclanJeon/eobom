@@ -1,15 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { LoginButton } from "@/components/login-button";
 import { db } from "@/lib/db";
 import { getOptionalUser } from "@/lib/session";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import {
-  CLAIM_COOKIE,
   claimErrorMessage,
-  claimSeat,
-  ClaimError,
   getSeatBySlug,
   isSeatSlug,
   normalizeSeatSlug,
@@ -91,27 +87,8 @@ export default async function PersonalJournalPage({
     }
 
     if (seat.status === "unclaimed") {
-      try {
-        await claimSeat(viewer.id, viewer.email || "", slug);
-        const jar = await cookies();
-        jar.set(CLAIM_COOKIE, "", { httpOnly: true, path: "/", maxAge: 0 });
-        redirect("/entries/new");
-      } catch (e) {
-        if (e instanceof ClaimError) {
-          return (
-            <Shell>
-              <h1 className="text-display-lg text-primary">연결할 수 없습니다</h1>
-              <p className="mt-3 text-body-md text-text-muted">
-                {claimErrorMessage(e.code)}
-              </p>
-              <Link href="/today" className="cta-primary mt-8 inline-flex">
-                내 홈으로
-              </Link>
-            </Shell>
-          );
-        }
-        throw e;
-      }
+      // Cookie writes are only allowed in Route Handlers / Server Actions.
+      redirect(`/api/seats/claim?slug=${encodeURIComponent(slug)}`);
     }
 
     // claimed by someone else
