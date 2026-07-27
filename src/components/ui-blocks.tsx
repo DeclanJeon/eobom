@@ -24,11 +24,23 @@ export function PageIntro({
 export function SurfaceCard({
   children,
   className,
+  tone = "light",
 }: {
   children: ReactNode;
   className?: string;
+  tone?: "light" | "dark";
 }) {
-  return <div className={cn("paper-card p-5", className)}>{children}</div>;
+  return (
+    <div
+      className={cn(
+        "paper-card p-5",
+        tone === "dark" && "surface-card-dark",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function EmptyState({

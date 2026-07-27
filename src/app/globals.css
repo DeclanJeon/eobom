@@ -199,10 +199,31 @@
   }
 
   .paper-card {
-    background: color-mix(in oklab, var(--card) 92%, var(--surface-low));
+    /* background-color only so Tailwind bg-* utilities can override */
+    background-color: color-mix(in oklab, var(--card) 92%, var(--surface-low));
     border: 1px solid #e0ddd7;
     border-radius: 1rem;
     box-shadow: 0 12px 40px -28px rgba(27, 28, 26, 0.18);
+    color: var(--text-main);
+  }
+
+  .surface-card-dark {
+    background-color: #061b0e !important;
+    border-color: #0d2416 !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 40px -28px rgba(6, 27, 14, 0.55);
+  }
+
+  .surface-card-dark a {
+    color: #ffffff;
+  }
+
+  .surface-card-dark .text-on-dark-muted {
+    color: rgba(255, 255, 255, 0.86) !important;
+  }
+
+  .surface-card-dark .text-on-dark-soft {
+    color: rgba(255, 255, 255, 0.95) !important;
   }
 
   .ambient-shadow {

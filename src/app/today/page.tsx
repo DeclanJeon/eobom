@@ -68,14 +68,14 @@ export default async function TodayPage() {
         </div>
 
         <div className="mt-8 hidden md:block">
-          <SurfaceCard className="bg-primary text-primary-foreground">
+          <SurfaceCard tone="dark">
             <p className="text-label-sm text-on-dark-muted">빠른 시작</p>
-            <p className="mt-2 font-journal text-xl leading-snug">
+            <p className="mt-2 font-journal text-xl leading-snug text-white">
               성구를 고르고, 마음에 남는 한 줄을 적으세요.
             </p>
             <Link
               href="/entries/new"
-              className="mt-5 inline-flex text-label-md text-on-dark-soft underline-offset-4 hover:underline"
+              className="mt-5 inline-flex text-label-md font-medium text-white underline-offset-4 hover:underline"
             >
               지금 쓰기 →
             </Link>
@@ -85,14 +85,17 @@ export default async function TodayPage() {
 
       {/* Mobile primary CTA card */}
       <Link href="/entries/new" className="mb-4 block md:hidden">
-        <SurfaceCard className="flex min-h-[140px] flex-col justify-between bg-primary text-primary-foreground">
+        <SurfaceCard
+          tone="dark"
+          className="flex min-h-[140px] flex-col justify-between"
+        >
           <div>
-            <p className="text-headline-sm">묵상 기록하기</p>
+            <p className="text-headline-sm text-white">묵상 기록하기</p>
             <p className="mt-2 text-label-md text-on-dark-muted">
               오늘 주신 말씀을 마음에 새깁니다
             </p>
           </div>
-          <p className="text-label-md">기록 시작하기 →</p>
+          <p className="text-label-md font-medium text-white">기록 시작하기 →</p>
         </SurfaceCard>
       </Link>
 
