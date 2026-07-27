@@ -351,6 +351,114 @@ export function LandingHero({
           </div>
         </main>
 
+        {/* Product story: clear use cases below the first impression */}
+        <section className="border-t border-[#E0DDD7]/70 py-20 md:py-28">
+          <motion.div
+            className="max-w-2xl"
+            initial={reduce ? false : { opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.65, ease }}
+          >
+            <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+              기록은 세 가지면 충분합니다
+            </h2>
+            <p className="mt-4 text-body-md text-text-muted">
+              말씀을 고르고, 마음을 남기고, 시간이 지난 뒤 다시 읽습니다.
+            </p>
+          </motion.div>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "말씀을 고릅니다",
+                body: "성경 책과 장, 절을 선택해 오늘의 묵상에 연결합니다.",
+                tone: "bg-[#edf3ec]",
+              },
+              {
+                title: "마음을 남깁니다",
+                body: "기도, 질문, 결단을 한 문장부터 부담 없이 적습니다.",
+                tone: "bg-[#fbf3db]",
+              },
+              {
+                title: "다시 만납니다",
+                body: "과거의 오늘과 회고 초안으로 기록의 흐름을 돌아봅니다.",
+                tone: "bg-[#e1f3fe]",
+              },
+            ].map((item, index) => (
+              <motion.div
+                key={item.title}
+                className={`min-h-[190px] rounded-2xl border border-[#E0DDD7] p-6 ${item.tone}`}
+                initial={reduce ? false : { opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.55, delay: index * 0.08, ease }}
+              >
+                <span className="font-mono text-xs font-semibold text-primary/60">
+                  0{index + 1}
+                </span>
+                <h3 className="mt-12 text-xl font-semibold text-primary">
+                  {item.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-[#374151]">
+                  {item.body}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-8 border-t border-[#E0DDD7]/70 py-20 md:grid-cols-[1fr_0.8fr] md:items-center md:py-28">
+          <motion.div
+            initial={reduce ? false : { opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.65, ease }}
+          >
+            <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+              기록은 기본적으로 나만 봅니다
+            </h2>
+            <p className="mt-4 max-w-xl text-body-md text-text-muted">
+              개인 묵상 원문은 공개되지 않습니다. 함께 나눌 때도 원하는 문장만 별도의 익명 공유본으로 올립니다.
+            </p>
+          </motion.div>
+          <motion.div
+            className="border-l-2 border-[#c5a059] pl-6"
+            initial={reduce ? false : { opacity: 0, x: 12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, amount: 0.35 }}
+            transition={{ duration: 0.65, delay: 0.1, ease }}
+          >
+            <p className="font-journal text-2xl leading-relaxed text-primary">
+              AI는 신앙을 평가하지 않습니다.
+            </p>
+            <p className="mt-3 text-label-md text-text-muted">
+              회고를 위한 성찰 초안만 돕습니다.
+            </p>
+          </motion.div>
+        </section>
+
+        <motion.section
+          className="border-t border-[#E0DDD7]/70 py-20 text-center md:py-28"
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.65, ease }}
+        >
+          <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+            오늘의 한 줄부터 시작하세요
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-body-md text-text-muted">
+            거창한 계획보다 지금 마음에 남은 말씀 하나를 기록해 보세요.
+          </p>
+          <Link
+            href={isAuthenticated ? "/entries/new" : "/login"}
+            className="cta-primary mt-8 min-h-[50px] px-7 py-4"
+          >
+            {isAuthenticated ? "새 기록 쓰기" : "Google로 시작하기"}
+          </Link>
+        </motion.section>
+
         <motion.footer
           className="flex flex-col items-start justify-between gap-3 border-t border-[#E0DDD7]/70 pt-5 text-label-sm text-text-muted md:flex-row md:items-center"
           initial={reduce ? false : { opacity: 0 }}
