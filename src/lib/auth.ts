@@ -4,11 +4,12 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
-import { generateUniquePersonalSlug } from "@/lib/slug";
 import {
   CLAIM_COOKIE,
+  allocateNextNumberedSlug,
   claimSeat,
   ClaimError,
+  ensureClaimedSeatForUser,
   getSeatBySlug,
   normalizeSeatSlug,
 } from "@/lib/seats";
@@ -118,17 +119,22 @@ export const authOptions: NextAuthOptions = {
     async createUser({ user }) {
       if (!user.id || !user.email) return;
       const claimSlug = await readClaimSlugFromCookie();
-      let personalSlug = await generateUniquePersonalSlug(user.email);
+      let personalSlug: string | null = null;
 
+      // Keyring QR claim: use the pre-provisioned seat slug when still free.
       if (claimSlug) {
         const seat = await getSeatBySlug(claimSlug);
         if (seat && seat.status === "unclaimed") {
-          // reserve slug on user; claimSeat finalizes seat row
           const taken = await db.user.findFirst({
             where: { personalSlug: claimSlug, NOT: { id: user.id } },
           });
           if (!taken) personalSlug = claimSlug;
         }
+      }
+
+      // General Google signup: sequential short slug e14, e15, …
+      if (!personalSlug) {
+        personalSlug = await allocateNextNumberedSlug();
       }
 
       await db.user.update({
@@ -137,14 +143,25 @@ export const authOptions: NextAuthOptions = {
           personalSlug,
           displayName: user.name ?? null,
           profileImageUrl: user.image ?? null,
+          seatClaimedAt: new Date(),
         },
       });
 
-      if (claimSlug) {
+      if (claimSlug && personalSlug === claimSlug) {
         try {
           await claimSeat(user.id, user.email, claimSlug);
         } catch (e) {
           if (!(e instanceof ClaimError)) console.error(e);
+        }
+      } else {
+        try {
+          await ensureClaimedSeatForUser({
+            userId: user.id,
+            email: user.email,
+            slug: personalSlug,
+          });
+        } catch (e) {
+          console.error("ensureClaimedSeatForUser", e);
         }
       }
     },

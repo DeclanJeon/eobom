@@ -19,7 +19,8 @@ export class ClaimError extends Error {
 export const CLAIM_COOKIE = "eobom_claim_slug";
 export const CLAIM_COOKIE_MAX_AGE = 600;
 
-const SLUG_RE = /^e\d{2}$/;
+/** e01, e13, e100 … (at least 2 digits) */
+const SLUG_RE = /^e\d{2,}$/;
 
 export function isSeatSlug(slug: string): boolean {
   return SLUG_RE.test(slug);
@@ -29,9 +30,108 @@ export function normalizeSeatSlug(slug: string): string {
   return slug.trim().toLowerCase();
 }
 
+/** Format sequential number: 1 → e01, 14 → e14, 100 → e100 */
+export function formatNumberedSlug(n: number): string {
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error("invalid seat number");
+  }
+  return n < 100 ? `e${String(n).padStart(2, "0")}` : `e${n}`;
+}
+
+function parseNumberedSlug(slug: string): number | null {
+  const m = normalizeSeatSlug(slug).match(/^e(\d+)$/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isInteger(n) && n >= 1 ? n : null;
+}
+
+/**
+ * Next free short slug in the eNN sequence.
+ * Considers both User.personalSlug and JournalSeat.slug.
+ */
+export async function allocateNextNumberedSlug(): Promise<string> {
+  const [users, seats] = await Promise.all([
+    db.user.findMany({
+      where: { personalSlug: { startsWith: "e" } },
+      select: { personalSlug: true },
+    }),
+    db.journalSeat.findMany({ select: { slug: true } }),
+  ]);
+
+  let max = 0;
+  for (const u of users) {
+    const n = parseNumberedSlug(u.personalSlug);
+    if (n != null) max = Math.max(max, n);
+  }
+  for (const s of seats) {
+    const n = parseNumberedSlug(s.slug);
+    if (n != null) max = Math.max(max, n);
+  }
+
+  for (let n = Math.max(1, max + 1); n < max + 5000; n += 1) {
+    const slug = formatNumberedSlug(n);
+    const [userHit, seatHit] = await Promise.all([
+      db.user.findUnique({ where: { personalSlug: slug }, select: { id: true } }),
+      db.journalSeat.findUnique({ where: { slug }, select: { id: true } }),
+    ]);
+    if (!userHit && !seatHit) return slug;
+  }
+
+  throw new Error("failed to allocate numbered slug");
+}
+
+/**
+ * Create a claimed seat row for an auto-assigned web signup slug.
+ * Idempotent if the seat already belongs to this user.
+ */
+export async function ensureClaimedSeatForUser(input: {
+  userId: string;
+  email: string;
+  slug: string;
+}) {
+  const slug = normalizeSeatSlug(input.slug);
+  const num = parseNumberedSlug(slug);
+  if (num == null) return null;
+
+  const existing = await db.journalSeat.findUnique({ where: { slug } });
+  if (existing) {
+    if (existing.claimedUserId === input.userId) return existing;
+    if (existing.status === "claimed") return existing;
+  }
+
+  const seatCode = `WEB-${String(num).padStart(2, "0")}`;
+  try {
+    if (existing) {
+      return await db.journalSeat.update({
+        where: { id: existing.id },
+        data: {
+          status: "claimed",
+          claimedUserId: input.userId,
+          claimedEmail: input.email,
+          claimedAt: new Date(),
+        },
+      });
+    }
+    return await db.journalSeat.create({
+      data: {
+        slug,
+        seatCode,
+        label: "web-signup",
+        status: "claimed",
+        claimedUserId: input.userId,
+        claimedEmail: input.email,
+        claimedAt: new Date(),
+      },
+    });
+  } catch {
+    // unique race — ignore
+    return db.journalSeat.findUnique({ where: { slug } });
+  }
+}
+
 export async function getSeatBySlug(slug: string) {
   const s = normalizeSeatSlug(slug);
-  if (!isSeatSlug(s) && !s) return null;
+  if (!s) return null;
   return db.journalSeat.findUnique({
     where: { slug: s },
     include: {

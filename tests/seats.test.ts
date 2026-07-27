@@ -1,18 +1,55 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { db } from "../src/lib/db";
 import {
+  allocateNextNumberedSlug,
   claimSeat,
   ClaimError,
+  ensureClaimedSeatForUser,
+  formatNumberedSlug,
   isSeatSlug,
   provisionSeats,
 } from "../src/lib/seats";
 
 describe("seat slug", () => {
-  test("e01 pattern", () => {
+  test("eNN pattern", () => {
     expect(isSeatSlug("e01")).toBe(true);
     expect(isSeatSlug("e13")).toBe(true);
+    expect(isSeatSlug("e14")).toBe(true);
+    expect(isSeatSlug("e100")).toBe(true);
     expect(isSeatSlug("E01")).toBe(false);
     expect(isSeatSlug("olive-01")).toBe(false);
+    expect(formatNumberedSlug(1)).toBe("e01");
+    expect(formatNumberedSlug(14)).toBe("e14");
+    expect(formatNumberedSlug(100)).toBe("e100");
+  });
+});
+
+describe("allocateNextNumberedSlug", () => {
+  test("continues after highest eNN among users and seats", async () => {
+    await provisionSeats({ count: 13, prefix: "e" });
+    // ensure at least e13 exists as seat
+    const next = await allocateNextNumberedSlug();
+    const n = Number(next.replace(/^e/, ""));
+    expect(n).toBeGreaterThanOrEqual(14);
+    expect(isSeatSlug(next)).toBe(true);
+
+    // simulate taking that slug
+    const email = `alloc-${next}@test.local`;
+    await db.user.deleteMany({ where: { email } });
+    const u = await db.user.create({
+      data: { email, personalSlug: next, name: "Alloc" },
+    });
+    await ensureClaimedSeatForUser({
+      userId: u.id,
+      email,
+      slug: next,
+    });
+
+    const next2 = await allocateNextNumberedSlug();
+    expect(Number(next2.replace(/^e/, ""))).toBe(n + 1);
+
+    await db.journalSeat.deleteMany({ where: { slug: { in: [next, next2] } } });
+    await db.user.deleteMany({ where: { email } });
   });
 });
 
@@ -61,7 +98,6 @@ describe("provision and claim", () => {
     expect(ua.personalSlug).toBe(slug);
     expect(ua.seatClaimedAt).toBeTruthy();
 
-    // idempotent
     await claimSeat(a.id, a.email, slug);
 
     let code = "";
