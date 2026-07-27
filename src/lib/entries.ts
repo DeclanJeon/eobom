@@ -198,7 +198,46 @@ export async function updateEntry(userId: string, id: string, input: EntryInput)
       cellShareSummary: input.cellShareSummary?.trim() || null,
     },
   });
+
+  await syncActionStepForEntry(userId, entry.id, input.actionStep);
+
   return serializeEntry(entry);
+}
+
+async function syncActionStepForEntry(
+  userId: string,
+  entryId: string,
+  actionStep?: string | null,
+) {
+  const body = actionStep?.trim() || "";
+  const existing = await db.actionStep.findFirst({
+    where: { userId, sourceEntryId: entryId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  if (!body) {
+    // Keep historical steps; do not delete when user clears the field.
+    return;
+  }
+
+  if (existing && (existing.status === "pending" || existing.status === "walking")) {
+    await db.actionStep.update({
+      where: { id: existing.id },
+      data: { body },
+    });
+    return;
+  }
+
+  if (!existing) {
+    await db.actionStep.create({
+      data: {
+        userId,
+        sourceEntryId: entryId,
+        body,
+        status: "pending",
+      },
+    });
+  }
 }
 
 export async function listEntries(

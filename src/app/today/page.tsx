@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { OpenActionCard } from "@/components/open-action-card";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { listOpenActionSteps } from "@/lib/actions";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
@@ -11,11 +13,18 @@ export default async function TodayPage() {
   const user = await requireUser();
   const now = new Date();
 
-  const recent = await db.reflectionEntry.findMany({
-    where: { userId: user.id, deletedAt: null },
-    orderBy: { entryDate: "desc" },
-    take: 4,
-  });
+  const [recent, openActions, latestReview] = await Promise.all([
+    db.reflectionEntry.findMany({
+      where: { userId: user.id, deletedAt: null },
+      orderBy: { entryDate: "desc" },
+      take: 4,
+    }),
+    listOpenActionSteps(user.id, 3),
+    db.reviewReport.findFirst({
+      where: { userId: user.id, deletedAt: null },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   const latest = recent[0] ?? null;
 
@@ -36,11 +45,6 @@ export default async function TodayPage() {
     })
     .slice(0, 1)[0];
 
-  const latestReview = await db.reviewReport.findFirst({
-    where: { userId: user.id, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-  });
-
   const greeting = user.displayName || user.name || "순례자";
 
   return (
@@ -50,34 +54,55 @@ export default async function TodayPage() {
           <p className="text-eyebrow">{formatDateKo(now)}</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
             {greeting}님,
-            <span className="mt-1 block md:mt-0 md:inline md:ml-2">
-              오늘도 이어봄
-            </span>
+            <span className="mt-1 block md:mt-0 md:ml-2">오늘도 이어봄</span>
           </h1>
           <p className="mt-3 max-w-xl text-body-md text-text-muted">
             오늘 머문 말씀이, 내일의 나를 만납니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/entries/new" className="cta-primary min-h-[48px] px-6 py-3">
+            <Link
+              href="/entries/new"
+              className="cta-primary min-h-[48px] px-6 py-3"
+            >
               묵상 기록하기
             </Link>
-            <Link href="/entries" className="cta-secondary min-h-[48px] px-6 py-3">
+            <Link
+              href="/entries"
+              className="cta-secondary min-h-[48px] px-6 py-3"
+            >
               기록 보기
             </Link>
           </div>
         </div>
-
       </section>
 
+      {openActions.length > 0 ? (
+        <section className="mb-8 md:mb-10">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-eyebrow">살다</p>
+              <h2 className="mt-1 text-headline-sm text-primary">
+                열린 결단
+              </h2>
+            </div>
+            <p className="max-w-xs text-right text-label-sm text-text-muted">
+              평가가 아니라 기억입니다
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {openActions.map((item) => (
+              <OpenActionCard key={item.id} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {latest ? (
           <Link href={`/entries/${latest.id}`}>
-            <SurfaceCard className="h-full border border-[#E0DDD7]/80 bg-secondary/40 transition hover:border-accent-gold/40">
+            <SurfaceCard className="h-full border border-border/80 bg-secondary/40 transition hover:border-accent-gold/40">
               <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="chip-gold">
-                  최근 기록
-                </span>
+                <span className="chip-gold">최근 기록</span>
                 <span className="text-label-sm text-text-muted">
                   {formatDateKo(latest.entryDate)}
                 </span>
@@ -132,7 +157,10 @@ export default async function TodayPage() {
         )}
 
         {latestReview ? (
-          <Link href={`/reviews/${latestReview.id}`} className="sm:col-span-2 xl:col-span-1">
+          <Link
+            href={`/reviews/${latestReview.id}`}
+            className="sm:col-span-2 xl:col-span-1"
+          >
             <section className="flex h-full min-h-[160px] flex-col justify-between overflow-hidden rounded-2xl bg-[linear-gradient(165deg,#2a3a2f,#152018)] p-6 text-white">
               <span className="inline-flex w-fit rounded-full bg-white/15 px-3 py-1 text-label-sm">
                 AI 회고
