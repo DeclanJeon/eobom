@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getOptionalUser } from "@/lib/session";
 import { LandingHero } from "@/components/landing-hero";
@@ -16,7 +15,11 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const user = await getOptionalUser();
-  if (user) redirect("/today");
 
-  return <LandingHero />;
+  return (
+    <LandingHero
+      isAuthenticated={Boolean(user)}
+      displayName={user?.displayName || user?.name || null}
+    />
+  );
 }

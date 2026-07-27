@@ -8,7 +8,13 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const floatWords = ["잇다", "머무르다", "다시 읽다", "조용히", "오늘"];
 
-export function LandingHero() {
+export function LandingHero({
+  isAuthenticated = false,
+  displayName = null,
+}: {
+  isAuthenticated?: boolean;
+  displayName?: string | null;
+}) {
   const reduce = useReducedMotion();
 
   const orbs = useMemo(
@@ -119,12 +125,21 @@ export function LandingHero() {
             >
               문의
             </Link>
-            <Link
-              href="/login"
-              className="rounded-full border border-[#E0DDD7] bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
-            >
-              로그인
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href="/today"
+                className="rounded-full border border-[#E0DDD7] bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+              >
+                {displayName ? `${displayName}의 오늘` : "내 기록으로"}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full border border-[#E0DDD7] bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+              >
+                로그인
+              </Link>
+            )}
           </nav>
         </motion.header>
 
@@ -209,7 +224,7 @@ export function LandingHero() {
                   whileTap={reduce ? undefined : { scale: 0.98 }}
                 >
                   <Link
-                    href="/login"
+                    href={isAuthenticated ? "/today" : "/login"}
                     className="cta-primary relative inline-flex min-h-[52px] overflow-hidden px-8 py-4 text-base shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
                   >
                     {!reduce ? (
@@ -225,15 +240,26 @@ export function LandingHero() {
                         }}
                       />
                     ) : null}
-                    <span className="relative">Google로 시작하기</span>
+                    <span className="relative">
+                      {isAuthenticated ? "오늘 기록으로" : "Google로 시작하기"}
+                    </span>
                   </Link>
                 </motion.div>
-                <Link
-                  href="/contact"
-                  className="cta-secondary min-h-[52px] px-6 py-4 text-base"
-                >
-                  문의하기
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/entries/new"
+                    className="cta-secondary min-h-[52px] px-6 py-4 text-base"
+                  >
+                    묵상 기록하기
+                  </Link>
+                ) : (
+                  <Link
+                    href="/contact"
+                    className="cta-secondary min-h-[52px] px-6 py-4 text-base"
+                  >
+                    문의하기
+                  </Link>
+                )}
               </motion.div>
 
               <motion.p
@@ -333,8 +359,8 @@ export function LandingHero() {
         >
           <p>© {new Date().getFullYear()} 이어봄 · PonsLink</p>
           <div className="flex gap-4">
-            <Link href="/login" className="hover:text-primary">
-              시작하기
+            <Link href={isAuthenticated ? "/today" : "/login"} className="hover:text-primary">
+              {isAuthenticated ? "내 기록" : "시작하기"}
             </Link>
             <Link href="/contact" className="hover:text-primary">
               문의
