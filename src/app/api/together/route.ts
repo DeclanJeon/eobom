@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  generateTopicTagsWithMimo,
+  sanitizeTopicTags,
+} from "@/lib/together-tags";
 import { parseJsonArray, toJsonArray } from "@/lib/utils";
 
 export async function GET() {
@@ -53,6 +57,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const scriptureRefs = Array.isArray(body.scriptureRefs)
+    ? body.scriptureRefs
+        .filter((s): s is string => typeof s === "string")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 5)
+    : [];
+
   if (body.sourceEntryId) {
     const entry = await db.reflectionEntry.findFirst({
       where: {
@@ -62,8 +74,21 @@ export async function POST(request: Request) {
       },
     });
     if (!entry) {
-      return NextResponse.json({ error: "원문 기록을 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json(
+        { error: "원문 기록을 찾을 수 없습니다." },
+        { status: 404 },
+      );
     }
+  }
+
+  let topicTags = sanitizeTopicTags(body.topicTags, 5);
+  if (topicTags.length === 0) {
+    const generated = await generateTopicTagsWithMimo({
+      publicBody,
+      scriptureRefs,
+      limit: 5,
+    });
+    topicTags = generated.tags;
   }
 
   const safety = scanSafety(publicBody);
@@ -72,8 +97,8 @@ export async function POST(request: Request) {
       ownerUserId: session.user.id,
       sourceEntryId: body.sourceEntryId || null,
       publicBody,
-      scriptureRefs: toJsonArray(body.scriptureRefs),
-      topicTags: toJsonArray(body.topicTags),
+      scriptureRefs: toJsonArray(scriptureRefs),
+      topicTags: toJsonArray(topicTags),
       pseudonym: body.pseudonym?.trim() || "익명의 순례자",
       safetyScanResult: JSON.stringify(safety),
       visibility: safety.blocked ? "private" : "public",
@@ -83,7 +108,8 @@ export async function POST(request: Request) {
   if (safety.blocked) {
     return NextResponse.json(
       {
-        error: "개인정보 또는 위험 표현이 감지되어 공개되지 않았습니다. 내용을 수정해 주세요.",
+        error:
+          "개인정보 또는 위험 표현이 감지되어 공개되지 않았습니다. 내용을 수정해 주세요.",
         safety,
         id: created.id,
       },
@@ -91,12 +117,19 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ item: created }, { status: 201 });
+  return NextResponse.json(
+    {
+      item: {
+        ...created,
+        scriptureRefs,
+        topicTags,
+      },
+    },
+    { status: 201 },
+  );
 }
 
-function summarizeReactions(
-  reactions: Array<{ reactionType: string }>,
-) {
+function summarizeReactions(reactions: Array<{ reactionType: string }>) {
   const counts: Record<string, number> = {};
   for (const r of reactions) {
     counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
@@ -117,6 +150,9 @@ function scanSafety(text: string) {
   }
   return {
     findings,
-    blocked: findings.includes("phone") || findings.includes("email") || findings.includes("crisis"),
+    blocked:
+      findings.includes("phone") ||
+      findings.includes("email") ||
+      findings.includes("crisis"),
   };
 }

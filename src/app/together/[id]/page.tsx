@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
@@ -26,27 +27,59 @@ export default async function TogetherDetailPage({
     counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
   }
 
+  const scriptures = parseJsonArray(item.scriptureRefs);
+  const tags = parseJsonArray(item.topicTags);
+
   return (
     <AppShell title="공유 묵상">
+      <div className="mb-4">
+        <Link
+          href="/together"
+          className="text-label-md text-text-muted transition hover:text-primary"
+        >
+          ← 피드로
+        </Link>
+      </div>
       <SurfaceCard className="bg-surface-shared/70">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-label-md text-primary">
-            {item.pseudonym || "익명의 순례자"}
-          </p>
-          <span className="text-label-sm text-text-muted">
-            {formatDateKo(item.publishedAt)}
+          <span className="flex size-9 items-center justify-center rounded-full bg-[#F7F0E2] text-label-md font-semibold text-gold-ink">
+            {(item.pseudonym || "익").slice(0, 1)}
           </span>
+          <div>
+            <p className="text-label-md text-primary">
+              {item.pseudonym || "익명의 순례자"}
+            </p>
+            <p className="text-label-sm text-text-muted">
+              {formatDateKo(item.publishedAt)}
+            </p>
+          </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {parseJsonArray(item.scriptureRefs).map((ref) => (
-            <SoftBadge key={ref}>{ref}</SoftBadge>
-          ))}
-          {parseJsonArray(item.topicTags).map((tag) => (
-            <SoftBadge key={tag}>#{tag}</SoftBadge>
-          ))}
-        </div>
-        <p className="mt-5 whitespace-pre-wrap text-body-lg">{item.publicBody}</p>
-        <div className="mt-6">
+
+        {scriptures.length ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {scriptures.map((ref) => (
+              <span key={ref} className="chip-gold">
+                {ref}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        <p className="mt-5 whitespace-pre-wrap text-body-lg leading-relaxed">
+          {item.publicBody}
+        </p>
+
+        {tags.length ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Link key={tag} href={`/together?tag=${encodeURIComponent(tag)}`}>
+                <SoftBadge>#{tag}</SoftBadge>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-6 border-t border-[#E0DDD7] pt-4">
           <TogetherActions id={item.id} counts={counts} />
         </div>
       </SurfaceCard>

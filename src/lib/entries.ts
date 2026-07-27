@@ -49,7 +49,7 @@ function normalizeBindings(input?: ScriptureBinding[] | null): ScriptureBinding[
     }));
 }
 
-function parseBindings(raw: string | null | undefined): ScriptureBinding[] {
+export function parseBindings(raw: string | null | undefined): ScriptureBinding[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
