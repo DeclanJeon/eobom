@@ -9,10 +9,9 @@ export default async function LandingPage() {
   return (
     <div className="relative flex min-h-dvh items-center justify-center px-5">
       <main className="w-full max-w-md">
-        <div className="mb-10 flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-            ✿
-          </span>
+        <div className="mb-10 flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="이어봄" width={40} height={40} className="h-10 w-10 rounded-xl" />
           <p className="font-journal text-title-journal text-primary">이어봄</p>
         </div>
 

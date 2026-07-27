@@ -209,9 +209,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-            ✿
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
           <Link href="/" className="font-journal text-title-journal text-primary">
             이어봄
           </Link>
