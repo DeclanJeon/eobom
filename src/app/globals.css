@@ -40,6 +40,7 @@
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
   --color-primary-container: var(--primary-container);
+  --color-leaf: var(--leaf);
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -64,26 +65,27 @@
   --surface-low: #f5f3f0;
   --surface-shared: #f0f4f2;
   --text-main: #2d2d2d;
-  --text-muted: #4b5563;
+  --text-muted: #5c574f;
   --primary: #061b0e;
   --primary-foreground: #ffffff;
   --primary-container: #1b3022;
   --secondary: #e6e2dc;
   --secondary-foreground: #1c1c18;
   --muted: #efeeeb;
-  --muted-foreground: #4b5563;
+  --muted-foreground: #5c574f;
   --accent: #f5f3f0;
   --accent-foreground: #061b0e;
   --accent-gold: #c5a059;
   --accent-gold-ink: #7a5a24;
   --accent-terracotta: #b36a5e;
+  --leaf: #295c3b;
   --safety-blue: #4a6fa5;
   --destructive: #ba1a1a;
   --border: #e0ddd7;
   --input: #e0ddd7;
   --outline: #737973;
   --outline-variant: #c3c8c1;
-  --ring: #4d6453;
+  --ring: #295c3b;
   --card: #ffffff;
   --card-foreground: #1b1c1a;
   --popover: #ffffff;
@@ -112,7 +114,7 @@
     @apply bg-background text-text-main antialiased;
     font-family: var(--font-sans);
     min-height: 100dvh;
-    background-color: #fbf9f6;
+    background-color: var(--background);
   }
 
   ::selection {
@@ -122,7 +124,7 @@
 
   input::placeholder,
   textarea::placeholder {
-    color: #6b7280;
+    color: color-mix(in oklab, var(--text-muted) 90%, transparent);
     opacity: 1;
   }
 
@@ -201,7 +203,7 @@
   .paper-card {
     /* background-color only so Tailwind bg-* utilities can override */
     background-color: color-mix(in oklab, var(--card) 92%, var(--surface-low));
-    border: 1px solid #e0ddd7;
+    border: 1px solid var(--border);
     border-radius: 1rem;
     box-shadow: 0 12px 40px -28px rgba(27, 28, 26, 0.18);
     color: var(--text-main);
@@ -258,7 +260,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 1rem;
-    border: 1px solid #e0ddd7;
+    border: 1px solid var(--border);
     background: rgba(255, 255, 255, 0.8);
     color: var(--text-main);
     padding: 0.875rem 1.25rem;
@@ -276,14 +278,14 @@
     display: inline-flex;
     align-items: center;
     border-radius: 9999px;
-    border: 1px solid #e0ddd7;
+    border: 1px solid var(--border);
     background: #ffffff;
     padding: 0.25rem 0.625rem;
     font-family: var(--font-sans);
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1rem;
-    color: #3f3f46;
+    color: var(--text-muted);
   }
 
   .pb-safe {
@@ -329,6 +331,13 @@
     font-weight: 600;
     line-height: 1rem;
     color: var(--accent-gold-ink);
+  }
+  .text-leaf {
+    color: var(--leaf);
+  }
+
+  .nav-active-mark {
+    background: var(--accent-gold);
   }
 }
 
@@ -420,7 +429,7 @@
 }
 
 .entry-markdown a {
-  color: #295c3b;
+  color: var(--leaf);
   text-decoration: underline;
   text-underline-offset: 3px;
 }

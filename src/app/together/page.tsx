@@ -59,8 +59,8 @@ export default async function TogetherPage({
         <p className="text-eyebrow">익명 나눔</p>
         <h1 className="mt-2 text-display-lg text-primary md:text-4xl">함께</h1>
         <p className="mt-3 text-body-md text-text-muted">
-          원문은 공개되지 않습니다. 나누고 싶은 문장만 남겨, 같은 길을 걷는
-          이들과 가볍게 연결됩니다.
+          나눌 한 문장으로, 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지
+          않습니다.
         </p>
       </section>
 

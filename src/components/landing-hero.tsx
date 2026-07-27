@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const floatWords = ["잇다", "머무르다", "다시 읽다", "조용히", "오늘"];
+const floatWords = ["잇다", "모으다", "다시 보다", "동행", "오늘"];
 
 export function LandingHero({
   isAuthenticated = false,
@@ -128,14 +128,14 @@ export function LandingHero({
             {isAuthenticated ? (
               <Link
                 href="/today"
-                className="rounded-full border border-[#E0DDD7] bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+                className="rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
               >
                 {displayName ? `${displayName}의 오늘` : "내 기록으로"}
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="rounded-full border border-[#E0DDD7] bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+                className="rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
               >
                 로그인
               </Link>
@@ -148,13 +148,13 @@ export function LandingHero({
           <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <motion.p
-                className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#E0DDD7] bg-white/60 px-3 py-1.5 text-label-sm text-text-muted backdrop-blur"
+                className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-white/60 px-3 py-1.5 text-label-sm text-text-muted backdrop-blur"
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.55, delay: 0.05, ease }}
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-accent-gold" />
-                조용히 이어가는 신앙의 기록
+                모이고 · 다시 보이고 · 함께 가벼워집니다
               </motion.p>
 
               <h1 className="text-primary">
@@ -199,10 +199,10 @@ export function LandingHero({
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.55, duration: 0.6 }}
               >
-                {["성구", "기도", "결단", "회고"].map((label, i) => (
+                {["모으다", "잇다", "나누다"].map((label, i) => (
                   <motion.span
                     key={label}
-                    className="rounded-full border border-[#E0DDD7] bg-white/80 px-3 py-1.5 text-label-sm text-primary"
+                    className="rounded-full border border-border bg-white/80 px-3 py-1.5 text-label-sm text-primary"
                     initial={reduce ? false : { opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.6 + i * 0.08, duration: 0.4, ease }}
@@ -297,7 +297,7 @@ export function LandingHero({
                 <div className="writing-margin">
                   <p className="text-eyebrow">오늘의 한 줄</p>
                   <TypeLine
-                    text="어제의 기록이 오늘의 방향을 비춥니다."
+                    text="모이고, 다시 보이고, 함께 가벼워집니다."
                     reduce={!!reduce}
                   />
                 </div>
@@ -310,7 +310,7 @@ export function LandingHero({
                   ].map((row, i) => (
                     <motion.div
                       key={row.k}
-                      className="flex items-start gap-3 rounded-2xl border border-[#E0DDD7]/80 bg-surface-low/70 px-4 py-3"
+                      className="flex items-start gap-3 rounded-2xl border border-border/80 bg-surface-low/70 px-4 py-3"
                       initial={reduce ? false : { opacity: 0, x: 12 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.75 + i * 0.12, duration: 0.45, ease }}
@@ -332,7 +332,7 @@ export function LandingHero({
                 </div>
 
                 <motion.div
-                  className="mt-7 flex items-center justify-between border-t border-[#E0DDD7] pt-5"
+                  className="mt-7 flex items-center justify-between border-t border-border pt-5"
                   initial={reduce ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.15 }}
@@ -343,7 +343,7 @@ export function LandingHero({
                     animate={reduce ? undefined : { opacity: [0.45, 1, 0.45] }}
                     transition={{ duration: 3.2, repeat: Infinity }}
                   >
-                    당신만의 평온한 공간
+                    이어서, 다시 보다
                   </motion.span>
                 </motion.div>
               </motion.div>
@@ -352,7 +352,7 @@ export function LandingHero({
         </main>
 
         {/* Product story: clear use cases below the first impression */}
-        <section className="border-t border-[#E0DDD7]/70 py-20 md:py-28">
+        <section className="border-t border-border/70 py-20 md:py-28">
           <motion.div
             className="max-w-2xl"
             initial={reduce ? false : { opacity: 0, y: 16 }}
@@ -361,34 +361,34 @@ export function LandingHero({
             transition={{ duration: 0.65, ease }}
           >
             <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
-              기록은 세 가지면 충분합니다
+              세 걸음이면 충분합니다
             </h2>
             <p className="mt-4 text-body-md text-text-muted">
-              말씀을 고르고, 마음을 남기고, 시간이 지난 뒤 다시 읽습니다.
+              모으고, 잇고, 나눕니다. 거창한 계획보다 오늘의 한 줄부터.
             </p>
           </motion.div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
               {
-                title: "말씀을 고릅니다",
-                body: "성경 책과 장, 절을 선택해 오늘의 묵상에 연결합니다.",
+                title: "모으다",
+                body: "흩어진 성구와 기도, 결단을 한 기록지에 남깁니다.",
                 tone: "bg-[#edf3ec]",
               },
               {
-                title: "마음을 남깁니다",
-                body: "기도, 질문, 결단을 한 문장부터 부담 없이 적습니다.",
-                tone: "bg-[#fbf3db]",
+                title: "잇다",
+                body: "어제의 기록이 오늘의 방향을 비추도록 회고로 다시 만납니다.",
+                tone: "bg-[#f7f0e2]",
               },
               {
-                title: "다시 만납니다",
-                body: "과거의 오늘과 회고 초안으로 기록의 흐름을 돌아봅니다.",
-                tone: "bg-[#e1f3fe]",
+                title: "나누다",
+                body: "원할 때만 한 문장을 익명으로 나눠 공감과 기도를 나눕니다.",
+                tone: "bg-[#f3ebe7]",
               },
             ].map((item, index) => (
               <motion.div
                 key={item.title}
-                className={`min-h-[190px] rounded-2xl border border-[#E0DDD7] p-6 ${item.tone}`}
+                className={`min-h-[190px] rounded-2xl border border-border p-6 ${item.tone}`}
                 initial={reduce ? false : { opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -400,7 +400,7 @@ export function LandingHero({
                 <h3 className="mt-12 text-xl font-semibold text-primary">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-[#374151]">
+                <p className="mt-2 text-sm leading-relaxed text-text-muted">
                   {item.body}
                 </p>
               </motion.div>
@@ -408,7 +408,7 @@ export function LandingHero({
           </div>
         </section>
 
-        <section className="grid gap-8 border-t border-[#E0DDD7]/70 py-20 md:grid-cols-[1fr_0.8fr] md:items-center md:py-28">
+        <section className="grid gap-8 border-t border-border/70 py-20 md:grid-cols-[1fr_0.8fr] md:items-center md:py-28">
           <motion.div
             initial={reduce ? false : { opacity: 0, x: -12 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -423,7 +423,7 @@ export function LandingHero({
             </p>
           </motion.div>
           <motion.div
-            className="border-l-2 border-[#c5a059] pl-6"
+            className="border-l-2 border-accent-gold pl-6"
             initial={reduce ? false : { opacity: 0, x: 12 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.35 }}
@@ -439,17 +439,17 @@ export function LandingHero({
         </section>
 
         <motion.section
-          className="border-t border-[#E0DDD7]/70 py-20 text-center md:py-28"
+          className="border-t border-border/70 py-20 text-center md:py-28"
           initial={reduce ? false : { opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.65, ease }}
         >
           <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
-            오늘의 한 줄부터 시작하세요
+            오늘의 한 줄부터
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-body-md text-text-muted">
-            거창한 계획보다 지금 마음에 남은 말씀 하나를 기록해 보세요.
+            쌓임의 시작은 거창하지 않습니다. 마음에 남은 말씀 하나면 됩니다.
           </p>
           <Link
             href={isAuthenticated ? "/entries/new" : "/login"}
@@ -460,7 +460,7 @@ export function LandingHero({
         </motion.section>
 
         <motion.footer
-          className="flex flex-col items-start justify-between gap-3 border-t border-[#E0DDD7]/70 pt-5 text-label-sm text-text-muted md:flex-row md:items-center"
+          className="flex flex-col items-start justify-between gap-3 border-t border-border/70 pt-5 text-label-sm text-text-muted md:flex-row md:items-center"
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1, duration: 0.5 }}

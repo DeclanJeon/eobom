@@ -55,7 +55,7 @@ export default async function TodayPage() {
             </span>
           </h1>
           <p className="mt-3 max-w-xl text-body-md text-text-muted">
-            흩어진 묵상을 한곳에 남기고, 필요할 때 다시 만납니다.
+            오늘 머문 말씀이, 내일의 나를 만납니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/entries/new" className="cta-primary min-h-[48px] px-6 py-3">

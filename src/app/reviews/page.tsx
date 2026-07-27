@@ -22,7 +22,7 @@ export default async function ReviewsPage() {
           그간의 여정을 갈무리합니다
         </h1>
         <p className="mt-3 text-body-md text-text-muted">
-          흩어진 묵상과 기록들을 모아, 평가가 아닌 성찰 초안으로 정리합니다.
+          평가가 아니라, 기록이 비추는 거울입니다.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/reviews/new" className="cta-primary min-h-[48px] px-6 py-3">

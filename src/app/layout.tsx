@@ -28,7 +28,7 @@ const siteUrl =
 const siteName = "이어봄";
 const titleDefault = "이어봄 — 흩어진 묵상을 잇는 개인 기록지";
 const description =
-  "이어봄(Eobom)은 성경 묵상·큐티·기도·결단을 한곳에 남기고, AI 회고로 과거의 기록을 다시 연결하는 개인 묵상 기록 웹 서비스입니다. 평가하지 않는 성찰 도구.";
+  "모이고, 다시 보이고, 함께 가벼워집니다. 성경 묵상·기도·결단을 한곳에 남기고, AI 회고로 어제의 기록을 오늘의 방향과 잇는 개인 묵상 공간. 평가하지 않는 성찰 도구.";
 
 export const viewport: Viewport = {
   themeColor: [
