@@ -22,6 +22,7 @@ model User {
   aiProcessingConsent       Boolean   @default(false)
   communityEnabled          Boolean   @default(false)
   pastTodayEnabled          Boolean   @default(true)
+  seatClaimedAt             DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
   deletedAt                 DateTime?
@@ -37,6 +38,7 @@ model User {
   safetyReports       SafetyReport[]
   consentRecords      ConsentRecord[]
   contactInquiries    ContactInquiry[]
+  claimedSeat         JournalSeat?
 
   @@index([personalSlug])
 }
@@ -266,4 +268,21 @@ model ContactInquiry {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
+}
+
+model JournalSeat {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  seatCode      String    @unique
+  label         String?
+  status        String    @default("unclaimed")
+  claimedUserId String?   @unique
+  claimedAt     DateTime?
+  claimedEmail  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  claimedUser User? @relation(fields: [claimedUserId], references: [id], onDelete: SetNull)
+
+  @@index([status])
 }

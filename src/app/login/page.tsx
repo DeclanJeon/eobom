@@ -10,9 +10,9 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
-  const user = await getOptionalUser();
-  if (user) redirect("/today");
   const params = await searchParams;
+  const user = await getOptionalUser();
+  if (user) redirect(params.callbackUrl || "/today");
 
   return (
     <div className="relative flex min-h-dvh items-center justify-center px-5">
@@ -37,7 +37,16 @@ export default async function LoginPage({
         ) : null}
 
         <div className="mt-8">
-          <LoginButton callbackUrl={params.callbackUrl || "/today"} />
+          {(() => {
+          const cb = params.callbackUrl || "/today";
+          const m = cb.match(/^\/j\/([a-z0-9-]+)/i);
+          return (
+            <LoginButton
+              callbackUrl={cb}
+              claimSlug={m?.[1]?.toLowerCase()}
+            />
+          );
+        })()}
         </div>
 
         <p className="mt-6 text-label-sm text-text-muted">
