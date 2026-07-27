@@ -225,7 +225,7 @@ export function LandingHero({
                 >
                   <Link
                     href={isAuthenticated ? "/today" : "/login"}
-                    className="cta-primary relative inline-flex min-h-[52px] overflow-hidden px-8 py-4 text-base shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
+                    className="cta-primary relative inline-flex min-h-[48px] overflow-hidden px-8 py-3 text-base shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
                   >
                     {!reduce ? (
                       <motion.span
@@ -241,21 +241,21 @@ export function LandingHero({
                       />
                     ) : null}
                     <span className="relative">
-                      {isAuthenticated ? "오늘 기록으로" : "Google로 시작하기"}
+                      {isAuthenticated ? "오늘의 기록" : "Google로 시작하기"}
                     </span>
                   </Link>
                 </motion.div>
                 {isAuthenticated ? (
                   <Link
                     href="/entries/new"
-                    className="cta-secondary min-h-[52px] px-6 py-4 text-base"
+                    className="cta-secondary min-h-[48px] px-6 py-3 text-base"
                   >
                     묵상 기록하기
                   </Link>
                 ) : (
                   <Link
                     href="/contact"
-                    className="cta-secondary min-h-[52px] px-6 py-4 text-base"
+                    className="cta-secondary min-h-[48px] px-6 py-3 text-base"
                   >
                     문의하기
                   </Link>
@@ -453,9 +453,9 @@ export function LandingHero({
           </p>
           <Link
             href={isAuthenticated ? "/entries/new" : "/login"}
-            className="cta-primary mt-8 min-h-[50px] px-7 py-4"
+            className="cta-primary mt-8 min-h-[48px] px-7 py-3"
           >
-            {isAuthenticated ? "새 기록 쓰기" : "Google로 시작하기"}
+            {isAuthenticated ? "묵상 기록하기" : "Google로 시작하기"}
           </Link>
         </motion.section>
 
@@ -469,9 +469,6 @@ export function LandingHero({
           <div className="flex gap-4">
             <Link href={isAuthenticated ? "/today" : "/login"} className="hover:text-primary">
               {isAuthenticated ? "내 기록" : "시작하기"}
-            </Link>
-            <Link href="/contact" className="hover:text-primary">
-              문의
             </Link>
           </div>
         </motion.footer>

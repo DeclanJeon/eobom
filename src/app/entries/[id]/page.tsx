@@ -28,7 +28,7 @@ export default async function EntryDetailPage({
       action={
         <Link
           href={`/entries/${entry.id}/edit`}
-          className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground"
+          className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
         >
           수정
         </Link>

@@ -45,7 +45,7 @@ export default async function TodayPage() {
 
   return (
     <AppShell wide bare>
-      <section className="mb-8 md:mb-12 md:grid md:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] md:items-end md:gap-12">
+      <section className="mb-8 md:mb-12">
         <div>
           <p className="text-eyebrow">{formatDateKo(now)}</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
@@ -67,37 +67,8 @@ export default async function TodayPage() {
           </div>
         </div>
 
-        <div className="mt-8 hidden md:block">
-          <SurfaceCard tone="dark">
-            <p className="text-label-sm text-on-dark-muted">빠른 시작</p>
-            <p className="mt-2 font-journal text-xl leading-snug text-white">
-              성구를 고르고, 마음에 남는 한 줄을 적으세요.
-            </p>
-            <Link
-              href="/entries/new"
-              className="mt-5 inline-flex text-label-md font-medium text-white underline-offset-4 hover:underline"
-            >
-              지금 쓰기 →
-            </Link>
-          </SurfaceCard>
-        </div>
       </section>
 
-      {/* Mobile primary CTA card */}
-      <Link href="/entries/new" className="mb-4 block md:hidden">
-        <SurfaceCard
-          tone="dark"
-          className="flex min-h-[140px] flex-col justify-between"
-        >
-          <div>
-            <p className="text-headline-sm text-white">묵상 기록하기</p>
-            <p className="mt-2 text-label-md text-on-dark-muted">
-              오늘 주신 말씀을 마음에 새깁니다
-            </p>
-          </div>
-          <p className="text-label-md font-medium text-white">기록 시작하기 →</p>
-        </SurfaceCard>
-      </Link>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {latest ? (
