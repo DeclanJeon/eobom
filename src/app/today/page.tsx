@@ -2,10 +2,17 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { RereadScriptureList } from "@/components/reread-scripture-list";
 import { listOpenActionSteps } from "@/lib/actions";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
+import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
+import { pastTodayDateRanges } from "@/lib/past-today";
+import {
+  isReviewStaleForHome,
+  selectHomeRereadScriptures,
+} from "@/lib/reread-scriptures";
+import { getUserPreferenceFlags } from "@/lib/user-preferences";
 
 export const metadata = { title: "오늘" };
 
@@ -13,11 +20,12 @@ export default async function TodayPage() {
   const user = await requireUser();
   const now = new Date();
 
-  const [recent, openActions, latestReview] = await Promise.all([
+  const [flags, entryPool, openActions, latestReview] = await Promise.all([
+    getUserPreferenceFlags(user.id),
     db.reflectionEntry.findMany({
       where: { userId: user.id, deletedAt: null },
       orderBy: { entryDate: "desc" },
-      take: 4,
+      take: 40,
     }),
     listOpenActionSteps(user.id, 3),
     db.reviewReport.findFirst({
@@ -26,24 +34,56 @@ export default async function TodayPage() {
     }),
   ]);
 
+  const recent = entryPool.slice(0, 4);
   const latest = recent[0] ?? null;
 
-  const pastToday = (
-    await db.reflectionEntry.findMany({
-      where: { userId: user.id, deletedAt: null },
-      orderBy: { entryDate: "desc" },
-      take: 400,
-    })
-  )
-    .filter((e) => {
-      const d = e.entryDate;
-      return (
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate() &&
-        d.getFullYear() < now.getFullYear()
-      );
-    })
-    .slice(0, 1)[0];
+  let allowedRefs: string[] = [];
+  if (latestReview && !isReviewStaleForHome(latestReview)) {
+    const includedEntryIds = parseJsonArray(latestReview.includedEntryIds);
+    if (includedEntryIds.length) {
+      allowedRefs = (
+        await db.reflectionEntry.findMany({
+          where: {
+            id: { in: includedEntryIds },
+            userId: user.id,
+            deletedAt: null,
+          },
+          select: { scriptureRefs: true },
+        })
+      ).flatMap((entry) => parseJsonArray(entry.scriptureRefs));
+    }
+  }
+
+  const fallbackEntries = entryPool.map((entry) => ({
+    id: entry.id,
+    entryDate: entry.entryDate,
+    title: entry.title,
+    scriptureRefs: parseJsonArray(entry.scriptureRefs),
+  }));
+
+  const homeSelection = selectHomeRereadScriptures({
+    report: latestReview,
+    allowedRefs,
+    fallbackEntries,
+    max: 2,
+  });
+  const homeReread = homeSelection.items;
+  const fromReview = homeSelection.source === "review";
+
+  let pastToday: (typeof entryPool)[number] | null = null;
+  if (flags.pastTodayEnabled) {
+    const ranges = pastTodayDateRanges(now, 8);
+    if (ranges.length) {
+      pastToday = await db.reflectionEntry.findFirst({
+        where: {
+          userId: user.id,
+          deletedAt: null,
+          OR: ranges.map((r) => ({ entryDate: { gte: r.gte, lte: r.lte } })),
+        },
+        orderBy: { entryDate: "desc" },
+      });
+    }
+  }
 
   const greeting = user.displayName || user.name || "순례자";
 
@@ -96,7 +136,26 @@ export default async function TodayPage() {
           </div>
         </section>
       ) : null}
-
+      {homeReread.length ? (
+        <section className="mb-8 md:mb-10">
+          <RereadScriptureList
+            items={homeReread}
+            variant="home"
+            title={fromReview ? "다시 머물 수 있는 본문" : "최근에 머문 본문"}
+            subtitle={
+              fromReview
+                ? "최근 회고에서 이어진 말씀입니다."
+                : "직접 기록에 남긴 성구입니다."
+            }
+            meta={
+              fromReview && latestReview
+                ? `${latestReview.reportType} 회고 · ${formatDateShort(latestReview.periodEnd)} 기준`
+                : undefined
+            }
+            reviewHref={fromReview && latestReview ? `/reviews/${latestReview.id}` : undefined}
+          />
+        </section>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {latest ? (
           <Link href={`/entries/${latest.id}`}>
@@ -125,36 +184,38 @@ export default async function TodayPage() {
           </SurfaceCard>
         )}
 
-        {pastToday ? (
-          <Link href={`/entries/${pastToday.id}`}>
-            <SurfaceCard className="writing-margin h-full">
-              <p className="mb-3 text-label-md text-accent-terracotta">
-                과거의 오늘 ·{" "}
-                {now.getFullYear() - pastToday.entryDate.getFullYear()}년 전
+        {flags.pastTodayEnabled ? (
+          pastToday ? (
+            <Link href={`/entries/${pastToday.id}`}>
+              <SurfaceCard className="writing-margin h-full">
+                <p className="mb-3 text-label-md text-accent-terracotta">
+                  과거의 오늘 ·{" "}
+                  {now.getFullYear() - pastToday.entryDate.getFullYear()}년 전
+                </p>
+                <h2 className="text-headline-sm text-primary">
+                  {pastToday.title || "제목 없음"}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-body-md text-text-main">
+                  {excerpt(pastToday.reflectionBody, 110)}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {parseJsonArray(pastToday.tags)
+                    .slice(0, 3)
+                    .map((tag) => (
+                      <SoftBadge key={tag}>#{tag}</SoftBadge>
+                    ))}
+                </div>
+              </SurfaceCard>
+            </Link>
+          ) : (
+            <SurfaceCard className="h-full bg-surface-low/60">
+              <p className="text-label-md text-text-muted">과거의 오늘</p>
+              <p className="mt-2 text-body-md text-text-muted">
+                같은 날짜의 과거 기록이 쌓이면 여기에 부드럽게 다시 만납니다.
               </p>
-              <h2 className="text-headline-sm text-primary">
-                {pastToday.title || "제목 없음"}
-              </h2>
-              <p className="mt-2 line-clamp-3 text-body-md text-text-main">
-                {excerpt(pastToday.reflectionBody, 110)}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {parseJsonArray(pastToday.tags)
-                  .slice(0, 3)
-                  .map((tag) => (
-                    <SoftBadge key={tag}>#{tag}</SoftBadge>
-                  ))}
-              </div>
             </SurfaceCard>
-          </Link>
-        ) : (
-          <SurfaceCard className="h-full bg-surface-low/60">
-            <p className="text-label-md text-text-muted">과거의 오늘</p>
-            <p className="mt-2 text-body-md text-text-muted">
-              같은 날짜의 과거 기록이 쌓이면 여기에 부드럽게 다시 만납니다.
-            </p>
-          </SurfaceCard>
-        )}
+          )
+        ) : null}
 
         {latestReview ? (
           <Link

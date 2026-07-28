@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession, requireApiUser } from "@/lib/session";
 import {
   CLAIM_COOKIE,
   claimErrorMessage,
@@ -21,8 +20,10 @@ function clearClaimCookie(res: NextResponse) {
 
 /** Explicit JSON claim (session required). */
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || !session.user.email) {
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
+  if (!user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "slug required" }, { status: 400 });
     }
 
-    const seat = await claimSeat(session.user.id, session.user.email, slug);
+    const seat = await claimSeat(user.id, user.email, slug);
     const res = NextResponse.json({
       ok: true,
       slug: seat.slug,
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
  * Safe to call from a Server Component via redirect (cookie write allowed here).
  */
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
   const url = new URL(request.url);
   const slug = normalizeSeatSlug(url.searchParams.get("slug") || "");
   const base = process.env.NEXTAUTH_URL || process.env.APP_URL || url.origin;
@@ -83,7 +84,6 @@ export async function GET(request: Request) {
     const dest = new URL(`/j/${slug}`, base);
     dest.searchParams.set("claim", code);
     const res = NextResponse.redirect(dest);
-    // keep cookie only if useful for retry; clear on hard failures
     if (code === "already_claimed" || code === "user_has_other_seat") {
       clearClaimCookie(res);
     }

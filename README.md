@@ -44,7 +44,8 @@
 
 - **오늘의 묵상** — 성구 선택(책·장·절), 본문 미리보기, 자유 기록
 - **기록함** — 날짜·성구·태그로 지난 묵상 다시 읽기
-- **AI 회고** — 기간별 테마·감정·결단 흐름을 근거와 함께 정리
+- **AI 회고** — 기간별 테마·감정·결단 흐름을 근거와 함께 정리 (설정에서 외부 처리 허용 필요)
+- **다시 머물 본문** — 회고·오늘 홈에서 기록에 등장한 말씀을 처방 없이 다시 연결
 - **함께** — 익명 나눔, 성구 선택, AI 주제 태그, 공감·기도 반응
 - **내 기록지** — QR 키링 입구(`/j/{slug}`), 설정·내보내기
 
@@ -99,7 +100,8 @@ bun run dev
 |:---|:---|
 | `bun run dev` | 개발 서버 (3100) |
 | `bun run build` | 프로덕션 빌드 |
-| `bun run test` | 단위 테스트 |
+| `bun run test` / `test:unit` | DB 없는 단위 테스트 |
+| `bun run test:seats` | seats DB 테스트 |
 | `bun run db:push` | 스키마 반영 |
 | `./deploy/deploy.sh` | 운영 배포 |
 
@@ -116,6 +118,14 @@ bun run dev
 /j/[slug]        개인 키링 입구
 /contact         문의
 ```
+
+## 운영 메모
+
+- **헬스체크** — `GET /api/health` (생존), `GET /api/health?db=1` (SQLite 핑, 실패 시 503)
+- **Rate limit** — 프로세스 메모리 슬라이딩 윈도우(단일 인스턴스 전제). 스케일 아웃 시 공유 스토어 필요
+- **테스트** — `bun run test:unit` (DB 불필요), `bun run test:seats` (SQLite 파일 필요)
+- **아카이브** — 과거 Stitch 시안은 `docs/archive/`
+- **후속** — 기도 주제 UI 등은 `docs/deferred/`
 
 ## 배포
 

@@ -1,4 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { db } from "../src/lib/db";
 import {
   allocateWebUserSlug,
@@ -11,6 +13,36 @@ import {
   KEYRING_MAX,
   provisionSeats,
 } from "../src/lib/seats";
+
+/** Resolve Prisma `file:` URLs (absolute or cwd-relative). */
+export function resolveSqlitePath(url: string): string | null {
+  if (!url.startsWith("file:")) return null;
+  let filePath = url.slice("file:".length);
+  // file:/abs or file:///abs
+  if (filePath.startsWith("///")) filePath = filePath.slice(2);
+  if (filePath.startsWith("/") && !filePath.startsWith("//")) {
+    return filePath;
+  }
+  return path.resolve(process.cwd(), filePath.replace(/^\.\//, ""));
+}
+
+function dbAvailable() {
+  const url = process.env.DATABASE_URL || "";
+  const filePath = resolveSqlitePath(url);
+  return Boolean(filePath && existsSync(filePath));
+}
+
+const hasDb = dbAvailable();
+const dbDescribe = hasDb ? describe : describe.skip;
+
+describe("resolveSqlitePath", () => {
+  test("absolute and relative file URLs", () => {
+    expect(resolveSqlitePath("file:/tmp/x.db")).toBe("/tmp/x.db");
+    expect(resolveSqlitePath("postgres://x")).toBeNull();
+    const rel = resolveSqlitePath("file:./db/eobom.db");
+    expect(rel?.endsWith("db/eobom.db")).toBe(true);
+  });
+});
 
 describe("slug namespaces", () => {
   test("keyring e01–e10000", () => {
@@ -37,7 +69,7 @@ describe("slug namespaces", () => {
   });
 });
 
-describe("allocateWebUserSlug", () => {
+dbDescribe("allocateWebUserSlug", () => {
   test("returns u-prefixed unique slug outside keyring namespace", async () => {
     const a = await allocateWebUserSlug();
     const b = await allocateWebUserSlug();
@@ -57,7 +89,7 @@ describe("allocateWebUserSlug", () => {
   });
 });
 
-describe("provision and claim", () => {
+dbDescribe("provision and claim", () => {
   beforeAll(async () => {
     await provisionSeats({ count: 13, prefix: "e" });
   });

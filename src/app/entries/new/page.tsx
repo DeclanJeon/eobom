@@ -4,12 +4,17 @@ import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "기록하기" };
 
-export default async function NewEntryPage() {
+export default async function NewEntryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ scripture?: string }>;
+}) {
   await requireUser();
+  const { scripture } = await searchParams;
   return (
     <AppShell bare>
       <div className="mx-auto max-w-2xl">
-        <EntryForm />
+        <EntryForm seedScripture={scripture} />
       </div>
     </AppShell>
   );

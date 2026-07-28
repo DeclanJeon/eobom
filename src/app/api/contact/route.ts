@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { sendContactEmail } from "@/lib/mail";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import { contactSchema, parseJsonBody } from "@/lib/api-schemas";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      name?: string;
-      email?: string;
-      subject?: string;
-      message?: string;
-    };
+    const parsed = await parseJsonBody(request, contactSchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
     const name = body.name?.trim() || "";
     const email = body.email?.trim() || "";
@@ -28,7 +30,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "이메일 형식이 올바르지 않습니다." }, { status: 400 });
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
+    const rateKey = session?.user?.id
+      ? `contact:user:${session.user.id}`
+      : `contact:ip:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"}`;
+    const limited = checkRateLimit(rateKey, RATE_LIMITS.contact);
+    if (!limited.ok) {
+      return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      });
+    }
 
     const inquiry = await db.contactInquiry.create({
       data: {

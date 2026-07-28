@@ -1,29 +1,27 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { parseJsonArray } from "@/lib/utils";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format") || "json";
 
   const [entries, reviews, shared] = await Promise.all([
     db.reflectionEntry.findMany({
-      where: { userId: session.user.id, deletedAt: null },
+      where: { userId: user.id, deletedAt: null },
       orderBy: { entryDate: "asc" },
     }),
     db.reviewReport.findMany({
-      where: { userId: session.user.id, deletedAt: null },
+      where: { userId: user.id, deletedAt: null },
       orderBy: { createdAt: "asc" },
     }),
     db.sharedReflection.findMany({
-      where: { ownerUserId: session.user.id, deletedAt: null },
+      where: { ownerUserId: user.id, deletedAt: null },
       orderBy: { publishedAt: "asc" },
     }),
   ]);
@@ -31,9 +29,9 @@ export async function GET(request: Request) {
   const payload = {
     exportedAt: new Date().toISOString(),
     user: {
-      email: session.user.email,
-      displayName: session.user.displayName,
-      personalSlug: session.user.personalSlug,
+      email: user.email,
+      displayName: user.displayName,
+      personalSlug: user.personalSlug,
     },
     entries: entries.map((e) => ({
       ...e,

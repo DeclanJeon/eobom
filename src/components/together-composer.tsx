@@ -17,13 +17,32 @@ export function TogetherComposer({
   initialBody = "",
   initialBindings = [],
   autoOpen = false,
+  communityEnabled = true,
 }: {
   sourceEntryId?: string;
   initialBody?: string;
   initialBindings?: ScriptureBinding[];
   autoOpen?: boolean;
+  communityEnabled?: boolean;
 }) {
-  const [open, setOpen] = useState(autoOpen);
+  const [open, setOpen] = useState(autoOpen && communityEnabled);
+
+  if (!communityEnabled) {
+    return (
+      <div className="mb-6 rounded-2xl border border-[#E0DDD7] bg-white/95 px-4 py-4">
+        <p className="text-label-md text-primary">익명 나눔이 꺼져 있습니다</p>
+        <p className="mt-1 text-label-sm text-text-muted">
+          설정에서 익명 피드 참여를 켜면 한 문장을 나눌 수 있습니다.
+        </p>
+        <a
+          href="/me/settings"
+          className="mt-3 inline-flex text-label-md text-primary underline-offset-2 hover:underline"
+        >
+          설정으로 이동
+        </a>
+      </div>
+    );
+  }
 
   return (
     <>

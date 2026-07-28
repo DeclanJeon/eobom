@@ -1,18 +1,44 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { parseJsonBody, togetherTagsSchema } from "@/lib/api-schemas";
 import { generateTopicTagsWithMimo } from "@/lib/together-tags";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import {
+  CONSENT_AI_TAGS_MESSAGE,
+  consentAiDeniedBody,
+  getUserPreferenceFlags,
+} from "@/lib/user-preferences";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
+
+  const flags = await getUserPreferenceFlags(user.id);
+  if (!flags.aiProcessingConsent) {
+    return NextResponse.json(consentAiDeniedBody(CONSENT_AI_TAGS_MESSAGE), {
+      status: 403,
+    });
   }
 
-  const body = (await request.json()) as {
-    publicBody?: string;
-    scriptureRefs?: string[];
-  };
+  const limited = checkRateLimit(
+    `together:tags:${user.id}`,
+    RATE_LIMITS.togetherTags,
+  );
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
+
+  const parsed = await parseJsonBody(request, togetherTagsSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const publicBody = body.publicBody?.trim() || "";
   if (publicBody.length < 12) {
@@ -22,9 +48,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const scriptureRefs = Array.isArray(body.scriptureRefs)
-    ? body.scriptureRefs.filter((s): s is string => typeof s === "string").slice(0, 5)
-    : [];
+  const scriptureRefs = (body.scriptureRefs ?? []).slice(0, 5);
 
   const result = await generateTopicTagsWithMimo({
     publicBody,

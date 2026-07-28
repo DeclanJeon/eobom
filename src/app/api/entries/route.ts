@@ -1,27 +1,27 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { entryBodySchema, parseJsonBody } from "@/lib/api-schemas";
 import { createEntry, listEntries, type EntryInput } from "@/lib/entries";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") || undefined;
-  const entries = await listEntries(session.user.id, { q, limit: 100 });
+  const entries = await listEntries(user.id, { q, limit: 100 });
   return NextResponse.json({ entries });
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   try {
-    const body = (await request.json()) as EntryInput;
-    const entry = await createEntry(session.user.id, body);
+    const parsed = await parseJsonBody(request, entryBodySchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data as EntryInput;
+    const entry = await createEntry(user.id, body);
     return NextResponse.json({ entry }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

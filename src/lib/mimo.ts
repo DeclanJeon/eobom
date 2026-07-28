@@ -1,15 +1,9 @@
+import type { RereadScripture } from "@/lib/reread-scriptures";
+import { deepScrubMirror } from "@/lib/content-scrub";
+
 const DISCLAIMER =
   "이 회고는 사용자가 남긴 기록을 정리한 성찰 자료입니다. 하나님의 뜻, 신앙 상태 또는 성경의 최종 해석을 판정하지 않으며, 기도와 성경 본문 읽기, 공동체의 분별을 대신하지 않습니다.";
 
-const FORBIDDEN = [
-  /하나님이\s*당신(?:에게|께)?\s*말씀/i,
-  /하나님은\s*당신이\s*반드시/i,
-  /믿음이\s*부족/i,
-  /당신은\s*죄\s*가운데/i,
-  /이것이\s*당신의\s*소명/i,
-  /기도가\s*응답되지\s*않은\s*이유/i,
-  /하나님이\s*원하(?:신다|십니다|시는\s*것)/i,
-];
 
 export type ReviewObservation = {
   key: string;
@@ -28,7 +22,7 @@ export type StructuredReview = {
   actionFlow: ReviewObservation[];
   changesOrUnknown: string;
   rereadEntries: Array<{ entryId: string; reason: string }>;
-  rereadScriptures: Array<{ ref: string; reason: string }>;
+  rereadScriptures: RereadScripture[];
   smallPractices: string[];
   communityQuestions: string[];
   limitations: string;
@@ -50,26 +44,6 @@ export type EntryForReview = {
   tags: string[];
 };
 
-function scrubForbidden(text: string): string {
-  let out = text;
-  for (const pattern of FORBIDDEN) {
-    out = out.replace(pattern, "기록에서 관찰되는 흐름");
-  }
-  return out;
-}
-
-function deepScrub<T>(value: T): T {
-  if (typeof value === "string") return scrubForbidden(value) as T;
-  if (Array.isArray(value)) return value.map((item) => deepScrub(item)) as T;
-  if (value && typeof value === "object") {
-    const next: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      next[k] = deepScrub(v);
-    }
-    return next as T;
-  }
-  return value;
-}
 
 function fallbackReview(entries: EntryForReview[]): StructuredReview {
   const themes = new Map<string, EntryForReview[]>();
@@ -172,7 +146,7 @@ function fallbackReview(entries: EntryForReview[]): StructuredReview {
       .slice(0, 3)
       .map((ref) => ({
         ref,
-        reason: "해당 기간에 반복적으로 또는 의미 있게 등장한 본문입니다.",
+        reason: "해당 기간 기록에 등장한 본문입니다. 문맥과 함께 다시 읽어볼 수 있습니다.",
       })),
     smallPractices: [
       "이번 주 한 번의 묵상만 남겨 보기",
@@ -202,7 +176,7 @@ export async function generateReviewWithMimo(
 
   if (!apiKey || entries.length === 0) {
     return {
-      review: deepScrub(fallbackReview(entries)),
+      review: deepScrubMirror(fallbackReview(entries)),
       modelProvider: apiKey ? "mimo" : "local-fallback",
       modelName: apiKey ? model : "heuristic-v1",
     };
@@ -210,6 +184,7 @@ export async function generateReviewWithMimo(
 
   const system = `당신은 개인 묵상 기록을 정리하는 성찰 도우미입니다.
 절대 금지: 하나님의 뜻을 판정, 믿음 평가, 죄 확정, 소명 선언, 예언, 의료/법률 단정.
+rereadScriptures는 처방이나 추천이 아닌, 사용자가 기록에서 다시 방문할 본문 제안입니다. entries.scriptureRefs에 있는 본문만 선택하세요. 문맥을 위해 절 범위를 우선하고 최대 3개까지만 제시하며, 해당 본문이 없으면 빈 배열을 반환하세요. 추천, 오늘의 성구, 하나님이 주시는, 이 말씀이 답과 같은 표현을 사용하지 마세요.
 출력은 반드시 JSON 객체 하나만. 한국어. 모든 관찰은 제공된 기록 id와 인용 근거를 포함.
 disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
 
@@ -238,7 +213,7 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
       actionFlow: [],
       changesOrUnknown: "string",
       rereadEntries: [{ entryId: "", reason: "" }],
-      rereadScriptures: [{ ref: "", reason: "" }],
+      rereadScriptures: [{ ref: "", reason: "", evidenceEntryIds: [""], openQuestion: "" }],
       smallPractices: ["string"],
       communityQuestions: ["string"],
       limitations: "string",
@@ -271,7 +246,7 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
       const text = await res.text();
       console.error("MiMo error", res.status, text);
       return {
-        review: deepScrub(fallbackReview(entries)),
+        review: deepScrubMirror(fallbackReview(entries)),
         modelProvider: "local-fallback",
         modelName: "heuristic-v1",
       };
@@ -285,14 +260,14 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
     const parsed = JSON.parse(jsonText) as StructuredReview;
     parsed.disclaimer = DISCLAIMER;
     return {
-      review: deepScrub(parsed),
+      review: deepScrubMirror(parsed),
       modelProvider: "mimo",
       modelName: model,
     };
   } catch (error) {
     console.error("MiMo generate failed", error);
     return {
-      review: deepScrub(fallbackReview(entries)),
+      review: deepScrubMirror(fallbackReview(entries)),
       modelProvider: "local-fallback",
       modelName: "heuristic-v1",
     };

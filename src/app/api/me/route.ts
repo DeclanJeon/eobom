@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { mePatchSchema, parseJsonBody } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   const user = await db.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: user.id },
     select: {
       id: true,
       email: true,
@@ -31,20 +30,15 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const body = (await request.json()) as {
-    displayName?: string;
-    preferredBibleTranslation?: string;
-    aiProcessingConsent?: boolean;
-    communityEnabled?: boolean;
-    pastTodayEnabled?: boolean;
-  };
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
+  const parsed = await parseJsonBody(request, mePatchSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const user = await db.user.update({
-    where: { id: session.user.id },
+    where: { id: user.id },
     data: {
       displayName: body.displayName?.trim() || undefined,
       preferredBibleTranslation: body.preferredBibleTranslation?.trim() || undefined,
@@ -62,7 +56,7 @@ export async function PATCH(request: Request) {
   if (typeof body.aiProcessingConsent === "boolean") {
     await db.consentRecord.create({
       data: {
-        userId: session.user.id,
+        userId: user.id,
         consentType: "ai_processing",
         policyVersion: "v1",
         granted: body.aiProcessingConsent,

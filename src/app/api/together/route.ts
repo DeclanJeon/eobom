@@ -1,11 +1,28 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { parseJsonBody, togetherCreateSchema } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
 import {
   generateTopicTagsWithMimo,
   sanitizeTopicTags,
 } from "@/lib/together-tags";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import {
+  SAFETY_BLOCKED,
+  SAFETY_BLOCKED_MESSAGE,
+  scanSharedReflectionSafety,
+  shouldPersistSharedReflection,
+} from "@/lib/together-safety";
+import {
+  CONSENT_AI_TAGS_MESSAGE,
+  consentAiDeniedBody,
+  consentCommunityDeniedBody,
+  getUserPreferenceFlags,
+} from "@/lib/user-preferences";
 import { parseJsonArray, toJsonArray } from "@/lib/utils";
 
 export async function GET() {
@@ -36,18 +53,29 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
+
+  const flags = await getUserPreferenceFlags(user.id);
+  if (!flags.communityEnabled) {
+    return NextResponse.json(consentCommunityDeniedBody(), { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    sourceEntryId?: string;
-    publicBody?: string;
-    scriptureRefs?: string[];
-    topicTags?: string[];
-    pseudonym?: string;
-  };
+  const limited = checkRateLimit(
+    `together:create:${user.id}`,
+    RATE_LIMITS.togetherCreate,
+  );
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
+
+  const parsed = await parseJsonBody(request, togetherCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const publicBody = body.publicBody?.trim() || "";
   if (publicBody.length < 20) {
@@ -57,19 +85,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const scriptureRefs = Array.isArray(body.scriptureRefs)
-    ? body.scriptureRefs
-        .filter((s): s is string => typeof s === "string")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 5)
-    : [];
+  const scriptureRefs = (body.scriptureRefs ?? [])
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 5);
 
   if (body.sourceEntryId) {
     const entry = await db.reflectionEntry.findFirst({
       where: {
         id: body.sourceEntryId,
-        userId: session.user.id,
+        userId: user.id,
         deletedAt: null,
       },
     });
@@ -81,8 +106,25 @@ export async function POST(request: Request) {
     }
   }
 
+  const safety = scanSharedReflectionSafety(publicBody);
+  if (!shouldPersistSharedReflection(safety)) {
+    return NextResponse.json(
+      {
+        error: SAFETY_BLOCKED_MESSAGE,
+        safety,
+        code: SAFETY_BLOCKED,
+      },
+      { status: 400 },
+    );
+  }
+
   let topicTags = sanitizeTopicTags(body.topicTags, 5);
   if (topicTags.length === 0) {
+    if (!flags.aiProcessingConsent) {
+      return NextResponse.json(consentAiDeniedBody(CONSENT_AI_TAGS_MESSAGE), {
+        status: 403,
+      });
+    }
     const generated = await generateTopicTagsWithMimo({
       publicBody,
       scriptureRefs,
@@ -91,31 +133,18 @@ export async function POST(request: Request) {
     topicTags = generated.tags;
   }
 
-  const safety = scanSafety(publicBody);
   const created = await db.sharedReflection.create({
     data: {
-      ownerUserId: session.user.id,
+      ownerUserId: user.id,
       sourceEntryId: body.sourceEntryId || null,
       publicBody,
       scriptureRefs: toJsonArray(scriptureRefs),
       topicTags: toJsonArray(topicTags),
       pseudonym: body.pseudonym?.trim() || "익명의 순례자",
       safetyScanResult: JSON.stringify(safety),
-      visibility: safety.blocked ? "private" : "public",
+      visibility: "public",
     },
   });
-
-  if (safety.blocked) {
-    return NextResponse.json(
-      {
-        error:
-          "개인정보 또는 위험 표현이 감지되어 공개되지 않았습니다. 내용을 수정해 주세요.",
-        safety,
-        id: created.id,
-      },
-      { status: 400 },
-    );
-  }
 
   return NextResponse.json(
     {
@@ -135,24 +164,4 @@ function summarizeReactions(reactions: Array<{ reactionType: string }>) {
     counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
   }
   return counts;
-}
-
-function scanSafety(text: string) {
-  const findings: string[] = [];
-  if (/(010|011|016|017|018|019)[-.\s]?\d{3,4}[-.\s]?\d{4}/.test(text)) {
-    findings.push("phone");
-  }
-  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(text)) {
-    findings.push("email");
-  }
-  if (/(자살|죽고\s*싶|자해|타해)/.test(text)) {
-    findings.push("crisis");
-  }
-  return {
-    findings,
-    blocked:
-      findings.includes("phone") ||
-      findings.includes("email") ||
-      findings.includes("crisis"),
-  };
 }

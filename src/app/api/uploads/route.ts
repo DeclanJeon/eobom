@@ -3,6 +3,11 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/session";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MIME_EXTENSIONS: Record<string, string> = {
@@ -18,6 +23,15 @@ function uploadRoot() {
 
 export async function POST(request: Request) {
   const user = await requireUser();
+
+  const limited = checkRateLimit(`uploads:${user.id}`, RATE_LIMITS.uploads);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
+
   const form = await request.formData();
   const image = form.get("image");
 

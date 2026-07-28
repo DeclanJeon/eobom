@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/ui-blocks";
 import { TogetherComposer } from "@/components/together-composer";
 import { TogetherFeedCard } from "@/components/together-feed-card";
 import { requireUser } from "@/lib/session";
+import { getUserPreferenceFlags } from "@/lib/user-preferences";
 import { db } from "@/lib/db";
 import { parseBindings } from "@/lib/entries";
 import { parseJsonArray } from "@/lib/utils";
@@ -16,6 +17,7 @@ export default async function TogetherPage({
   searchParams: Promise<{ from?: string; tag?: string }>;
 }) {
   const user = await requireUser();
+  const flags = await getUserPreferenceFlags(user.id);
   const { from, tag } = await searchParams;
 
   const source = from
@@ -70,6 +72,7 @@ export default async function TogetherPage({
           initialBody={sourceBody}
           initialBindings={sourceBindings}
           autoOpen={Boolean(source)}
+          communityEnabled={flags.communityEnabled}
         />
 
         {popularTags.length ? (

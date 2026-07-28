@@ -89,6 +89,8 @@ export const authOptions: NextAuthOptions = {
             image: true,
             profileImageUrl: true,
             aiProcessingConsent: true,
+            communityEnabled: true,
+            pastTodayEnabled: true,
           },
         });
         session.user.personalSlug = dbUser?.personalSlug ?? "";
@@ -99,6 +101,8 @@ export const authOptions: NextAuthOptions = {
             dbUser.profileImageUrl || dbUser.image || session.user.image;
         }
         session.user.aiProcessingConsent = dbUser?.aiProcessingConsent ?? false;
+        session.user.communityEnabled = dbUser?.communityEnabled ?? false;
+        session.user.pastTodayEnabled = dbUser?.pastTodayEnabled !== false;
       }
       return session;
     },

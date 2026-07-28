@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { ScriptureBinding } from "@/lib/bible";
+import { shouldApplyScriptureSeed } from "@/lib/entry-seed";
 import { ScriptureChipList } from "@/components/scripture/scripture-chip-list";
 import { ScripturePicker } from "@/components/scripture/scripture-picker";
 import { ScripturePreviewCard } from "@/components/scripture/scripture-preview-card";
@@ -48,13 +49,16 @@ function splitList(value?: string) {
 export function EntryForm({
   initial,
   entryId,
+  seedScripture,
 }: {
   initial?: EntryFormValues;
   entryId?: string;
+  seedScripture?: string;
 }) {
   const router = useRouter();
   const draftKey = `eobom-entry-draft:${entryId || "new"}`;
-  const draftLoaded = useRef(false);
+  const seedApplied = useRef(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
   const [values, setValues] = useState<EntryFormValues>(
     initial || {
@@ -98,14 +102,14 @@ export function EntryForm({
     } catch {
       localStorage.removeItem(draftKey);
     } finally {
-      draftLoaded.current = true;
+      setIsDraftLoaded(true);
     }
   // Restore only once for this entry.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
 
   useEffect(() => {
-    if (!draftLoaded.current) return;
+    if (!isDraftLoaded) return;
     const timer = window.setTimeout(() => {
       const hasContent =
         Boolean(values.reflectionBody.trim()) ||
@@ -127,7 +131,37 @@ export function EntryForm({
       setDraftMessage("초안이 이 기기에 자동 저장되었습니다.");
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [bindings, draftKey, open, values]);
+  }, [bindings, draftKey, isDraftLoaded, open, values]);
+
+  useEffect(() => {
+    if (!isDraftLoaded || seedApplied.current || !seedScripture?.trim()) return;
+    // Draft wins over query seed; mark applied so we do not re-check every keystroke.
+    if (
+      !shouldApplyScriptureSeed({
+        seedScripture,
+        values,
+        bindingsCount: bindings.length,
+      })
+    ) {
+      seedApplied.current = true;
+      return;
+    }
+
+    seedApplied.current = true;
+    void (async () => {
+      try {
+        const res = await fetch("/api/bible/parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: seedScripture }),
+        });
+        const data = await res.json();
+        if (res.ok && data.ok?.length) addBindings(data.ok);
+      } catch {
+        // A malformed seed must not interfere with creating a new entry.
+      }
+    })();
+  }, [bindings.length, isDraftLoaded, seedScripture, values]);
 
   const canSave = useMemo(() => {
     const hasBody = Boolean(values.reflectionBody.trim());

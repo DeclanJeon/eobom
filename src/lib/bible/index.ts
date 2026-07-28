@@ -9,7 +9,7 @@ export type {
 
 export { getBook, getBookName, isValidBookCode, listBooks, translationInfo } from "./book-meta";
 export { parseSlug, toBinding, toDisplay, toSlug } from "./format";
-export { parseBibleReferences } from "./parse";
+export { formatBibleReferenceKey, parseBibleReferences } from "./parse";
 export {
   getPassageByInput,
   getPassageBySlug,

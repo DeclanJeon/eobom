@@ -10,6 +10,8 @@ declare module "next-auth" {
       personalSlug: string;
       displayName: string;
       aiProcessingConsent: boolean;
+      communityEnabled: boolean;
+      pastTodayEnabled: boolean;
     };
   }
 
@@ -17,5 +19,7 @@ declare module "next-auth" {
     personalSlug?: string;
     displayName?: string | null;
     aiProcessingConsent?: boolean;
+    communityEnabled?: boolean;
+    pastTodayEnabled?: boolean;
   }
 }

@@ -4,8 +4,10 @@ import { AppShell } from "@/components/app-shell";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { formatDateShort } from "@/lib/utils";
+import { formatDateShort, parseJsonArray } from "@/lib/utils";
 import type { StructuredReview } from "@/lib/mimo";
+import { normalizeRereadScriptures } from "@/lib/reread-scriptures";
+import { RereadScriptureList } from "@/components/reread-scripture-list";
 
 export const metadata = { title: "회고 상세" };
 
@@ -21,7 +23,25 @@ export default async function ReviewDetailPage({
   });
   if (!report) notFound();
 
-  const review = JSON.parse(report.structuredOutput) as StructuredReview;
+  let review: StructuredReview | null = null;
+  try {
+    review = JSON.parse(report.structuredOutput) as StructuredReview;
+  } catch {
+    review = null;
+  }
+
+  const includedEntryIds = parseJsonArray(report.includedEntryIds);
+  const includedEntries = includedEntryIds.length
+    ? await db.reflectionEntry.findMany({
+        where: { id: { in: includedEntryIds }, userId: user.id, deletedAt: null },
+        select: { scriptureRefs: true },
+      })
+    : [];
+  const rereadScriptures = normalizeRereadScriptures(review?.rereadScriptures, {
+    allowedRefs: includedEntries.flatMap((entry) =>
+      parseJsonArray(entry.scriptureRefs),
+    ),
+  });
 
   return (
     <AppShell title="회고">
@@ -35,68 +55,88 @@ export default async function ReviewDetailPage({
             </span>
           </div>
           <h1 className="mt-3 text-display-lg text-primary">
-            {review.oneSentence || report.summary}
+            {review?.oneSentence || report.summary || "회고"}
           </h1>
-          <p className="mt-3 rounded-2xl bg-surface-low px-4 py-3 text-label-md leading-relaxed text-text-muted">
-            {review.disclaimer}
-          </p>
+          {review?.disclaimer ? (
+            <p className="mt-3 rounded-2xl bg-surface-low px-4 py-3 text-label-md leading-relaxed text-text-muted">
+              {review.disclaimer}
+            </p>
+          ) : null}
         </div>
 
-        <ObservationSection title="자주 나타난 주제" items={review.themes} />
-        <ObservationSection title="반복해서 드러난 마음" items={review.emotions} />
-        <ObservationSection title="붙잡고 있던 질문" items={review.questions} />
-        <ObservationSection
-          title="말씀과 삶의 연결"
-          items={review.scriptureConnections}
-        />
-        <ObservationSection title="이전 결단의 흐름" items={review.actionFlow} />
-
-        <SurfaceCard>
-          <h2 className="text-headline-sm text-primary">
-            달라진 점 또는 아직 알 수 없는 점
-          </h2>
-          <p className="mt-2 text-body-md text-text-muted">
-            {review.changesOrUnknown}
-          </p>
-        </SurfaceCard>
-
-        {review.rereadEntries?.length ? (
+        {!review ? (
           <SurfaceCard>
-            <h2 className="text-headline-sm text-primary">다시 읽어볼 기록</h2>
-            <ul className="mt-3 space-y-2">
-              {review.rereadEntries.map((item) => (
-                <li key={item.entryId}>
-                  <Link
-                    href={`/entries/${item.entryId}`}
-                    className="text-label-md text-primary"
-                  >
-                    기록 열기
-                  </Link>
-                  <p className="text-label-md text-text-muted">{item.reason}</p>
-                </li>
-              ))}
-            </ul>
+            <h2 className="text-headline-sm text-primary">회고 본문을 열 수 없습니다</h2>
+            <p className="mt-2 text-body-md text-text-muted">
+              저장된 회고 형식을 읽지 못했습니다. 같은 기간으로 다시 만들어 볼 수 있습니다.
+            </p>
           </SurfaceCard>
-        ) : null}
+        ) : (
+          <>
+            <ObservationSection title="자주 나타난 주제" items={review.themes} />
+            <ObservationSection title="반복해서 드러난 마음" items={review.emotions} />
+            <ObservationSection title="붙잡고 있던 질문" items={review.questions} />
+            <ObservationSection
+              title="말씀과 삶의 연결"
+              items={review.scriptureConnections}
+            />
+            <ObservationSection title="이전 결단의 흐름" items={review.actionFlow} />
 
-        {review.smallPractices?.length ? (
-          <SurfaceCard>
-            <h2 className="text-headline-sm text-primary">작은 실천 후보</h2>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-body-md text-text-muted">
-              {review.smallPractices.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </SurfaceCard>
-        ) : null}
+            <SurfaceCard>
+              <h2 className="text-headline-sm text-primary">
+                달라진 점 또는 아직 알 수 없는 점
+              </h2>
+              <p className="mt-2 text-body-md text-text-muted">
+                {review.changesOrUnknown}
+              </p>
+            </SurfaceCard>
 
-        <SurfaceCard>
-          <h2 className="text-headline-sm text-primary">분석의 한계</h2>
-          <p className="mt-2 text-body-md text-text-muted">{review.limitations}</p>
-          <p className="mt-3 text-label-sm text-text-muted">
-            model: {report.modelProvider}/{report.modelName}
-          </p>
-        </SurfaceCard>
+            {review.rereadEntries?.length ? (
+              <SurfaceCard>
+                <h2 className="text-headline-sm text-primary">다시 읽어볼 기록</h2>
+                <ul className="mt-3 space-y-2">
+                  {review.rereadEntries.map((item) => (
+                    <li key={item.entryId}>
+                      <Link
+                        href={`/entries/${item.entryId}`}
+                        className="text-label-md text-primary"
+                      >
+                        기록 열기
+                      </Link>
+                      <p className="text-label-md text-text-muted">{item.reason}</p>
+                    </li>
+                  ))}
+                </ul>
+              </SurfaceCard>
+            ) : null}
+            {rereadScriptures.length ? (
+              <RereadScriptureList
+                items={rereadScriptures}
+                variant="review"
+                title="다시 머물 본문"
+                subtitle="문맥 전체를 읽고, 해석은 확정하지 마세요. 기록과 닿아 보이는 본문입니다."
+              />
+            ) : null}
+            {review.smallPractices?.length ? (
+              <SurfaceCard>
+                <h2 className="text-headline-sm text-primary">작은 실천 후보</h2>
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-body-md text-text-muted">
+                  {review.smallPractices.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </SurfaceCard>
+            ) : null}
+
+            <SurfaceCard>
+              <h2 className="text-headline-sm text-primary">분석의 한계</h2>
+              <p className="mt-2 text-body-md text-text-muted">{review.limitations}</p>
+              <p className="mt-3 text-label-sm text-text-muted">
+                model: {report.modelProvider}/{report.modelName}
+              </p>
+            </SurfaceCard>
+          </>
+        )}
       </div>
     </AppShell>
   );

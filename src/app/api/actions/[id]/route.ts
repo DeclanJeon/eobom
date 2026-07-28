@@ -1,28 +1,22 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { isActionStatus, updateActionStep } from "@/lib/actions";
+import { requireApiUser } from "@/lib/session";
+import { actionPatchSchema, parseJsonBody } from "@/lib/api-schemas";
+import { updateActionStep } from "@/lib/actions";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, ctx: Ctx) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const { id } = await ctx.params;
-  const body = (await request.json()) as {
-    status?: string;
-    reflectionOnResult?: string | null;
-  };
-
-  if (body.status !== undefined && !isActionStatus(body.status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, actionPatchSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   try {
-    const item = await updateActionStep(session.user.id, id, {
+    const item = await updateActionStep(user.id, id, {
       status: body.status,
       reflectionOnResult: body.reflectionOnResult,
     });

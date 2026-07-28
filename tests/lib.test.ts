@@ -38,3 +38,16 @@ describe("mimo safety", () => {
     expect(DISCLAIMER.includes("하나님의 뜻")).toBe(true);
   });
 });
+
+describe("reread copy contract", () => {
+  test("fixed UI labels avoid prescription wording", () => {
+    const labels = [
+      "다시 머물 본문",
+      "다시 머물 수 있는 본문",
+      "최근에 머문 본문",
+    ];
+    for (const label of labels) {
+      expect(label).not.toMatch(/추천\s*성구|오늘의\s*성구|지금\s*필요한/);
+    }
+  });
+});

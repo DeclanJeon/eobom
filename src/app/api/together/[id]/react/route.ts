@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { parseJsonBody, reactionSchema } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
-
-const ALLOWED = new Set(["empathize", "pray", "same_scripture", "bookmark"]);
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, ctx: Ctx) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   const { id } = await ctx.params;
-  const body = (await request.json()) as { reactionType?: string };
-  const reactionType = body.reactionType || "";
-  if (!ALLOWED.has(reactionType)) {
-    return NextResponse.json({ error: "Invalid reaction" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(request, reactionSchema);
+  if (!parsed.ok) return parsed.response;
+  const reactionType = parsed.data.reactionType;
 
   const shared = await db.sharedReflection.findFirst({
     where: { id, visibility: "public", withdrawnAt: null, deletedAt: null },
@@ -28,7 +23,7 @@ export async function POST(request: Request, ctx: Ctx) {
     where: {
       sharedReflectionId_userId_reactionType: {
         sharedReflectionId: id,
-        userId: session.user.id,
+        userId: user.id,
         reactionType,
       },
     },
@@ -42,7 +37,7 @@ export async function POST(request: Request, ctx: Ctx) {
   await db.communityReaction.create({
     data: {
       sharedReflectionId: id,
-      userId: session.user.id,
+      userId: user.id,
       reactionType,
     },
   });

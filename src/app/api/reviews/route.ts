@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireApiUser } from "@/lib/session";
+import { parseJsonBody, reviewCreateSchema } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
 import { parseJsonArray } from "@/lib/utils";
 import { generateReviewWithMimo } from "@/lib/mimo";
+import { finalizeReviewRereadScriptures } from "@/lib/reread-scriptures";
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import {
+  consentAiDeniedBody,
+  getUserPreferenceFlags,
+} from "@/lib/user-preferences";
 
 const MIN_COUNTS: Record<string, number> = {
   "15d": 5,
@@ -13,12 +23,11 @@ const MIN_COUNTS: Record<string, number> = {
 };
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   const reports = await db.reviewReport.findMany({
-    where: { userId: session.user.id, deletedAt: null },
+    where: { userId: user.id, deletedAt: null },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
@@ -33,17 +42,26 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
+
+  const flags = await getUserPreferenceFlags(user.id);
+  if (!flags.aiProcessingConsent) {
+    return NextResponse.json(consentAiDeniedBody(), { status: 403 });
   }
 
-  const body = (await request.json()) as {
-    reportType?: string;
-    periodStart?: string;
-    periodEnd?: string;
-    excludedEntryIds?: string[];
-  };
+  const limited = checkRateLimit(`reviews:create:${user.id}`, RATE_LIMITS.reviewsCreate);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
+
+  const parsed = await parseJsonBody(request, reviewCreateSchema);
+  if (!parsed.ok) return parsed.response;
+  const body = parsed.data;
 
   const reportType = body.reportType || "monthly";
   const periodEnd = body.periodEnd ? new Date(body.periodEnd) : new Date();
@@ -54,7 +72,7 @@ export async function POST(request: Request) {
 
   const entries = await db.reflectionEntry.findMany({
     where: {
-      userId: session.user.id,
+      userId: user.id,
       deletedAt: null,
       entryDate: { gte: periodStart, lte: periodEnd },
     },
@@ -91,10 +109,16 @@ export async function POST(request: Request) {
     mapped,
     reportType,
   );
+  const allowed = mapped.flatMap((e) => e.scriptureRefs);
+  review.rereadScriptures = finalizeReviewRereadScriptures(
+    review.rereadScriptures,
+    allowed,
+    3,
+  );
 
   const report = await db.reviewReport.create({
     data: {
-      userId: session.user.id,
+      userId: user.id,
       periodStart,
       periodEnd,
       reportType,
@@ -104,7 +128,7 @@ export async function POST(request: Request) {
       summary: review.oneSentence,
       modelProvider,
       modelName,
-      promptVersion: "eobom-review-v1",
+      promptVersion: "eobom-review-v1.1",
       evidences: {
         create: collectEvidence(review),
       },
