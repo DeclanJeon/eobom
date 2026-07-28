@@ -6,9 +6,9 @@ import { db } from "@/lib/db";
 export async function GET() {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
-  const user = auth.user;
+  const { id: userId } = auth.user;
   const user = await db.user.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     select: {
       id: true,
       email: true,
@@ -32,13 +32,13 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
-  const user = auth.user;
+  const { id: userId } = auth.user;
   const parsed = await parseJsonBody(request, mePatchSchema);
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
 
   const user = await db.user.update({
-    where: { id: user.id },
+    where: { id: userId },
     data: {
       displayName: body.displayName?.trim() || undefined,
       preferredBibleTranslation: body.preferredBibleTranslation?.trim() || undefined,
@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
   if (typeof body.aiProcessingConsent === "boolean") {
     await db.consentRecord.create({
       data: {
-        userId: user.id,
+        userId,
         consentType: "ai_processing",
         policyVersion: "v1",
         granted: body.aiProcessingConsent,
