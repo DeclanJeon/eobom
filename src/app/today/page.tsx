@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { RereadScriptureList } from "@/components/reread-scripture-list";
+import { StoryMirrorHomeCard } from "@/components/story-mirror-home-card";
 import { listOpenActionSteps } from "@/lib/actions";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
@@ -267,6 +268,8 @@ export default async function TodayPage() {
           </div>
         </section>
       ) : null}
+
+      <StoryMirrorHomeCard userId={user.id} />
     </AppShell>
   );
 }

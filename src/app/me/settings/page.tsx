@@ -22,6 +22,8 @@ export default async function SettingsPage() {
             aiProcessingConsent: user.aiProcessingConsent,
             communityEnabled: user.communityEnabled,
             pastTodayEnabled: user.pastTodayEnabled,
+            storyMirrorEnabled: (user as Record<string, unknown>).storyMirrorEnabled as boolean ?? false,
+            storyMirrorExternalConsent: (user as Record<string, unknown>).storyMirrorExternalConsent as boolean ?? false,
           }}
         />
       </SurfaceCard>

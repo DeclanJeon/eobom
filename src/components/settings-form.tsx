@@ -12,6 +12,8 @@ export function SettingsForm({
     aiProcessingConsent: boolean;
     communityEnabled: boolean;
     pastTodayEnabled: boolean;
+    storyMirrorEnabled: boolean;
+    storyMirrorExternalConsent: boolean;
   };
 }) {
   const router = useRouter();
@@ -69,6 +71,8 @@ export function SettingsForm({
           ["aiProcessingConsent", "AI 회고를 위해 기록 일부를 외부 모델에 전송 허용"],
           ["communityEnabled", "익명 묵상 피드 참여"],
           ["pastTodayEnabled", "과거의 오늘 기능"],
+          ["storyMirrorEnabled", "이야기 거울 사용 (묵상 기록 연결)"],
+          ["storyMirrorExternalConsent", "이야기 거울 이미지 생성 허용 (codex-imagen)"],
         ] as const
       ).map(([key, label]) => (
         <label key={key} className="flex items-start gap-3 text-label-md">

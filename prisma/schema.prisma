@@ -39,6 +39,12 @@ model User {
   consentRecords      ConsentRecord[]
   contactInquiries    ContactInquiry[]
   claimedSeat         JournalSeat?
+  storyMirrorRuns     StoryMirrorRun[]
+  storyMirrorFeedback StoryMirrorFeedback[]
+  visualizations      UserVisualization[]
+  storyMirrorEnabled              Boolean  @default(false)
+  storyMirrorExternalConsent      Boolean  @default(false)
+  storyMirrorLastConsentVersion   String?
 
   @@index([personalSlug])
 }
@@ -108,6 +114,7 @@ model ReflectionEntry {
   actionSteps       ActionStep[]
   sharedReflections SharedReflection[]
   reviewEvidences   ReviewEvidence[]
+  storyMirrorEvidence StoryMirrorEvidence[]
 
   @@index([userId])
   @@index([entryDate])
@@ -284,5 +291,213 @@ model JournalSeat {
 
   claimedUser User? @relation(fields: [claimedUserId], references: [id], onDelete: SetNull)
 
+  @@index([status])
+}
+
+// ─── Story Mirror ─────────────────────────────────────────────────────────────
+
+model StoryWork {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  titleOriginal   String?
+  author          String?
+  translator      String?
+  sourceKind      String   // gutenberg | standard_ebooks | korean_open_data | bible | internal
+  language        String
+  culture         String   // korean | western | eastern | biblical | mixed
+  era             String?
+  sourceUrl       String
+  landingPageUrl  String?
+  licenseUrl      String?
+  rightsRegion    String   // KR | US | world | unknown
+  rightsBasis     String   // public_domain | cc0 | open_license | permission | link_only | unknown
+  rightsStatus    String   @default("candidate")
+  rightsCheckedAt DateTime?
+  rightsNotes     String?
+  checksum        String?
+  corpusVersion   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  editions StoryEdition[]
+  cards    StoryCard[]
+
+  @@index([rightsStatus])
+  @@index([sourceKind])
+  @@index([culture])
+}
+
+model StoryEdition {
+  id           String   @id @default(cuid())
+  workId       String
+  editionLabel String?
+  sourceUrl    String
+  licenseUrl   String?
+  rightsStatus String   @default("review")
+  textChecksum String?
+  textStored   Boolean  @default(false)
+  accessedAt   DateTime
+  createdAt    DateTime @default(now())
+
+  work     StoryWork     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  passages StoryPassage[]
+
+  @@index([workId])
+}
+
+model StoryCard {
+  id              String   @id @default(cuid())
+  workId          String
+  kind            String   // character | relationship | scene | motif | voice
+  name            String
+  aliases         String   @default("[]")
+  locale          String   @default("ko")
+  summary         String
+  arc             String?
+  themes          String   @default("[]")
+  emotions        String   @default("[]")
+  situations      String   @default("[]")
+  counterPatterns String   @default("[]")
+  contentWarnings String   @default("[]")
+  reviewStatus    String   @default("draft")
+  reviewNotes     String?
+  reviewedAt      DateTime?
+  cardVersion     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  work       StoryWork            @relation(fields: [workId], references: [id], onDelete: Cascade)
+  passages   StoryPassage[]
+  embeddings StoryCardEmbedding[]
+  matches    StoryMirrorMatch[]
+
+  @@index([workId])
+  @@index([reviewStatus])
+  @@index([locale])
+}
+
+model StoryPassage {
+  id              String   @id @default(cuid())
+  cardId          String
+  editionId       String
+  locator         String
+  text            String?
+  sourceUrl       String
+  rightsStatus    String
+  citationAllowed Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  card    StoryCard    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  edition StoryEdition @relation(fields: [editionId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}
+
+model StoryCardEmbedding {
+  id            String   @id @default(cuid())
+  cardId        String
+  provider      String
+  modelName     String
+  dimensions    Int
+  vectorJson    String
+  corpusVersion String
+  createdAt     DateTime @default(now())
+
+  card StoryCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, modelName, corpusVersion])
+}
+
+model StoryMirrorRun {
+  id               String   @id @default(cuid())
+  userId           String
+  inputFingerprint String
+  corpusVersion    String
+  matcherVersion   String
+  modelName        String?
+  status           String   @default("pending")
+  consentSnapshot  Boolean
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+  expiresAt        DateTime?
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches StoryMirrorMatch[]
+
+  @@index([userId, createdAt])
+  @@index([inputFingerprint, corpusVersion, matcherVersion])
+}
+
+model StoryMirrorMatch {
+  id              String   @id @default(cuid())
+  runId           String
+  cardId          String
+  internalScore   Float
+  confidence      String
+  matchThemes     String   @default("[]")
+  matchEmotions   String   @default("[]")
+  matchReason     String
+  narrativeBridge String?
+  state           String   @default("active")
+  createdAt       DateTime @default(now())
+
+  run      StoryMirrorRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  card     StoryCard            @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  evidence StoryMirrorEvidence[]
+  feedback StoryMirrorFeedback[]
+
+  @@index([runId])
+  @@index([cardId])
+}
+
+model StoryMirrorEvidence {
+  id        String   @id @default(cuid())
+  matchId   String
+  entryId   String
+  excerpt   String
+  relevance String
+  createdAt DateTime @default(now())
+
+  match StoryMirrorMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  entry ReflectionEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([entryId])
+}
+
+model StoryMirrorFeedback {
+  id        String   @id @default(cuid())
+  matchId   String
+  userId    String
+  type      String
+  createdAt DateTime @default(now())
+
+  match StoryMirrorMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId, type])
+}
+
+model UserVisualization {
+  id             String   @id @default(cuid())
+  userId         String
+  kind           String   // timeline | network | emotion | story-match
+  periodStart    DateTime
+  periodEnd      DateTime
+  imageUrl       String?
+  imagePrompt    String?
+  dataJson       String
+  status         String   @default("pending") // pending | generating | complete | failed
+  errorMsg       String?
+  corpusVersion  String
+  matcherVersion String?
+  createdAt      DateTime @default(now())
+  completedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, periodStart, periodEnd])
+  @@index([userId])
   @@index([status])
 }
