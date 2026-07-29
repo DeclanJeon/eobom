@@ -1,158 +1,221 @@
 {
   "version": 1,
-  "createdAt": "2026-07-29T09:51:48.856Z",
-  "updatedAt": "2026-07-29T09:52:29.449Z",
+  "createdAt": "2026-07-29T13:04:58.669Z",
+  "updatedAt": "2026-07-29T13:07:05.600Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
   "codexGoalMode": "aggregate",
   "goals": [
     {
-      "id": "G001-gutendex-500-256-500-api-244",
-      "title": "Gutendex 500권 수집 (현재 256/500, API 복구 후 나머지 244권)",
-      "objective": "Gutendex 500권 수집 (현재 256/500, API 복구 후 나머지 244권)",
+      "id": "G001-db-bge-m3-qdrant-sqlite-vec-sqlite-f",
+      "title": "외부 임베딩/벡터 DB(BGE-M3, Qdrant, sqlite-vec)를 사용하지 않는다. SQLite FTS5(trigr...",
+      "objective": "외부 임베딩/벡터 DB(BGE-M3, Qdrant, sqlite-vec)를 사용하지 않는다. SQLite FTS5(trigram/BM25)를 production 검색기로 사용한다.",
       "status": "in_progress",
       "attempt": 1,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:52:29.449Z",
-      "startedAt": "2026-07-29T09:52:29.449Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:07:05.600Z",
+      "startedAt": "2026-07-29T13:07:05.600Z"
     },
     {
-      "id": "G002-codex-imagen",
-      "title": "codex-imagen 연동 (회고/이야기 거울에서 이미지 생성)",
-      "objective": "codex-imagen 연동 (회고/이야기 거울에서 이미지 생성)",
+      "id": "G002-mimo-chat-completions-stream-true-1",
+      "title": "MiMo는 `chat/completions` 스트리밍(`stream:true`)으로만 사용하며, 요청당 최대 1회 호출한다.",
+      "objective": "MiMo는 `chat/completions` 스트리밍(`stream:true`)으로만 사용하며, 요청당 최대 1회 호출한다.",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G003",
-      "title": "피드백 반영 로직 (\"도움됨\" 피드백 기반 회고 품질 개선)",
-      "objective": "피드백 반영 로직 (\"도움됨\" 피드백 기반 회고 품질 개선)",
+      "id": "G003-3-6-mimo",
+      "title": "검색은 로컬에서 먼저 확보하고, 후보 3~6개만 MiMo 컨텍스트로 전달한다.",
+      "objective": "검색은 로컬에서 먼저 확보하고, 후보 3~6개만 MiMo 컨텍스트로 전달한다.",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G004-mimo",
-      "title": "실제 데이터 검증 (사용자 실제 기록으로 MiMo 회고 품질 확인)",
-      "objective": "실제 데이터 검증 (사용자 실제 기록으로 MiMo 회고 품질 확인)",
+      "id": "G004-storyragrun-storyragmatch-storyragev",
+      "title": "결과 저장은 카드 비종속 `StoryRagRun`/`StoryRagMatch`/`StoryRagEvidence`를 사용한다.",
+      "objective": "결과 저장은 카드 비종속 `StoryRagRun`/`StoryRagMatch`/`StoryRagEvidence`를 사용한다.",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G005-100-28-100-160",
-      "title": "이야기 거울 카드 100개+ 확장 (현재 28개 → 100~160개)",
-      "objective": "이야기 거울 카드 100개+ 확장 (현재 28개 → 100~160개)",
+      "id": "G005-mimo-insufficientevidence",
+      "title": "검색 후보가 없거나 근거가 약하면 MiMo를 호출하지 않고 `insufficientEvidence`를 반환한다.",
+      "objective": "검색 후보가 없거나 근거가 약하면 MiMo를 호출하지 않고 `insufficientEvidence`를 반환한다.",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G006-prisma-cascade",
-      "title": "삭제 파이프라인 실제 테스트 (Prisma cascade 동작 검증)",
-      "objective": "삭제 파이프라인 실제 테스트 (Prisma cascade 동작 검증)",
+      "id": "G006-user-storymirrorenabled-storymirrore",
+      "title": "동의 필드는 이미 존재: `User.storyMirrorEnabled` / `storyMirrorExternalConsent...",
+      "objective": "동의 필드는 이미 존재: `User.storyMirrorEnabled` / `storyMirrorExternalConsent` / `storyMirrorLastConsentVersion`.",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G007-eobom-next-js-16-prisma-sqlite-bun",
+      "id": "G007-storychunk-storyragrun-storyragmatch",
+      "title": "스키마/마이그레이션: `StoryChunk`, `StoryRagRun`, `StoryRagMatch`, `StoryRagEv...",
+      "objective": "스키마/마이그레이션: `StoryChunk`, `StoryRagRun`, `StoryRagMatch`, `StoryRagEvidence` 추가 + FTS5 virtual table(`StoryChunkFts`) 생성 절차. 기존 모델 호환 유지.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G008-seed-world-classics-korean-classics",
+      "title": "코퍼스 수집/인덱싱: 기존 seed 소스(`world-classics`, `korean-classics`, `bible-ch...",
+      "objective": "코퍼스 수집/인덱싱: 기존 seed 소스(`world-classics`, `korean-classics`, `bible-characters`)에서 `StoryChunk` + FTS5 행을 생성하는 ingest 스크립트. `rightsStatus=approved`, `corpusVersion` 고정.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G009-fts5-src-lib-story-mirror-rag-search",
+      "title": "FTS5 검색 파이프라인: `src/lib/story-mirror/rag-search.ts` — 쿼리 정규화, FTS5 MA...",
+      "objective": "FTS5 검색 파이프라인: `src/lib/story-mirror/rag-search.ts` — 쿼리 정규화, FTS5 MATCH, 권리/언어/코퍼스 필터, 다양성, top 3~6.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G010-mimo-src-lib-story-mirror-rag-genera",
+      "title": "MiMo 스트리밍 생성: `src/lib/story-mirror/rag-generation.ts` — `stream:true...",
+      "objective": "MiMo 스트리밍 생성: `src/lib/story-mirror/rag-generation.ts` — `stream:true` SSE 파싱, 누적, Zod/citation 검증.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G011-sse-post-api-story-mirror-rag-runs-s",
+      "title": "SSE 엔드포인트: `POST /api/story-mirror/rag/runs/stream` — 동의 확인 → FTS5 검색...",
+      "objective": "SSE 엔드포인트: `POST /api/story-mirror/rag/runs/stream` — 동의 확인 → FTS5 검색 → `retrieval` 이벤트 → MiMo `delta` 스트리밍 → `complete`/`insufficientEvidence`/`error`. 완료 시 `StoryRagRun/Match/Evidence` 저장.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G012-summary-kinds-summary-image-gen-visu",
+      "title": "시각화 summary 단일화: `KINDS`를 `summary`만 허용하도록 정리(라우트/페이지/image-gen/visua...",
+      "objective": "시각화 summary 단일화: `KINDS`를 `summary`만 허용하도록 정리(라우트/페이지/image-gen/visualize-data). 비동기 상태 유지.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G013-rag-search-fts5-suite",
+      "title": "테스트/검증: `rag-search`(FTS5), 스트리밍 엔드포인트, 동의 경계 단위 테스트 + 전체 suite + 타입체...",
+      "objective": "테스트/검증: `rag-search`(FTS5), 스트리밍 엔드포인트, 동의 경계 단위 테스트 + 전체 suite + 타입체크 + 빌드.",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G014-eobom-next-js-16-prisma-sqlite-bun",
       "title": "기존 eobom 아키텍처 유지 (Next.js 16, Prisma + SQLite, Bun)",
       "objective": "기존 eobom 아키텍처 유지 (Next.js 16, Prisma + SQLite, Bun)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
-      "id": "G008",
+      "id": "G015",
       "title": "브랜드 톤 유지 (온화한 동행자, 점수·랭킹 금지)",
       "objective": "브랜드 톤 유지 (온화한 동행자, 점수·랭킹 금지)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G009-163",
-      "title": "기존 163개 테스트 회귀 금지",
-      "objective": "기존 163개 테스트 회귀 금지",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G010-gutendex-500",
-      "title": "Gutendex 500권 수집 완료",
-      "objective": "Gutendex 500권 수집 완료",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G011-codex-imagen",
-      "title": "codex-imagen으로 시각화 이미지 생성 동작",
-      "objective": "codex-imagen으로 시각화 이미지 생성 동작",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G012",
-      "title": "피드백이 회고 품질에 반영되는 로직 구현",
-      "objective": "피드백이 회고 품질에 반영되는 로직 구현",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G013",
-      "title": "실제 데이터로 회고 생성 성공",
-      "objective": "실제 데이터로 회고 생성 성공",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G014-storycard-100-published",
-      "title": "StoryCard 100개 이상 published",
-      "objective": "StoryCard 100개 이상 published",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
-    },
-    {
-      "id": "G015-cascade",
-      "title": "삭제 cascade 동작 확인",
-      "objective": "삭제 cascade 동작 확인",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     },
     {
       "id": "G016-163",
-      "title": "전체 테스트 163개+ 통과",
-      "objective": "전체 테스트 163개+ 통과",
+      "title": "기존 테스트 회귀 금지 (163개+)",
+      "objective": "기존 테스트 회귀 금지 (163개+)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T09:51:48.856Z",
-      "updatedAt": "2026-07-29T09:51:48.856Z"
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G017-api",
+      "title": "외부 임베딩 API/비용 없음",
+      "objective": "외부 임베딩 API/비용 없음",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G018-prisma-generate-db-push-fts5-virtual",
+      "title": "`prisma generate` + `db push` 성공, FTS5 virtual table 생성 절차 포함",
+      "objective": "`prisma generate` + `db push` 성공, FTS5 virtual table 생성 절차 포함",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G019-ingest-approved-storychunk-30-fts5",
+      "title": "ingest 스크립트로 `approved` `StoryChunk` ≥ 30개 + FTS5 인덱싱 확인",
+      "objective": "ingest 스크립트로 `approved` `StoryChunk` ≥ 30개 + FTS5 인덱싱 확인",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G020-rag-search-retrievedchunk-top-n",
+      "title": "`rag-search`가 권리/언어/코퍼스 필터 후 `RetrievedChunk[]` top-N 반환, 단위 테스트 통과",
+      "objective": "`rag-search`가 권리/언어/코퍼스 필터 후 `RetrievedChunk[]` top-N 반환, 단위 테스트 통과",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G021-stream-retrieval-delta-complete-insu",
+      "title": "`/stream`이 `retrieval → delta → complete` 흐름을 내고, 후보 없음 시 `insufficie...",
+      "objective": "`/stream`이 `retrieval → delta → complete` 흐름을 내고, 후보 없음 시 `insufficientEvidence` 분기",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G022-visualize-summary",
+      "title": "visualize가 `summary`만 허용",
+      "objective": "visualize가 `summary`만 허용",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
+    },
+    {
+      "id": "G023",
+      "title": "전체 테스트 통과 + 타입체크 + 프로덕션 빌드 통과",
+      "objective": "전체 테스트 통과 + 타입체크 + 프로덕션 빌드 통과",
+      "status": "pending",
+      "attempt": 0,
+      "createdAt": "2026-07-29T13:04:58.669Z",
+      "updatedAt": "2026-07-29T13:04:58.669Z"
     }
   ],
   "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
-  "activeGoalId": "G001-gutendex-500-256-500-api-244"
+  "activeGoalId": "G001-db-bge-m3-qdrant-sqlite-vec-sqlite-f"
 }

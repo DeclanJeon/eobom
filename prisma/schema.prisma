@@ -40,6 +40,7 @@ model User {
   contactInquiries    ContactInquiry[]
   claimedSeat         JournalSeat?
   storyMirrorRuns     StoryMirrorRun[]
+  storyRagRuns       StoryRagRun[]
   storyMirrorFeedback StoryMirrorFeedback[]
   visualizations      UserVisualization[]
   storyMirrorEnabled              Boolean  @default(false)
@@ -114,6 +115,7 @@ model ReflectionEntry {
   actionSteps       ActionStep[]
   sharedReflections SharedReflection[]
   reviewEvidences   ReviewEvidence[]
+  ragEvidence       StoryRagEvidence[]
   storyMirrorEvidence StoryMirrorEvidence[]
 
   @@index([userId])
@@ -321,6 +323,7 @@ model StoryWork {
   updatedAt       DateTime @updatedAt
 
   editions StoryEdition[]
+  chunks   StoryChunk[]
   cards    StoryCard[]
 
   @@index([rightsStatus])
@@ -500,4 +503,96 @@ model UserVisualization {
   @@unique([userId, kind, periodStart, periodEnd])
   @@index([userId])
   @@index([status])
+}
+
+// ─── Story Mirror RAG (v4.2: card-independent, FTS5, MiMo-only) ───────────────
+// 카드 비종속 청크 기반 RAG. 임베딩/외부 벡터 DB를 쓰지 않고 SQLite FTS5로 검색한다.
+
+model StoryChunk {
+  id              String   @id @default(cuid())
+  workId          String
+  editionId       String?
+  chunkIndex      Int      @default(0)
+  locator         String?
+  title           String?
+  text            String
+  excerpt         String?
+  summary         String?
+  language        String   @default("ko")
+  themes          String   @default("[]")
+  emotions        String   @default("[]")
+  situations      String   @default("[]")
+  contentWarnings String   @default("[]")
+  rightsStatus    String   @default("approved")
+  citationAllowed Boolean  @default(false)
+  sourceUrl       String?
+  checksum        String?
+  corpusVersion   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  work    StoryWork       @relation(fields: [workId], references: [id], onDelete: Cascade)
+  matches StoryRagMatch[]
+
+  @@index([workId])
+  @@index([rightsStatus])
+  @@index([language])
+  @@index([corpusVersion])
+}
+
+model StoryRagRun {
+  id               String   @id @default(cuid())
+  userId           String
+  inputFingerprint String
+  corpusVersion    String
+  retrieverVersion String
+  generatorVersion String
+  policyVersion    String
+  consentSnapshot  String
+  status           String   @default("pending") // pending|complete|insufficient_evidence|error
+  failureCode      String?
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+  expiresAt        DateTime?
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches StoryRagMatch[]
+
+  @@index([userId, createdAt])
+  @@index([inputFingerprint, corpusVersion, retrieverVersion])
+}
+
+model StoryRagMatch {
+  id                  String  @id @default(cuid())
+  runId               String
+  chunkId             String
+  searchScore         Float
+  confidence          String  @default("medium")
+  connection          String?
+  differentPerspective String?
+  state               String  @default("active")
+  createdAt           DateTime @default(now())
+
+  run      StoryRagRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  chunk    StoryChunk        @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  evidence StoryRagEvidence[]
+
+  @@index([runId])
+  @@index([chunkId])
+}
+
+model StoryRagEvidence {
+  id        String   @id @default(cuid())
+  matchId   String
+  entryId   String
+  role      String   @default("supporting") // supporting | contradicting
+  excerpt   String
+  relevance String   @default("medium")
+  createdAt DateTime @default(now())
+
+  match StoryRagMatch   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  entry ReflectionEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([entryId])
 }

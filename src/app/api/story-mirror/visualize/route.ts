@@ -11,7 +11,7 @@ import { db } from "@/lib/db";
 import { generateImage, buildVisualizationPrompt } from "@/lib/story-mirror/image-gen";
 import { createHash } from "crypto";
 
-const KINDS = ["timeline", "network", "emotion", "story-match"] as const;
+const KINDS = ["summary"] as const;
 
 export async function POST(request: Request) {
   const auth = await requireApiUser();

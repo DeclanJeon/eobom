@@ -31,7 +31,7 @@ export default async function VisualizePage() {
     if (!visByKind.has(v.kind)) visByKind.set(v.kind, v);
   }
 
-  const kinds = ["timeline", "network", "emotion", "story-match"] as const;
+  const kinds = ["summary"] as const;
 
   return (
     <AppShell wide bare>

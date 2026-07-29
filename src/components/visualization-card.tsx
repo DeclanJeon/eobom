@@ -17,10 +17,7 @@ type Visualization = {
 };
 
 const KIND_LABELS: Record<string, string> = {
-  timeline: "여정 타임라인",
-  network: "생각의 네트워크",
-  emotion: "감정 분포",
-  "story-match": "이야기 매칭",
+  summary: "이야기 요약",
 };
 
 export function VisualizationCard({

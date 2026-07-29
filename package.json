@@ -13,7 +13,7 @@
     "db:reset": "prisma migrate reset",
     "test": "bun run test:unit",
     "postinstall": "prisma generate",
-    "test:unit": "bun test tests/actions.test.ts tests/api-schemas.test.ts tests/bible.test.ts tests/content-scrub.test.ts tests/lib.test.ts tests/past-today.test.ts tests/rate-limit.test.ts tests/reread-scriptures.test.ts tests/together-tags.test.ts tests/user-preferences.test.ts",
+    "test:unit": "bun test tests/actions.test.ts tests/api-schemas.test.ts tests/bible.test.ts tests/content-scrub.test.ts tests/lib.test.ts tests/past-today.test.ts tests/rate-limit.test.ts tests/reread-scriptures.test.ts tests/together-tags.test.ts tests/user-preferences.test.ts tests/story-mirror-rag.test.ts tests/story-mirror-rag-e2e.test.ts",
     "test:seats": "bun test tests/seats.test.ts"
   },
   "dependencies": {
