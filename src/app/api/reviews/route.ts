@@ -15,19 +15,13 @@ import {
   getUserPreferenceFlags,
 } from "@/lib/user-preferences";
 
-const MIN_COUNTS: Record<string, number> = {
-  "15d": 5,
-  monthly: 8,
-  quarterly: 15,
-  yearly: 30,
-};
+const MIN_ENTRIES = 3;
 
 export async function GET() {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
-  const user = auth.user;
   const reports = await db.reviewReport.findMany({
-    where: { userId: user.id, deletedAt: null },
+    where: { userId: auth.user.id, deletedAt: null },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
@@ -63,32 +57,25 @@ export async function POST(request: Request) {
   if (!parsed.ok) return parsed.response;
   const body = parsed.data;
 
-  const reportType = body.reportType || "monthly";
-  const periodEnd = body.periodEnd ? new Date(body.periodEnd) : new Date();
-  const periodStart = body.periodStart
-    ? new Date(body.periodStart)
-    : defaultStart(reportType, periodEnd);
   const excluded = new Set(body.excludedEntryIds ?? []);
 
+  // 전체 기록에서 회고 (기간 제거)
   const entries = await db.reflectionEntry.findMany({
-    where: {
-      userId: user.id,
-      deletedAt: null,
-      entryDate: { gte: periodStart, lte: periodEnd },
-    },
+    where: { userId: user.id, deletedAt: null },
     orderBy: { entryDate: "asc" },
+    take: 100,
   });
 
   const included = entries.filter((e) => !excluded.has(e.id));
-  const min = MIN_COUNTS[reportType] ?? 5;
-  if (included.length < min) {
+  if (included.length < MIN_ENTRIES) {
     return NextResponse.json(
-      {
-        error: `회고를 만들기에는 기록이 부족합니다. (필요 ${min}개, 현재 ${included.length}개)`,
-      },
+      { error: `회고를 만들기에는 기록이 부족합니다. (필요 ${MIN_ENTRIES}개, 현재 ${included.length}개)` },
       { status: 400 },
     );
   }
+
+  const periodStart = included[0].entryDate;
+  const periodEnd = included[included.length - 1].entryDate;
 
   const mapped = included.map((e) => ({
     id: e.id,
@@ -107,7 +94,7 @@ export async function POST(request: Request) {
 
   const { review, modelProvider, modelName } = await generateReviewWithMimo(
     mapped,
-    reportType,
+    "cumulative",
   );
   const allowed = mapped.flatMap((e) => e.scriptureRefs);
   review.rereadScriptures = finalizeReviewRereadScriptures(
@@ -121,35 +108,22 @@ export async function POST(request: Request) {
       userId: user.id,
       periodStart,
       periodEnd,
-      reportType,
+      reportType: "cumulative",
       includedEntryIds: JSON.stringify(included.map((e) => e.id)),
       excludedEntryIds: JSON.stringify([...excluded]),
       structuredOutput: JSON.stringify(review),
       summary: review.oneSentence,
       modelProvider,
       modelName,
-      promptVersion: "eobom-review-v1.1",
-      evidences: {
-        create: collectEvidence(review),
-      },
+      promptVersion: "eobom-review-v1.2",
+      evidences: { create: collectEvidence(review) },
     },
   });
 
-  return NextResponse.json({
-    report: {
-      ...report,
-      structuredOutput: review,
-    },
-  }, { status: 201 });
-}
-
-function defaultStart(reportType: string, end: Date) {
-  const start = new Date(end);
-  if (reportType === "15d") start.setDate(start.getDate() - 15);
-  else if (reportType === "quarterly") start.setMonth(start.getMonth() - 3);
-  else if (reportType === "yearly") start.setFullYear(start.getFullYear() - 1);
-  else start.setMonth(start.getMonth() - 1);
-  return start;
+  return NextResponse.json(
+    { report: { ...report, structuredOutput: review } },
+    { status: 201 },
+  );
 }
 
 function collectEvidence(review: {
@@ -159,20 +133,8 @@ function collectEvidence(review: {
   scriptureConnections?: Array<{ key: string; evidence?: Array<{ entryId: string; excerpt: string }>; confidence?: string }>;
   actionFlow?: Array<{ key: string; evidence?: Array<{ entryId: string; excerpt: string }>; confidence?: string }>;
 }) {
-  const rows: Array<{
-    observationKey: string;
-    entryId: string;
-    excerpt: string;
-    confidence: string;
-  }> = [];
-  const groups = [
-    review.themes,
-    review.emotions,
-    review.questions,
-    review.scriptureConnections,
-    review.actionFlow,
-  ];
-  for (const group of groups) {
+  const rows: Array<{ observationKey: string; entryId: string; excerpt: string; confidence: string }> = [];
+  for (const group of [review.themes, review.emotions, review.questions, review.scriptureConnections, review.actionFlow]) {
     for (const obs of group ?? []) {
       for (const ev of obs.evidence ?? []) {
         if (!ev.entryId) continue;

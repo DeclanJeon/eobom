@@ -5,7 +5,6 @@ import { useState } from "react";
 
 export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
   const router = useRouter();
-  const [reportType, setReportType] = useState("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -16,7 +15,7 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
     const res = await fetch("/api/reviews", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reportType }),
+      body: JSON.stringify({}),
     });
     const data = await res.json();
     setLoading(false);
@@ -30,24 +29,12 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <label className="block text-label-md">
-        <span className="text-primary">기간</span>
-        <select
-          value={reportType}
-          onChange={(e) => setReportType(e.target.value)}
-          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
-        >
-          <option value="15d">15일 (최소 5개)</option>
-          <option value="monthly">한 달 (최소 8개)</option>
-          <option value="quarterly">분기 (최소 15개)</option>
-          <option value="yearly">1년 (최소 30개)</option>
-        </select>
-      </label>
-
-      <p className="text-label-md text-text-muted">기록 {entryCount}개</p>
+      <p className="text-body-md text-text-muted">
+        지금까지의 기록 {entryCount}개를 바탕으로 회고를 생성합니다.
+      </p>
 
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+        <p className="rounded-xl bg-safety/10 px-3 py-2 text-label-md text-safety">
           {error}
         </p>
       ) : null}
