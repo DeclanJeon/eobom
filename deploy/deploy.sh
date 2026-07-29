@@ -25,7 +25,7 @@ set -euo pipefail
 export PATH="\$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 cd "${APP_DIR}"
 bunx prisma generate
-bunx prisma db push
+bunx prisma db push --accept-data-loss
 bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
 bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
@@ -55,7 +55,7 @@ fi
 export PATH="$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 bun install --frozen-lockfile || bun install
 bunx prisma generate
-bunx prisma db push
+bunx prisma db push --accept-data-loss
 bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
 bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
