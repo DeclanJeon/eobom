@@ -25,6 +25,7 @@ set -euo pipefail
 export PATH="\$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 cd "${APP_DIR}"
 bunx prisma generate
+echo "DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;" | bunx prisma db execute --stdin --schema prisma/schema.prisma
 bunx prisma db push --accept-data-loss
 bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
 bun run build
@@ -55,6 +56,7 @@ fi
 export PATH="$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 bun install --frozen-lockfile || bun install
 bunx prisma generate
+echo "DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;" | bunx prisma db execute --stdin --schema prisma/schema.prisma
 bunx prisma db push --accept-data-loss
 bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
 bun run build
