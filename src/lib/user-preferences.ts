@@ -4,6 +4,7 @@ export type UserPreferenceFlags = {
   aiProcessingConsent: boolean;
   communityEnabled: boolean;
   pastTodayEnabled: boolean;
+  storyMirrorEnabled: boolean;
 };
 
 export const CONSENT_AI = "CONSENT_AI" as const;
@@ -22,6 +23,7 @@ const DEFAULT_FLAGS: UserPreferenceFlags = {
   aiProcessingConsent: false,
   communityEnabled: false,
   pastTodayEnabled: true,
+  storyMirrorEnabled: false,
 };
 
 /** Load consent/feature flags from DB (source of truth, not session cache). */
@@ -34,6 +36,7 @@ export async function getUserPreferenceFlags(
       aiProcessingConsent: true,
       communityEnabled: true,
       pastTodayEnabled: true,
+      storyMirrorEnabled: true,
     },
   });
   if (!row) return { ...DEFAULT_FLAGS };
@@ -41,6 +44,7 @@ export async function getUserPreferenceFlags(
     aiProcessingConsent: Boolean(row.aiProcessingConsent),
     communityEnabled: Boolean(row.communityEnabled),
     pastTodayEnabled: row.pastTodayEnabled !== false,
+    storyMirrorEnabled: Boolean(row.storyMirrorEnabled),
   };
 }
 

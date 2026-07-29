@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { SurfaceCard } from "@/components/ui-blocks";
 import { getCardDetail } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -202,6 +203,19 @@ export default async function StoryMirrorDetailPage({
           이 이야기는 판정이나 처방이 아닙니다. 사용자의 경험과 겹치는 부분을
           발견할 수 있는 읽을 거리만 제공합니다.
         </p>
+
+        <SurfaceCard className="border-l-4 border-l-clay">
+          <h2 className="text-headline-sm text-primary">나의 회고에서 찾기</h2>
+          <p className="mt-2 text-body-md text-text-muted">
+            이 이야기와 겹치는 주제가 내 묵상 기록에서 어떻게 나타나는지 확인할 수 있습니다.
+          </p>
+          <Link
+            href="/reviews/new"
+            className="mt-3 inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
+          >
+            회고 만들기 →
+          </Link>
+        </SurfaceCard>
 
         {/* Feedback */}
         <StoryMirrorFeedback cardId={card.id} />

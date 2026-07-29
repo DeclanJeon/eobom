@@ -1,282 +1,158 @@
 {
   "version": 1,
-  "createdAt": "2026-07-29T00:56:41.094Z",
-  "updatedAt": "2026-07-29T00:56:41.094Z",
+  "createdAt": "2026-07-29T09:51:48.856Z",
+  "updatedAt": "2026-07-29T09:52:29.449Z",
   "briefPath": ".omx/ultragoal/brief.md",
   "goalsPath": ".omx/ultragoal/goals.json",
   "ledgerPath": ".omx/ultragoal/ledger.jsonl",
   "codexGoalMode": "aggregate",
   "goals": [
     {
-      "id": "G001-eobom-next-js-16-prisma-sqlite-bun",
-      "title": "기존 eobom 아키텍처를 따른다 (Next.js 16, Prisma + SQLite, Bun)",
-      "objective": "기존 eobom 아키텍처를 따른다 (Next.js 16, Prisma + SQLite, Bun)",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "id": "G001-gutendex-500-256-500-api-244",
+      "title": "Gutendex 500권 수집 (현재 256/500, API 복구 후 나머지 244권)",
+      "objective": "Gutendex 500권 수집 (현재 256/500, API 복구 후 나머지 244권)",
+      "status": "in_progress",
+      "attempt": 1,
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:52:29.449Z",
+      "startedAt": "2026-07-29T09:52:29.449Z"
     },
     {
-      "id": "G002",
-      "title": "브랜드 톤을 유지한다 (온화한 동행자, 점수·랭킹 금지)",
-      "objective": "브랜드 톤을 유지한다 (온화한 동행자, 점수·랭킹 금지)",
+      "id": "G002-codex-imagen",
+      "title": "codex-imagen 연동 (회고/이야기 거울에서 이미지 생성)",
+      "objective": "codex-imagen 연동 (회고/이야기 거울에서 이미지 생성)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G003-67",
-      "title": "기존 67개 테스트를 깨뜨리지 않는다",
-      "objective": "기존 67개 테스트를 깨뜨리지 않는다",
+      "id": "G003",
+      "title": "피드백 반영 로직 (\"도움됨\" 피드백 기반 회고 품질 개선)",
+      "objective": "피드백 반영 로직 (\"도움됨\" 피드백 기반 회고 품질 개선)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G004-codex-imagen-ponslink-bin-codex-imag",
-      "title": "codex-imagen은 ponslink 서버의 `~/bin/codex-imagen`을 사용한다",
-      "objective": "codex-imagen은 ponslink 서버의 `~/bin/codex-imagen`을 사용한다",
+      "id": "G004-mimo",
+      "title": "실제 데이터 검증 (사용자 실제 기록으로 MiMo 회고 품질 확인)",
+      "objective": "실제 데이터 검증 (사용자 실제 기록으로 MiMo 회고 품질 확인)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G005-ux",
-      "title": "이미지 생성 시 사용자에게 대기 UX를 제공한다",
-      "objective": "이미지 생성 시 사용자에게 대기 UX를 제공한다",
+      "id": "G005-100-28-100-160",
+      "title": "이야기 거울 카드 100개+ 확장 (현재 28개 → 100~160개)",
+      "objective": "이야기 거울 카드 100개+ 확장 (현재 28개 → 100~160개)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G006-prisma-uservisualization",
-      "title": "Prisma에 `UserVisualization` 모델 추가",
-      "objective": "Prisma에 `UserVisualization` 모델 추가",
+      "id": "G006-prisma-cascade",
+      "title": "삭제 파이프라인 실제 테스트 (Prisma cascade 동작 검증)",
+      "objective": "삭제 파이프라인 실제 테스트 (Prisma cascade 동작 검증)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G007-db-push",
-      "title": "`db push` 마이그레이션",
-      "objective": "`db push` 마이그레이션",
+      "id": "G007-eobom-next-js-16-prisma-sqlite-bun",
+      "title": "기존 eobom 아키텍처 유지 (Next.js 16, Prisma + SQLite, Bun)",
+      "objective": "기존 eobom 아키텍처 유지 (Next.js 16, Prisma + SQLite, Bun)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G008-src-lib-story-mirror-visualize-data",
-      "title": "`src/lib/story-mirror/visualize-data.ts` 구현",
-      "objective": "`src/lib/story-mirror/visualize-data.ts` 구현\n기록에서 타임라인 데이터 추출\n기록에서 네트워크 데이터 추출 (주제 동시출현)\n기록에서 감정 분포 데이터 추출\n매칭 결과에서 스토리 매칭 데이터 추출",
+      "id": "G008",
+      "title": "브랜드 톤 유지 (온화한 동행자, 점수·랭킹 금지)",
+      "objective": "브랜드 톤 유지 (온화한 동행자, 점수·랭킹 금지)",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G009-post-api-story-mirror-visualize",
-      "title": "`POST /api/story-mirror/visualize` — 시각화 이미지 생성",
-      "objective": "`POST /api/story-mirror/visualize` — 시각화 이미지 생성",
+      "id": "G009-163",
+      "title": "기존 163개 테스트 회귀 금지",
+      "objective": "기존 163개 테스트 회귀 금지",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G010-get-api-story-mirror-visualize",
-      "title": "`GET /api/story-mirror/visualize` — 시각화 목록 조회",
-      "objective": "`GET /api/story-mirror/visualize` — 시각화 목록 조회",
+      "id": "G010-gutendex-500",
+      "title": "Gutendex 500권 수집 완료",
+      "objective": "Gutendex 500권 수집 완료",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G011-src-lib-story-mirror-image-gen-ts-co",
-      "title": "`src/lib/story-mirror/image-gen.ts` — codex-imagen 호출 래퍼",
-      "objective": "`src/lib/story-mirror/image-gen.ts` — codex-imagen 호출 래퍼\nSSH로 ponslink의 codex-imagen 호출\n생성된 이미지를 public/story-mirror/vis/에 저장\n에러 핸들링 + 폴백",
+      "id": "G011-codex-imagen",
+      "title": "codex-imagen으로 시각화 이미지 생성 동작",
+      "objective": "codex-imagen으로 시각화 이미지 생성 동작",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
       "id": "G012",
-      "title": "이미지 생성 중 사용자에게 대기 상태 표시",
-      "objective": "이미지 생성 중 사용자에게 대기 상태 표시",
+      "title": "피드백이 회고 품질에 반영되는 로직 구현",
+      "objective": "피드백이 회고 품질에 반영되는 로직 구현",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G013-storymirrorhomecard",
-      "title": "StoryMirrorHomeCard에 로딩 스피너 추가",
-      "objective": "StoryMirrorHomeCard에 로딩 스피너 추가",
+      "id": "G013",
+      "title": "실제 데이터로 회고 생성 성공",
+      "objective": "실제 데이터로 회고 생성 성공",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G014-story-mirror",
-      "title": "story-mirror 메인 페이지에 이미지 생성 상태 표시",
-      "objective": "story-mirror 메인 페이지에 이미지 생성 상태 표시",
+      "id": "G014-storycard-100-published",
+      "title": "StoryCard 100개 이상 published",
+      "objective": "StoryCard 100개 이상 published",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G015",
-      "title": "생성 완료 시 자동 업데이트",
-      "objective": "생성 완료 시 자동 업데이트",
+      "id": "G015-cascade",
+      "title": "삭제 cascade 동작 확인",
+      "objective": "삭제 cascade 동작 확인",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     },
     {
-      "id": "G016-today-page-tsx-storymirrorhomecard",
-      "title": "`today/page.tsx`에 `StoryMirrorHomeCard` 연결",
-      "objective": "`today/page.tsx`에 `StoryMirrorHomeCard` 연결",
+      "id": "G016-163",
+      "title": "전체 테스트 163개+ 통과",
+      "objective": "전체 테스트 163개+ 통과",
       "status": "pending",
       "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G017-bun-run-scripts-story-mirror-seed-co",
-      "title": "시드 데이터 주입 (`bun run scripts/story-mirror/seed-corpus.ts`)",
-      "objective": "시드 데이터 주입 (`bun run scripts/story-mirror/seed-corpus.ts`)",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G018-reviewstatus-published",
-      "title": "성경 인물 카드 `reviewStatus`를 `published`로 전환",
-      "objective": "성경 인물 카드 `reviewStatus`를 `published`로 전환",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G019-tests-story-mirror-api-test-ts-visua",
-      "title": "`tests/story-mirror-api.test.ts` — visualize API 테스트",
-      "objective": "`tests/story-mirror-api.test.ts` — visualize API 테스트",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G020-bun-run-build",
-      "title": "`bun run build` 빌드 회귀 검증",
-      "objective": "`bun run build` 빌드 회귀 검증",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G021-89",
-      "title": "전체 테스트 실행 (89개+)",
-      "objective": "전체 테스트 실행 (89개+)",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G022-prisma",
-      "title": "모든 Prisma 마이그레이션 성공",
-      "objective": "모든 Prisma 마이그레이션 성공",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G023-api",
-      "title": "시각화 API가 이미지를 정상 생성",
-      "objective": "시각화 API가 이미지를 정상 생성",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G024-codex-imagen-ponslink",
-      "title": "codex-imagen 호출이 ponslink에서 정상 동작",
-      "objective": "codex-imagen 호출이 ponslink에서 정상 동작",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G025-ux",
-      "title": "이미지 생성 중 사용자에게 로딩 UX 표시",
-      "objective": "이미지 생성 중 사용자에게 로딩 UX 표시",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G026-storymirrorhomecard",
-      "title": "오늘 홈에 StoryMirrorHomeCard 표시",
-      "objective": "오늘 홈에 StoryMirrorHomeCard 표시",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G027-db",
-      "title": "시드 데이터가 DB에 주입됨",
-      "objective": "시드 데이터가 DB에 주입됨",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G028-published",
-      "title": "성경 인물 카드가 published 상태",
-      "objective": "성경 인물 카드가 published 상태",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G029-67",
-      "title": "기존 67개 테스트 + 신규 테스트 모두 통과",
-      "objective": "기존 67개 테스트 + 신규 테스트 모두 통과",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
-    },
-    {
-      "id": "G030-bun-run-build",
-      "title": "`bun run build` 성공",
-      "objective": "`bun run build` 성공",
-      "status": "pending",
-      "attempt": 0,
-      "createdAt": "2026-07-29T00:56:41.094Z",
-      "updatedAt": "2026-07-29T00:56:41.094Z"
+      "createdAt": "2026-07-29T09:51:48.856Z",
+      "updatedAt": "2026-07-29T09:51:48.856Z"
     }
   ],
-  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail."
+  "codexObjective": "Complete the durable ultragoal plan in .omx/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .omx/ultragoal/ledger.jsonl as the audit trail.",
+  "activeGoalId": "G001-gutendex-500-256-500-api-244"
 }

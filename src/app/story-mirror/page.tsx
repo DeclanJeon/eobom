@@ -30,6 +30,15 @@ export default async function StoryMirrorPage() {
         </p>
       </section>
 
+      <div className="mb-6 flex gap-3">
+        <Link href="/story-mirror" className="text-label-md text-primary border-b-2 border-primary pb-1">
+          이야기
+        </Link>
+        <Link href="/story-mirror/visualize" className="text-label-md text-text-muted hover:text-primary pb-1">
+          시각화
+        </Link>
+      </div>
+
       {!run || run.matches.length === 0 ? (
         <EmptyState
           title="아직 연결된 이야기가 없습니다"

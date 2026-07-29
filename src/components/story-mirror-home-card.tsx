@@ -9,7 +9,8 @@ import Link from "next/link";
 import { getLatestRun } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 
-export async function StoryMirrorHomeCard({ userId }: { userId: string }) {
+export async function StoryMirrorHomeCard({ userId, storyMirrorEnabled }: { userId: string; storyMirrorEnabled: boolean }) {
+  if (!storyMirrorEnabled) return null;
   const run = await getLatestRun(userId);
   if (!run || run.matches.length === 0) return null;
 

@@ -1,1 +1,3 @@
-{"ts":"2026-07-29T00:56:41.094Z","event":"plan_created","message":"30 goal(s) created"}
+{"ts":"2026-07-29T09:51:48.856Z","event":"plan_created","message":"16 goal(s) created"}
+{"ts":"2026-07-29T09:52:29.449Z","event":"goal_started","goalId":"G001-gutendex-500-256-500-api-244","status":"in_progress","message":"Attempt 1"}
+{"ts":"2026-07-29T09:53:22.293Z","event":"goal_resumed","goalId":"G001-gutendex-500-256-500-api-244","status":"in_progress","message":"Resuming active ultragoal"}

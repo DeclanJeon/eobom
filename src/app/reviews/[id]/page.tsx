@@ -8,6 +8,7 @@ import { formatDateShort, parseJsonArray } from "@/lib/utils";
 import type { StructuredReview } from "@/lib/mimo";
 import { normalizeRereadScriptures } from "@/lib/reread-scriptures";
 import { RereadScriptureList } from "@/components/reread-scripture-list";
+import { ObservationFeedback } from "@/components/observation-feedback";
 
 export const metadata = { title: "회고 상세" };
 
@@ -73,9 +74,9 @@ export default async function ReviewDetailPage({
           </SurfaceCard>
         ) : (
           <>
-            <ObservationSection title="자주 나타난 주제" items={review.themes} />
-            <ObservationSection title="반복해서 드러난 마음" items={review.emotions} />
-            <ObservationSection title="붙잡고 있던 질문" items={review.questions} />
+            <ObservationSection title="자주 나타난 주제" items={review.themes} reviewId={id} feedback={review} />
+            <ObservationSection title="반복해서 드러난 마음" items={review.emotions} reviewId={id} feedback={review} />
+            <ObservationSection title="붙잡고 있던 질문" items={review.questions} reviewId={id} feedback={review} />
             <ObservationSection
               title="말씀과 삶의 연결"
               items={review.scriptureConnections}
@@ -205,6 +206,19 @@ export default async function ReviewDetailPage({
                 model: {report.modelProvider}/{report.modelName}
               </p>
             </SurfaceCard>
+
+            <SurfaceCard className="border-l-4 border-l-accent-gold/50">
+              <h2 className="text-headline-sm text-primary">이야기 거울에서 더 찾기</h2>
+              <p className="mt-2 text-body-md text-text-muted">
+                이 회고의 주제와 겹치는 고전 인물·비유·교훈을 이야기 거울에서 확인할 수 있습니다.
+              </p>
+              <Link
+                href="/story-mirror"
+                className="mt-3 inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
+              >
+                이야기 거울 바로가기 →
+              </Link>
+            </SurfaceCard>
           </>
         )}
       </div>
@@ -215,6 +229,8 @@ export default async function ReviewDetailPage({
 function ObservationSection({
   title,
   items,
+  reviewId,
+  feedback,
 }: {
   title: string;
   items?: Array<{
@@ -224,6 +240,8 @@ function ObservationSection({
     confidence?: string;
     evidence?: Array<{ entryId: string; date?: string; excerpt: string }>;
   }>;
+  reviewId?: string;
+  feedback?: Record<string, unknown>;
 }) {
   if (!items?.length) return null;
   return (
@@ -247,6 +265,15 @@ function ObservationSection({
                   <p className="mt-1 text-text-main">“{ev.excerpt}”</p>
                 </div>
               ))}
+            </div>
+          ) : null}
+          {reviewId ? (
+            <div className="mt-3">
+              <ObservationFeedback
+                reviewId={reviewId}
+                observationKey={item.key}
+                initialFeedback={(feedback?.[`_feedback_${item.key}`] as string[]) ?? []}
+              />
             </div>
           ) : null}
         </SurfaceCard>

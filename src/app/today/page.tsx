@@ -269,7 +269,7 @@ export default async function TodayPage() {
         </section>
       ) : null}
 
-      <StoryMirrorHomeCard userId={user.id} />
+      <StoryMirrorHomeCard userId={user.id} storyMirrorEnabled={flags.storyMirrorEnabled ?? false} />
     </AppShell>
   );
 }
