@@ -218,7 +218,7 @@ export async function generateReviewWithMimo(
     /\/$/,
     "",
   );
-  const model = process.env.MIMO_MODEL || "mimo-v2.5-pro";
+  const model = process.env.MIMO_MODEL || "mimo-v2.5";
 
   if (!apiKey || entries.length === 0) {
     return {
