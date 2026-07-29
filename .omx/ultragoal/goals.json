@@ -38,7 +38,7 @@
       "id": "G004-p1-1-rag-get-api-story-mirror-rag-ru",
       "title": "[P1-1] RAG 실행 이력 저장·재조회 — `GET /api/story-mirror/rag/runs`(목록) + `/[i...",
       "objective": "[P1-1] RAG 실행 이력 저장·재조회 — `GET /api/story-mirror/rag/runs`(목록) + `/[id]`(상세) 추가, reflect 페이지 마운트 시 과거 run 렌더 + \"지난 연결\" 목록. 새로고침해도 결과 유지.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-07-29T15:55:04.145Z",
       "updatedAt": "2026-07-29T15:55:04.145Z"
@@ -47,7 +47,7 @@
       "id": "G005-p1-2-rag-getlatestragrun-util",
       "title": "[P1-2] 메인 페이지/홈 카드에 RAG 연결 노출 — `getLatestRagRun()` util + 메인 페이지 \"최근...",
       "objective": "[P1-2] 메인 페이지/홈 카드에 RAG 연결 노출 — `getLatestRagRun()` util + 메인 페이지 \"최근 거울 연결\" 카드, 홈 카드 링크. 구 카드 매칭 영역은 유지.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-07-29T15:55:04.145Z",
       "updatedAt": "2026-07-29T15:55:04.145Z"
@@ -119,7 +119,7 @@
       "id": "G013-tsc-0-test-unit-next-build",
       "title": "tsc 0 에러, test:unit 전체 통과, next build 성공.",
       "objective": "tsc 0 에러, test:unit 전체 통과, next build 성공.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-07-29T15:55:04.145Z",
       "updatedAt": "2026-07-29T15:55:04.145Z"
@@ -128,7 +128,7 @@
       "id": "G014-api-401-404",
       "title": "신규 API 단위 테스트: 권한 경계(401/404) + 정상 조회.",
       "objective": "신규 API 단위 테스트: 권한 경계(401/404) + 정상 조회.",
-      "status": "pending",
+      "status": "complete",
       "attempt": 0,
       "createdAt": "2026-07-29T15:55:04.145Z",
       "updatedAt": "2026-07-29T15:55:04.145Z"
