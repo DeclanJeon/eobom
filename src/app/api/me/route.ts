@@ -50,6 +50,14 @@ export async function PATCH(request: Request) {
         typeof body.communityEnabled === "boolean" ? body.communityEnabled : undefined,
       pastTodayEnabled:
         typeof body.pastTodayEnabled === "boolean" ? body.pastTodayEnabled : undefined,
+      storyMirrorEnabled:
+        typeof body.storyMirrorEnabled === "boolean"
+          ? body.storyMirrorEnabled
+          : undefined,
+      storyMirrorExternalConsent:
+        typeof body.storyMirrorExternalConsent === "boolean"
+          ? body.storyMirrorExternalConsent
+          : undefined,
     },
   });
 

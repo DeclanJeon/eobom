@@ -59,6 +59,8 @@ export const mePatchSchema = z.object({
   aiProcessingConsent: z.boolean().optional(),
   communityEnabled: z.boolean().optional(),
   pastTodayEnabled: z.boolean().optional(),
+  storyMirrorEnabled: z.boolean().optional(),
+  storyMirrorExternalConsent: z.boolean().optional(),
 });
 
 export const contactSchema = z.object({

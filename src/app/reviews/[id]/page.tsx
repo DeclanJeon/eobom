@@ -9,6 +9,7 @@ import type { StructuredReview } from "@/lib/mimo";
 import { normalizeRereadScriptures } from "@/lib/reread-scriptures";
 import { RereadScriptureList } from "@/components/reread-scripture-list";
 import { ObservationFeedback } from "@/components/observation-feedback";
+import { getLatestRun, getLatestRagRun } from "@/lib/story-mirror/db";
 
 export const metadata = { title: "회고 상세" };
 
@@ -18,6 +19,8 @@ export default async function ReviewDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const user = await requireUser();
+  const latestRun = await getLatestRun(user.id);
+  const latestRagRun = await getLatestRagRun(user.id);
   const { id } = await params;
   const report = await db.reviewReport.findFirst({
     where: { id, userId: user.id, deletedAt: null },
@@ -202,23 +205,54 @@ export default async function ReviewDetailPage({
             <SurfaceCard>
               <h2 className="text-headline-sm text-primary">분석의 한계</h2>
               <p className="mt-2 text-body-md text-text-muted">{review.limitations}</p>
-              <p className="mt-3 text-label-sm text-text-muted">
-                model: {report.modelProvider}/{report.modelName}
-              </p>
             </SurfaceCard>
 
-            <SurfaceCard className="border-l-4 border-l-accent-gold/50">
-              <h2 className="text-headline-sm text-primary">이야기 거울에서 더 찾기</h2>
-              <p className="mt-2 text-body-md text-text-muted">
-                이 회고의 주제와 겹치는 고전 인물·비유·교훈을 이야기 거울에서 확인할 수 있습니다.
-              </p>
-              <Link
-                href="/story-mirror"
-                className="mt-3 inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
-              >
-                이야기 거울 바로가기 →
-              </Link>
-            </SurfaceCard>
+            <section className="space-y-3">
+              <h2 className="text-headline-sm text-primary">이야기 거울</h2>
+              {latestRun && latestRun.matches.length > 0 ? (
+                <SurfaceCard className="border-l-4 border-l-accent-gold/50">
+                  <p className="text-label-sm text-text-muted">이야기 · 닮은 인물과 비유</p>
+                  <div className="mt-1 space-y-2">
+                    {latestRun.matches.slice(0, 2).map((m) => (
+                      <Link
+                        key={m.id}
+                        href={`/story-mirror/${m.card.id}`}
+                        className="block"
+                      >
+                        <p className="text-label-md text-primary">{m.card.name}</p>
+                        <p className="text-label-sm text-text-muted">
+                          {m.card.work.title}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </SurfaceCard>
+              ) : null}
+              {latestRagRun ? (
+                <SurfaceCard className="border-l-4 border-l-leaf/50">
+                  <p className="text-label-sm text-text-muted">
+                    연결 · 지금의 나를 비추는 거울
+                  </p>
+                  <p className="mt-1 text-body-md text-primary">
+                    {latestRagRun.summary ?? "연결된 이야기가 준비되었습니다."}
+                  </p>
+                </SurfaceCard>
+              ) : null}
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/story-mirror/visualize"
+                  className="text-label-md text-leaf hover:text-primary"
+                >
+                  시각화 보기 →
+                </Link>
+                <Link
+                  href="/story-mirror"
+                  className="text-label-md text-leaf hover:text-primary"
+                >
+                  이야기 거울 전체 →
+                </Link>
+              </div>
+            </section>
           </>
         )}
       </div>
@@ -243,11 +277,14 @@ function ObservationSection({
   reviewId?: string;
   feedback?: Record<string, unknown>;
 }) {
-  if (!items?.length) return null;
+  const visible = (items ?? []).filter(
+    (it) => (it.title ?? "").trim() || (it.body ?? "").trim(),
+  );
+  if (!visible.length) return null;
   return (
     <section className="space-y-3">
       <h2 className="text-headline-sm text-primary">{title}</h2>
-      {items.map((item) => (
+      {visible.map((item) => (
         <SurfaceCard key={item.key} className="border-l-4 border-l-accent-gold/50">
           <div className="flex items-center gap-2">
             <h3 className="text-label-md text-primary">{item.title}</h3>
