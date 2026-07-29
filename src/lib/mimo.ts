@@ -294,7 +294,7 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
       body: JSON.stringify({
         model,
         temperature: 0.4,
-        max_completion_tokens: 4096,
+        max_completion_tokens: 8192,
         messages: [
           { role: "system", content: system },
           {
@@ -320,7 +320,8 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
     };
     const content = data.choices?.[0]?.message?.content ?? "";
     const jsonText = extractJson(content);
-    const parsed = JSON.parse(jsonText) as StructuredReview;
+    const parsed = safeParseJson(jsonText) as StructuredReview | null;
+    if (!parsed) throw new Error("JSON parse failed");
     parsed.disclaimer = DISCLAIMER;
     return {
       review: deepScrubMirror(parsed),
@@ -347,3 +348,19 @@ function extractJson(content: string): string {
 }
 
 export { DISCLAIMER };
+
+/** JSON을 파싱하되, 실패 시 가능한 한 복구한다 */
+function safeParseJson(text: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(text);
+  } catch {
+    let fixed = text
+      .replace(/,(\s*[}\]])/g, "$1")
+      .replace(/,\s*$/gm, "");
+    try {
+      return JSON.parse(fixed);
+    } catch {
+      return null;
+    }
+  }
+}
