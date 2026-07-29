@@ -24,12 +24,12 @@ if [[ "${1:-}" == "--remote" || ! -d "$APP_DIR" ]]; then
 set -euo pipefail
 export PATH="\$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 cd "${APP_DIR}"
-bun install --frozen-lockfile || bun install
 bunx prisma generate
 bunx prisma db push
+bunx prisma db execute --file prisma/fts5-setup.sql
 bun run build
+bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
-cp .env .next/standalone/.env
 sudo cp deploy/eobom.service /etc/systemd/system/eobom.service
 sudo systemctl daemon-reload
 sudo systemctl enable eobom
@@ -56,7 +56,9 @@ export PATH="$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 bun install --frozen-lockfile || bun install
 bunx prisma generate
 bunx prisma db push
+bunx prisma db execute --file prisma/fts5-setup.sql
 bun run build
+bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
 cp -f .env .next/standalone/.env 2>/dev/null || true
 
