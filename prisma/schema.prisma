@@ -551,6 +551,7 @@ model StoryRagRun {
   consentSnapshot  String
   status           String   @default("pending") // pending|complete|insufficient_evidence|error
   failureCode      String?
+  summary          String?  // 생성된 요약(연결 결과 헤드라인) — 재조회 시 표시
   createdAt        DateTime @default(now())
   completedAt      DateTime?
   expiresAt        DateTime?

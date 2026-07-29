@@ -10,6 +10,7 @@ import { AppShell } from "@/components/app-shell";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { StoryMirrorRag } from "@/components/story-mirror-rag";
+import { getLatestRagRun } from "@/lib/story-mirror/db";
 
 export const metadata = { title: "이야기 거울 · 연결" };
 
@@ -19,6 +20,23 @@ export default async function StoryMirrorReflectPage() {
   const consented = Boolean(
     user?.storyMirrorEnabled && user?.storyMirrorExternalConsent
   );
+
+  const latestRun = await getLatestRagRun(session.id);
+  const initialRun = latestRun
+    ? {
+        id: latestRun.id,
+        createdAt: latestRun.createdAt.toISOString(),
+        summary: latestRun.summary ?? "",
+        connections: latestRun.matches.map((m) => ({
+          chunkId: m.chunkId,
+          title: m.chunk.title,
+          workTitle: m.chunk.work.title,
+          locator: m.chunk.locator,
+        connection: m.connection ?? "",
+          differentPerspective: m.differentPerspective,
+        })),
+      }
+    : null;
 
   return (
     <AppShell wide bare>
@@ -55,7 +73,7 @@ export default async function StoryMirrorReflectPage() {
       </div>
 
       <div className="max-w-2xl">
-        <StoryMirrorRag consented={consented} />
+      <StoryMirrorRag consented={consented} initialRun={initialRun} />
       </div>
     </AppShell>
   );

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
-import { getLatestRun } from "@/lib/story-mirror/db";
+import { getLatestRun, getLatestRagRun } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 
 export const metadata = { title: "이야기 거울" };
@@ -16,6 +16,7 @@ export const metadata = { title: "이야기 거울" };
 export default async function StoryMirrorPage() {
   const user = await requireUser();
   const run = await getLatestRun(user.id);
+  const latestRagRun = await getLatestRagRun(user.id);
 
   return (
     <AppShell wide bare>
@@ -112,6 +113,35 @@ export default async function StoryMirrorPage() {
             })}
           </div>
         </>
+      )}
+      {latestRagRun && (
+        <section className="mt-10">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-label-md text-accent-gold-ink">최근 거울 연결</p>
+            <Link
+              href="/story-mirror/reflect"
+              className="text-label-sm text-leaf transition hover:text-primary"
+            >
+              연결 탭에서 더 보기 →
+            </Link>
+          </div>
+          <SurfaceCard tone="dark" className="space-y-2">
+            {latestRagRun.summary && (
+              <p className="text-body-md text-primary">{latestRagRun.summary}</p>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              {latestRagRun.matches.slice(0, 3).map((m) => (
+                <span
+                  key={m.id}
+                  className="rounded-full bg-white/10 px-2 py-0.5 text-label-xs text-text-muted"
+                >
+                  {m.chunk.work.title}
+                  {m.chunk.locator ? ` · ${m.chunk.locator}` : ""}
+                </span>
+              ))}
+            </div>
+          </SurfaceCard>
+        </section>
       )}
     </AppShell>
   );

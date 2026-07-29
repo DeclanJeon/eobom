@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { SurfaceCard, SoftBadge } from "@/components/ui-blocks";
 
 type Candidate = {
@@ -18,6 +18,14 @@ type Connection = {
   locator: string | null;
   connection: string;
   differentPerspective?: string | null;
+};
+
+type RagRunListItem = {
+  id: string;
+  createdAt: string;
+  summary: string | null;
+  connectionCount: number;
+  corpusVersion: string;
 };
 
 type Status =
@@ -48,20 +56,99 @@ function parseBlock(block: string): SseData | null {
   return { event, data: parsed };
 }
 
-export function StoryMirrorRag({ consented }: { consented: boolean }) {
+export function StoryMirrorRag({
+  consented,
+  initialRun,
+}: {
+  consented: boolean;
+  initialRun?: {
+    id: string;
+    createdAt: string;
+    summary: string;
+    connections: Connection[];
+  } | null;
+}) {
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
   const [summary, setSummary] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [viewingPast, setViewingPast] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<RagRunListItem[] | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const initRef = useRef(false);
 
   const reset = useCallback(() => {
     setCandidates([]);
     setConnections([]);
     setSummary("");
     setErrorMsg("");
+    setViewingPast(false);
+    setActiveRunId(null);
+  }, []);
+
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    if (initialRun && status === "idle") {
+      setSummary(initialRun.summary ?? "");
+      setConnections(initialRun.connections ?? []);
+      setStatus("complete");
+      setViewingPast(true);
+      setActiveRunId(initialRun.id);
+    }
+  }, [initialRun, status]);
+
+  const toggleHistory = useCallback(async () => {
+    if (historyOpen) {
+      setHistoryOpen(false);
+      return;
+    }
+    setHistoryOpen(true);
+    if (history) return;
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/story-mirror/rag/runs", { cache: "no-store" });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          runs: Array<{
+            id: string;
+            createdAt: string;
+            summary: string | null;
+            connectionCount: number;
+            corpusVersion: string;
+          }>;
+        };
+        setHistory(data.runs ?? []);
+      }
+    } catch {
+      // ignore history fetch errors
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [historyOpen, history]);
+
+  const openRun = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/story-mirror/rag/runs/${id}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        run: { summary: string; connections: Connection[] };
+      };
+      setSummary(data.run.summary ?? "");
+      setConnections(data.run.connections ?? []);
+      setCandidates([]);
+      setErrorMsg("");
+      setStatus("complete");
+      setViewingPast(true);
+      setActiveRunId(id);
+    } catch {
+      // ignore
+    }
   }, []);
 
   const submit = useCallback(
@@ -194,6 +281,53 @@ export function StoryMirrorRag({ consented }: { consented: boolean }) {
           <span className="text-label-xs text-text-muted">{input.length}/4000</span>
         </div>
       </form>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={toggleHistory}
+          className="text-label-sm text-accent-gold-ink hover:underline"
+        >
+          지난 연결{history ? ` (${history.length})` : ""} 보기
+        </button>
+      </div>
+
+      {historyOpen && (
+        <div className="space-y-2">
+          {historyLoading && (
+            <p className="text-label-sm text-text-muted">불러오는 중…</p>
+          )}
+          {history && history.length === 0 && (
+            <p className="text-label-sm text-text-muted">
+              아직 저장된 연결이 없어요.
+            </p>
+          )}
+          {history?.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => openRun(r.id)}
+              className="w-full rounded-xl border border-line bg-white/80 p-3 text-left transition hover:border-accent-gold/40"
+            >
+              <p className="line-clamp-2 text-body-sm text-primary">
+                {r.summary ?? "(요약 없음)"}
+              </p>
+              <p className="mt-1 text-label-xs text-text-muted">
+                {new Date(r.createdAt).toLocaleDateString("ko-KR")} · 연결{" "}
+                {r.connectionCount}건
+              </p>
+            </button>
+          ))}
+          {history && history.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleHistory}
+              className="text-label-xs text-text-muted underline"
+            >
+              닫기
+            </button>
+          )}
+        </div>
+      )}
 
       {candidates.length > 0 && (
         <div>
@@ -221,6 +355,11 @@ export function StoryMirrorRag({ consented }: { consented: boolean }) {
 
       {status === "complete" && (
         <div className="space-y-4">
+          {viewingPast && (
+            <p className="text-label-xs text-text-muted">
+              지난 연결 · 저장된 기록
+            </p>
+          )}
           {summary && (
             <SurfaceCard tone="dark">
               <p className="text-body-lg text-primary">{summary}</p>

@@ -1,2 +1,1 @@
-{"ts":"2026-07-29T13:04:58.669Z","event":"plan_created","message":"23 goal(s) created"}
-{"ts":"2026-07-29T13:07:05.600Z","event":"goal_started","goalId":"G001-db-bge-m3-qdrant-sqlite-vec-sqlite-f","status":"in_progress","message":"Attempt 1"}
+{"ts":"2026-07-29T15:55:04.145Z","event":"plan_created","message":"16 goal(s) created"}

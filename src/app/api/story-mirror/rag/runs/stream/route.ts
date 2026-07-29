@@ -170,7 +170,7 @@ export async function POST(request: Request) {
         }
         await db.storyRagRun.update({
           where: { id: run.id },
-          data: { status: "complete", completedAt: new Date() },
+          data: { status: "complete", completedAt: new Date(), summary: result.summary },
         });
 
         send({
