@@ -82,6 +82,43 @@ export default async function ReviewDetailPage({
             />
             <ObservationSection title="이전 결단의 흐름" items={review.actionFlow} />
 
+            {/* 이야기와 연결 */}
+            {review.storyConnections?.length ? (
+              <section className="space-y-3">
+                <h2 className="text-headline-sm text-primary">이야기와 연결</h2>
+                {review.storyConnections.map((sc, idx) => (
+                  <SurfaceCard key={idx} className="border-l-4 border-l-leaf/50">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-label-md text-primary">{sc.story}</h3>
+                      <SoftBadge>{sc.source}</SoftBadge>
+                    </div>
+                    <p className="mt-2 text-body-md text-text-muted">{sc.connection}</p>
+                    {sc.differentPerspective ? (
+                      <p className="mt-1 text-body-sm text-text-muted italic">
+                        다른 관점: {sc.differentPerspective}
+                      </p>
+                    ) : null}
+                  </SurfaceCard>
+                ))}
+              </section>
+            ) : null}
+
+            {/* 다시 읽을 말씀 */}
+            {review.scriptureReadings?.length ? (
+              <section className="space-y-3">
+                <h2 className="text-headline-sm text-primary">다시 읽을 말씀</h2>
+                {review.scriptureReadings.map((sr, idx) => (
+                  <SurfaceCard key={idx} className="border-l-4 border-l-accent-gold/50">
+                    <h3 className="text-label-md text-primary">{sr.ref}</h3>
+                    <p className="mt-1 text-body-md text-text-muted">{sr.reason}</p>
+                    {sr.focus ? (
+                      <p className="mt-1 text-label-sm text-text-muted">💡 {sr.focus}</p>
+                    ) : null}
+                  </SurfaceCard>
+                ))}
+              </section>
+            ) : null}
+
             <SurfaceCard>
               <h2 className="text-headline-sm text-primary">
                 달라진 점 또는 아직 알 수 없는 점
@@ -125,6 +162,39 @@ export default async function ReviewDetailPage({
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
+              </SurfaceCard>
+            ) : null}
+
+            {/* 다음 한 걸음 */}
+            {review.nextSteps?.length ? (
+              <SurfaceCard className="border-l-4 border-l-leaf">
+                <h2 className="text-headline-sm text-primary">다음 한 걸음</h2>
+                <div className="mt-3 space-y-3">
+                  {review.nextSteps.map((ns, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <span className="mt-0.5 text-lg">👣</span>
+                      <div>
+                        <p className="text-label-md text-primary">{ns.action}</p>
+                        <p className="text-label-sm text-text-muted">{ns.reason}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
+
+            {/* 기도로 이어가기 */}
+            {review.prayerPrompts?.length ? (
+              <SurfaceCard className="border-l-4 border-l-clay">
+                <h2 className="text-headline-sm text-primary">기도로 이어가기</h2>
+                <div className="mt-3 space-y-3">
+                  {review.prayerPrompts.map((pp, idx) => (
+                    <div key={idx}>
+                      <p className="text-label-md text-primary">🙏 {pp.topic}</p>
+                      <p className="mt-1 text-body-md text-text-muted">{pp.suggestion}</p>
+                    </div>
+                  ))}
+                </div>
               </SurfaceCard>
             ) : null}
 
