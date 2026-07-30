@@ -4,7 +4,7 @@ import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { formatDateShort } from "@/lib/utils";
-
+import { reportTypeLabel } from "@/lib/review-display";
 export const metadata = { title: "회고" };
 
 export default async function ReviewsPage() {
@@ -50,7 +50,7 @@ export default async function ReviewsPage() {
             <Link key={report.id} href={`/reviews/${report.id}`}>
               <SurfaceCard className="h-full transition hover:border-accent-gold/30">
                 <div className="flex flex-wrap items-center gap-2">
-                  <SoftBadge>{report.reportType}</SoftBadge>
+                  <SoftBadge>{reportTypeLabel(report.reportType)}</SoftBadge>
                   <span className="text-label-sm text-text-muted">
                     {formatDateShort(report.periodStart)} –{" "}
                     {formatDateShort(report.periodEnd)}
