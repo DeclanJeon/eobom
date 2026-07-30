@@ -130,6 +130,31 @@ export default async function StoryMirrorPage() {
             ))}
           </div>
         </div>
+      ) : latestRagRun && latestRagRun.matches.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-label-md text-text-muted">회고에서 닿은 이야기 · 연결</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {latestRagRun.matches.map((m) => (
+              <SurfaceCard key={m.id} className="h-full">
+                <p className="text-label-sm text-text-muted">
+                  {m.chunk.work.title}
+                  {m.chunk.locator ? ` · ${m.chunk.locator}` : ""}
+                </p>
+                <h2 className="mt-1 text-headline-sm text-primary">
+                  {m.chunk.title}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-body-md text-text-muted">
+                  {m.connection}
+                </p>
+                {m.differentPerspective && (
+                  <p className="mt-3 rounded-xl bg-chalk p-3 text-body-sm text-text-muted">
+                    다른 시선 · {m.differentPerspective}
+                  </p>
+                )}
+              </SurfaceCard>
+            ))}
+          </div>
+        </div>
       ) : (
         <EmptyState
           title={
@@ -149,35 +174,6 @@ export default async function StoryMirrorPage() {
             </Link>
           }
         />
-      )}
-      {latestRagRun && (
-        <section className="mt-10">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-label-md text-accent-gold-ink">최근 거울 연결</p>
-            <Link
-              href="/story-mirror/reflect"
-              className="text-label-sm text-leaf transition hover:text-primary"
-            >
-              연결 탭에서 더 보기 →
-            </Link>
-          </div>
-          <SurfaceCard tone="dark" className="space-y-2">
-            {latestRagRun.summary && (
-              <p className="text-body-md text-primary">{latestRagRun.summary}</p>
-            )}
-            <div className="flex flex-wrap gap-1.5">
-              {latestRagRun.matches.slice(0, 3).map((m) => (
-                <span
-                  key={m.id}
-                  className="rounded-full bg-white/10 px-2 py-0.5 text-label-xs text-text-muted"
-                >
-                  {m.chunk.work.title}
-                  {m.chunk.locator ? ` · ${m.chunk.locator}` : ""}
-                </span>
-              ))}
-            </div>
-          </SurfaceCard>
-        </section>
       )}
     </AppShell>
   );

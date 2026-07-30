@@ -241,6 +241,21 @@ export function StoryMirrorRag({
     [input, runConnection]
   );
 
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    autoRanRef.current = true;
+    // 회고는 있으나 사전 연결(storyConnections)이 없으면, 회고 내용을 바탕으로
+    // RAG 연결을 자동 생성한다. 사용자가 직접 입력할 필요가 없다.
+    if (
+      seedInput &&
+      consented &&
+      status === "idle" &&
+      (!storyConnections || storyConnections.length === 0)
+    ) {
+      void runConnection(seedInput);
+    }
+  }, [seedInput, consented, status, storyConnections, runConnection]);
   const stop = useCallback(() => {
     abortRef.current?.abort();
     setStatus("idle");
@@ -251,6 +266,7 @@ export function StoryMirrorRag({
       <SurfaceCard className="text-center">
         <p className="text-headline-sm text-primary">이야기 거울 연결을 켜주세요</p>
         <p className="mt-2 text-body-md text-text-muted">
+
           당신의 회고를 바탕으로 고전·성경 속 이야기와 연결해 드립니다.
           먼저 외부 생성(AI) 동의를 켜주세요.
         </p>

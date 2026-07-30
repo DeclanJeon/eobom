@@ -109,7 +109,9 @@ export async function getLatestRagRun(userId: string) {
  * - storyConnections: 회고 생성 시 AI가 연결한 고전·성경 속 닮은 이야기
  * - seed: 회고 본문을 압축한 텍스트 (RAG 연결의 입력값)
  *
- * 회고가 없거나 연결된 이야기가 없으면 null을 반환한다.
+ * 회고가 없거나, 연결할 내용(이야기·주제·감정)이 전혀 없으면 null을 반환한다.
+ * storyConnections가 비어 있어도 주제·감정 시드가 있으면 반환하며,
+ * 이 경우 연결 탭에서 회고 내용을 바탕으로 RAG 연결을 자동 생성한다.
  */
 export async function getLatestReviewStoryMirror(userId: string) {
   const report = await db.reviewReport.findFirst({
@@ -127,7 +129,6 @@ export async function getLatestReviewStoryMirror(userId: string) {
   if (!parsed) return null;
 
   const review = normalizeReviewForDisplay(parsed);
-  if (review.storyConnections.length === 0) return null;
 
   const parts: string[] = [];
   if (review.oneSentence) parts.push(review.oneSentence);
@@ -140,6 +141,8 @@ export async function getLatestReviewStoryMirror(userId: string) {
     if (o.body) parts.push(o.body);
   }
   const seed = parts.join("\n").slice(0, 4000);
+
+  if (review.storyConnections.length === 0 && seed.length === 0) return null;
 
   return {
     reviewId: report.id,
