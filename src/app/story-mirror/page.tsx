@@ -28,6 +28,9 @@ export default async function StoryMirrorPage() {
       where: { userId: user.id, deletedAt: null },
     })) > 0;
 
+  const ragMatches =
+    latestRagRun?.matches.filter((match) => Boolean(match.connection?.trim())) ?? [];
+
   return (
     <AppShell wide bare>
       <section className="mb-8 max-w-2xl md:mb-10">
@@ -107,7 +110,7 @@ export default async function StoryMirrorPage() {
             })}
           </div>
         </div>
-      ) : reviewMirror && reviewMirror.storyConnections.length > 0 ? (
+      ) : ragMatches.length === 0 && reviewMirror && reviewMirror.storyConnections.length > 0 ? (
         <div className="space-y-3">
           <p className="text-label-md text-text-muted">
             회고에서 닿은 이야기 ·{" "}
@@ -130,11 +133,11 @@ export default async function StoryMirrorPage() {
             ))}
           </div>
         </div>
-      ) : latestRagRun && latestRagRun.matches.length > 0 ? (
+      ) : ragMatches.length > 0 ? (
         <div className="space-y-3">
           <p className="text-label-md text-text-muted">회고에서 닿은 이야기 · 연결</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {latestRagRun.matches.map((m) => (
+            {ragMatches.map((m) => (
               <SurfaceCard key={m.id} className="h-full">
                 <p className="text-label-sm text-text-muted">
                   {m.chunk.work.title}

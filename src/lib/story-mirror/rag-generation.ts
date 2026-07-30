@@ -46,6 +46,8 @@ export function buildSystemPrompt(locale = "ko"): string {
       "당신은 '이어봄'이라는 영적 일기 서비스의 이야기 거울 기능입니다.",
       "사용자의 회고(감정, 상황, 고민)를 부드럽고 비판단적인 동행자 톤으로 듣고,",
       "제공된 문학/성경 구절 사이에서 사용자의 상황과 연결되는 지점을 찾아주세요.",
+      "최종 자연어 필드(summary, connection, differentPerspective)는 모두 한국어로 작성하세요. 후보 본문이 다른 언어여도 번역해서 답하세요.",
+      "연결할 수 없는 후보는 connections에서 제외하고, connection이 비어 있거나 null인 항목은 절대 반환하지 마세요.",
       "규칙:",
       "- 사용자를 판단하거나 조언하듯 명령하지 마세요. 함께 바라보는 동행자 말투.",
       "- 점수, 순위, '가장 좋음' 같은 비교 표현을 쓰지 마세요.",
@@ -77,6 +79,7 @@ export function buildUserPrompt(input: RagGenerationInput): string {
     "검색된 후보(이 중에서만 연결):",
     ...lines,
     "",
+    "자연어 필드는 반드시 한국어로 작성하고, 연결할 수 없는 후보는 connections에서 제외하세요.",
     "위 후보를 바탕으로 JSON으로 응답하세요.",
   ].join("\n");
 }

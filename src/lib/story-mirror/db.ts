@@ -95,7 +95,10 @@ export async function getLatestRagRun(userId: string) {
     orderBy: { createdAt: "desc" },
     include: {
       matches: {
-        where: { state: "active" },
+        where: {
+          state: "active",
+          connection: { not: null },
+        },
         include: { chunk: { include: { work: true } } },
         orderBy: { createdAt: "asc" },
       },
@@ -166,7 +169,16 @@ export async function getRagRuns(userId: string, take = 20) {
       createdAt: true,
       summary: true,
       corpusVersion: true,
-      _count: { select: { matches: { where: { state: "active" } } } },
+      _count: {
+        select: {
+          matches: {
+            where: {
+              state: "active",
+              connection: { not: null },
+            },
+          },
+        },
+      },
     },
   });
   return runs.map((r) => ({
@@ -186,7 +198,10 @@ export async function getRagRunById(userId: string, runId: string) {
     where: { id: runId, userId, status: "complete" },
     include: {
       matches: {
-        where: { state: "active" },
+        where: {
+          state: "active",
+          connection: { not: null },
+        },
         include: { chunk: { include: { work: true } } },
         orderBy: { createdAt: "asc" },
       },

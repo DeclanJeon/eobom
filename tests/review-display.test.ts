@@ -54,6 +54,18 @@ describe("normalizeReviewForDisplay", () => {
     expect(got.themes[0].key).toBe("t1");
   });
 
+  it("설명 없는 이야기 연결은 빈 카드로 만들지 않는다", () => {
+    const review = baseReview({
+      storyConnections: [
+        { story: "이야기만 있는 항목", source: "성경", connection: "" },
+        { story: "설명 있는 항목", source: "성경", connection: "연결 이유" },
+      ],
+    });
+    const got = normalizeReviewForDisplay(review);
+    expect(got.storyConnections).toHaveLength(1);
+    expect(got.storyConnections[0].story).toBe("설명 있는 항목");
+  });
+
   it("confidence enum을 한국어 라벨로 변환한다", () => {
     const review = baseReview({
       emotions: [{ key: "e1", title: "감사", body: "함께 나타남", confidence: "high", evidence: [] }],

@@ -101,7 +101,7 @@ export function normalizeReviewForDisplay(review: StructuredReview): DisplayRevi
     ).map(mapObservation),
     storyConnections: capAndFilter(
       review.storyConnections,
-      (s) => Boolean(s?.story?.trim() || s?.connection?.trim()),
+      (s) => Boolean(s?.story?.trim() && s?.connection?.trim()),
       CAPS.storyConnections,
     ),
     scriptureReadings: capAndFilter(
