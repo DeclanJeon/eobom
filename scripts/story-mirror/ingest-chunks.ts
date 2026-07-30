@@ -8,6 +8,7 @@
  * 실행: bun run scripts/story-mirror/ingest-chunks.ts
  */
 import { db } from "../../src/lib/db";
+import type { Prisma } from "@prisma/client";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -39,6 +40,28 @@ function slugify(input: string): string {
 
 function checksum(text: string): string {
   return Bun.hash(text).toString(36);
+}
+
+type StoryChunkData = Prisma.StoryChunkUncheckedCreateInput;
+type StoryChunkCreateArgs = { data: StoryChunkData };
+
+async function upsertChunk({ data }: StoryChunkCreateArgs) {
+  const existing = await db.storyChunk.findFirst({
+    where: {
+      workId: data.workId,
+      chunkIndex: data.chunkIndex,
+      corpusVersion: data.corpusVersion,
+    },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return db.storyChunk.update({
+      where: { id: existing.id },
+      data,
+    });
+  }
+  return db.storyChunk.create({ data });
 }
 
 function composeText(parts: string[]): string {
@@ -95,7 +118,7 @@ type BaseSeed = {
 // 클래식 인물 1건 → 청크 2개(요약/서사 + 상황/감정)로 검색 다양성을 확보한다.
 async function ingestClassic(seed: any, workId: string) {
   const summaryText = composeText([seed.summary, seed.arc]);
-  await db.storyChunk.create({
+  await upsertChunk({
     data: {
       workId,
       chunkIndex: 0,
@@ -120,7 +143,7 @@ async function ingestClassic(seed: any, workId: string) {
     ...(seed.themes ?? []),
     ...(seed.emotions ?? []),
   ]);
-  await db.storyChunk.create({
+  await upsertChunk({
     data: {
       workId,
       chunkIndex: 1,
@@ -145,9 +168,7 @@ async function ingestClassic(seed: any, workId: string) {
 async function main() {
   await ensureFts5();
 
-  // 코퍼스 버전이 같으면 초기화 후 재생성(멱등).
-  await db.storyChunk.deleteMany({ where: { corpusVersion: CORPUS_VERSION } });
-
+  // 기존 청크 ID를 유지해 StoryRagMatch가 배포마다 cascade 삭제되지 않도록 upsert한다.
   const { WORLD_CLASSICS } = await import(
     "../../src/lib/story-mirror/seed/world-classics"
   );
@@ -212,7 +233,7 @@ async function main() {
     const passages = seed.keyPassages ?? [];
     for (let i = 0; i < passages.length; i++) {
       const p = passages[i];
-      await db.storyChunk.create({
+      await upsertChunk({
         data: {
           workId,
           chunkIndex: i,
