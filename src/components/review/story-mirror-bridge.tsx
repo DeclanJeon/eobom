@@ -35,7 +35,10 @@ export function StoryMirrorBridge({
   const ragSummary = latestRagRun?.summary ?? null;
   const ragConnection = latestRagRun?.matches?.[0] ?? null;
   const hasAny =
-    storyMatches.length > 0 || Boolean(ragSummary) || Boolean(ragConnection);
+    storyMatches.length > 0 ||
+    Boolean(ragSummary) ||
+    Boolean(ragConnection) ||
+    Boolean(storyConnections && storyConnections.length > 0);
 
   if (!hasAny) {
     return (
@@ -43,8 +46,8 @@ export function StoryMirrorBridge({
         <h2 className="text-headline-sm text-primary">이야기 거울</h2>
         <SurfaceCard className="border-l-4 border-l-accent-gold/50">
           <p className="text-body-md text-text-muted">
-            아직 연결된 이야기가 없어요. 기록이 쌓이면 지금의 마음과 닮은 인물과
-            작품을 찾아드릴게요.
+            아직 닿은 이야기가 없어요. 회고를 바탕으로 고전 속 닮은 인물과
+            작품을 찾아보세요.
           </p>
           <Link
             href="/story-mirror/reflect"

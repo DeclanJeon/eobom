@@ -10,7 +10,7 @@ import { AppShell } from "@/components/app-shell";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { StoryMirrorRag } from "@/components/story-mirror-rag";
-import { getLatestRagRun } from "@/lib/story-mirror/db";
+import { getLatestRagRun, getLatestReviewStoryMirror } from "@/lib/story-mirror/db";
 
 export const metadata = { title: "이야기 거울 · 연결" };
 
@@ -38,6 +38,13 @@ export default async function StoryMirrorReflectPage() {
       }
     : null;
 
+  const reviewMirror = await getLatestReviewStoryMirror(session.id);
+  const seedInput = reviewMirror?.seed ?? null;
+  const seedLabel = reviewMirror
+    ? `${new Date(reviewMirror.periodStart).toLocaleDateString("ko-KR")} 회고`
+    : null;
+  const storyConnections = reviewMirror?.storyConnections ?? null;
+
   return (
     <AppShell wide bare>
       <section className="mb-8 max-w-2xl md:mb-10">
@@ -46,7 +53,7 @@ export default async function StoryMirrorReflectPage() {
           당신의 이야기가 닿는 곳
         </h1>
         <p className="mt-3 text-body-md text-text-muted">
-          지금 마음에 걸리는 일을 적어보세요. 수천 년 전 사람들의 이야기 속에서,
+          회고 속 마음을 담아 닮은 이야기를 찾아요. 수천 년 전 사람들의 이야기 속에서,
           지금의 당신과 닮은 연결을 조용히 건네드립니다.
         </p>
       </section>
@@ -73,7 +80,13 @@ export default async function StoryMirrorReflectPage() {
       </div>
 
       <div className="max-w-2xl">
-      <StoryMirrorRag consented={consented} initialRun={initialRun} />
+      <StoryMirrorRag
+        consented={consented}
+        initialRun={initialRun}
+        seedInput={seedInput}
+        seedLabel={seedLabel}
+        storyConnections={storyConnections}
+      />
       </div>
     </AppShell>
   );

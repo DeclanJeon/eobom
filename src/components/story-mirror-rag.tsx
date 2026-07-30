@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { SurfaceCard, SoftBadge } from "@/components/ui-blocks";
+import type { StoryConnection } from "@/lib/mimo";
 
 type Candidate = {
   chunkId: string;
@@ -59,6 +60,9 @@ function parseBlock(block: string): SseData | null {
 export function StoryMirrorRag({
   consented,
   initialRun,
+  seedInput,
+  seedLabel,
+  storyConnections,
 }: {
   consented: boolean;
   initialRun?: {
@@ -67,8 +71,12 @@ export function StoryMirrorRag({
     summary: string;
     connections: Connection[];
   } | null;
+  seedInput?: string | null;
+  seedLabel?: string | null;
+  storyConnections?: StoryConnection[] | null;
 }) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(seedInput ?? "");
+  const [showRefine, setShowRefine] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -151,82 +159,86 @@ export function StoryMirrorRag({
     }
   }, []);
 
-  const submit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      const text = input.trim();
-      if (!text || status === "retrieving" || status === "streaming") return;
+  const runConnection = useCallback(async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || status === "retrieving" || status === "streaming") return;
 
-      reset();
-      setStatus("retrieving");
+    reset();
+    setStatus("retrieving");
 
-      const controller = new AbortController();
-      abortRef.current = controller;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-      try {
-        const res = await fetch("/api/story-mirror/rag/runs/stream", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ input: text, locale: "ko" }),
-          signal: controller.signal,
-        });
+    try {
+      const res = await fetch("/api/story-mirror/rag/runs/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: trimmed, locale: "ko" }),
+        signal: controller.signal,
+      });
 
-        if (res.status === 403) {
-          setStatus("denied");
-          return;
-        }
-        if (!res.ok || !res.body) {
-          setStatus("error");
-          setErrorMsg("이야기를 불러오지 못했습니다.");
-          return;
-        }
+      if (res.status === 403) {
+        setStatus("denied");
+        return;
+      }
+      if (!res.ok || !res.body) {
+        setStatus("error");
+        setErrorMsg("이야기를 불러오지 못했습니다.");
+        return;
+      }
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buf = "";
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += decoder.decode(value, { stream: true });
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
 
-          let idx: number;
-          while ((idx = buf.indexOf("\n\n")) >= 0) {
-            const block = buf.slice(0, idx);
-            buf = buf.slice(idx + 2);
-            const ev = parseBlock(block);
-            if (!ev) continue;
+        let idx: number;
+        while ((idx = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const ev = parseBlock(block);
+          if (!ev) continue;
 
-            if (ev.event === "retrieval") {
-              const d = ev.data as { candidates: Candidate[] };
-              setCandidates(d.candidates ?? []);
-              setStatus("streaming");
-            } else if (ev.event === "delta") {
-              setStatus("streaming");
-            } else if (ev.event === "complete") {
-              const d = ev.data as {
-                summary: string;
-                connections: Connection[];
-              };
-              setSummary(d.summary ?? "");
-              setConnections(d.connections ?? []);
-              setStatus("complete");
-            } else if (ev.event === "insufficientEvidence") {
-              setStatus("insufficient");
-            } else if (ev.event === "error") {
-              setStatus("error");
-              const d = ev.data as { message?: string };
-              setErrorMsg(d?.message ?? "이야기 생성 중 문제가 생겼어요.");
-            }
+          if (ev.event === "retrieval") {
+            const d = ev.data as { candidates: Candidate[] };
+            setCandidates(d.candidates ?? []);
+            setStatus("streaming");
+          } else if (ev.event === "delta") {
+            setStatus("streaming");
+          } else if (ev.event === "complete") {
+            const d = ev.data as {
+              summary: string;
+              connections: Connection[];
+            };
+            setSummary(d.summary ?? "");
+            setConnections(d.connections ?? []);
+            setStatus("complete");
+          } else if (ev.event === "insufficientEvidence") {
+            setStatus("insufficient");
+          } else if (ev.event === "error") {
+            setStatus("error");
+            const d = ev.data as { message?: string };
+            setErrorMsg(d?.message ?? "이야기 생성 중 문제가 생겼어요.");
           }
         }
-      } catch (err) {
-        if ((err as Error).name === "AbortError") return;
-        setStatus("error");
-        setErrorMsg("연결이 끊겼어요. 다시 시도해 주세요.");
       }
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      setStatus("error");
+      setErrorMsg("연결이 끊겼어요. 다시 시도해 주세요.");
+    }
+  }, [status, reset]);
+
+  const submit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      void runConnection(input);
     },
-    [input, status, reset]
+    [input, runConnection]
   );
 
   const stop = useCallback(() => {
@@ -251,36 +263,95 @@ export function StoryMirrorRag({
     );
   }
 
+  if (!seedInput && !initialRun) {
+    return (
+      <SurfaceCard className="text-center">
+        <p className="text-headline-sm text-primary">연결할 회고가 아직 없어요</p>
+        <p className="mt-2 text-body-md text-text-muted">
+          회고를 남기시면, 그 속 마음을 고전 속 이야기와 잇는 연결을 만들어 드립니다.
+        </p>
+        <div className="mt-4 flex justify-center">
+          <a href="/reviews" className="cta-primary">회고 생성하기</a>
+        </div>
+      </SurfaceCard>
+    );
+  }
+
   const busy = status === "retrieving" || status === "streaming";
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={submit} className="space-y-3">
-        <label htmlFor="rag-input" className="block text-label-md text-primary">
-          지금 마음에 걸리는 이야기를 적어보세요
-        </label>
-        <textarea
-          id="rag-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          rows={4}
-          maxLength={4000}
-          placeholder="요즘 반복되는 감정, 막막한 순간, 마음에 남는 상황을 자유롭게 적어보세요."
-          className="w-full rounded-2xl border border-line bg-white/95 p-4 text-body-md text-primary outline-none transition focus:border-accent-gold/40"
-        />
-        <div className="flex items-center gap-3">
-          {!busy ? (
-            <button type="submit" className="cta-primary" disabled={!input.trim()}>
-              이야기 찾기
-            </button>
-          ) : (
-            <button type="button" onClick={stop} className="cta-secondary">
-              멈추기
-            </button>
-          )}
-          <span className="text-label-xs text-text-muted">{input.length}/4000</span>
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-line bg-white/60 p-3 text-label-sm text-text-muted">
+          <span className="text-accent-gold-ink">{seedLabel}</span> 회고를 바탕으로
+          닮은 이야기를 찾아요.
         </div>
-      </form>
+
+        {!showRefine && status === "idle" && storyConnections && storyConnections.length > 0 ? (
+          <section className="space-y-4">
+            <p className="text-label-md text-text-muted">회고에서 닿은 이야기</p>
+            {storyConnections.map((sc, i) => (
+              <SurfaceCard key={i} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h3 className="text-headline-sm text-primary">{sc.story}</h3>
+                  {sc.source ? (
+                    <span className="shrink-0 text-label-xs text-text-muted">{sc.source}</span>
+                  ) : null}
+                </div>
+                <p className="text-body-md text-text-muted">{sc.connection}</p>
+                {sc.differentPerspective ? (
+                  <p className="rounded-xl bg-chalk p-3 text-body-sm text-text-muted">
+                    다른 시선 · {sc.differentPerspective}
+                  </p>
+                ) : null}
+              </SurfaceCard>
+            ))}
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowRefine(true)}
+                className="cta-secondary"
+              >
+                다른 마음으로 다시 찾기
+              </button>
+            </div>
+          </section>
+        ) : (
+          <form onSubmit={submit} className="space-y-3">
+            <label htmlFor="rag-input" className="block text-label-md text-primary">
+              회고를 바탕으로 닮은 이야기를 찾아요. 필요하면 다듬어 보세요.
+            </label>
+            <textarea
+              id="rag-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              rows={4}
+              maxLength={4000}
+              placeholder="회고 내용이 그대로 담겨 있어요. 다른 마음을 잇고 싶다면 수정해 보세요."
+              className="w-full rounded-2xl border border-line bg-white/95 p-4 text-body-md text-primary outline-none transition focus:border-accent-gold/40"
+            />
+            <div className="flex items-center gap-3">
+              {!busy ? (
+                <button type="submit" className="cta-primary" disabled={!input.trim()}>
+                  이야기 찾기
+                </button>
+              ) : (
+                <button type="button" onClick={stop} className="cta-secondary">
+                  멈추기
+                </button>
+              )}
+              <span className="text-label-xs text-text-muted">{input.length}/4000</span>
+              {showRefine ? (
+                <button
+                  type="button"
+                  onClick={() => setShowRefine(false)}
+                  className="text-label-xs text-text-muted underline"
+                >
+                  닫기
+                </button>
+              ) : null}
+            </div>
+          </form>
+        )}
       <div className="flex items-center justify-between">
         <button
           type="button"

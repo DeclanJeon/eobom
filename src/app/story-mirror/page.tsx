@@ -8,7 +8,12 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
-import { getLatestRun, getLatestRagRun } from "@/lib/story-mirror/db";
+import { db } from "@/lib/db";
+import {
+  getLatestRun,
+  getLatestRagRun,
+  getLatestReviewStoryMirror,
+} from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 
 export const metadata = { title: "이야기 거울" };
@@ -17,6 +22,11 @@ export default async function StoryMirrorPage() {
   const user = await requireUser();
   const run = await getLatestRun(user.id);
   const latestRagRun = await getLatestRagRun(user.id);
+  const reviewMirror = await getLatestReviewStoryMirror(user.id);
+  const hasReview =
+    (await db.reviewReport.count({
+      where: { userId: user.id, deletedAt: null },
+    })) > 0;
 
   return (
     <AppShell wide bare>
@@ -43,19 +53,9 @@ export default async function StoryMirrorPage() {
         </Link>
       </div>
 
-      {!run || run.matches.length === 0 ? (
-        <EmptyState
-          title="아직 연결된 이야기가 없습니다"
-          description="묵상 기록을 남기시면, 반복되는 주제와 감정을 고전 속 이야기와 연결해 드립니다."
-          action={
-            <Link href="/entries/new" className="cta-primary">
-              기록하기
-            </Link>
-          }
-        />
-      ) : (
-        <>
-          <div className="mb-6">
+      {run && run.matches.length > 0 ? (
+        <div className="space-y-6">
+          <div>
             <p className="text-label-md text-text-muted">
               최근 매칭 ·{" "}
               {run.completedAt
@@ -63,15 +63,11 @@ export default async function StoryMirrorPage() {
                 : ""}
             </p>
           </div>
-
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {run.matches.map((match) => {
               const warnings = parseJsonArray(match.card.contentWarnings);
               return (
-                <Link
-                  key={match.id}
-                  href={`/story-mirror/${match.card.id}`}
-                >
+                <Link key={match.id} href={`/story-mirror/${match.card.id}`}>
                   <SurfaceCard className="h-full transition hover:border-accent-gold/30">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -88,13 +84,11 @@ export default async function StoryMirrorPage() {
                         </span>
                       )}
                     </div>
-
                     {match.narrativeBridge && (
                       <p className="mt-2 line-clamp-3 text-body-md text-text-muted">
                         {match.narrativeBridge}
                       </p>
                     )}
-
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {parseJsonArray(match.matchThemes)
                         .slice(0, 3)
@@ -112,7 +106,49 @@ export default async function StoryMirrorPage() {
               );
             })}
           </div>
-        </>
+        </div>
+      ) : reviewMirror && reviewMirror.storyConnections.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-label-md text-text-muted">
+            회고에서 닿은 이야기 ·{" "}
+            {new Date(reviewMirror.periodStart).toLocaleDateString("ko-KR")}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {reviewMirror.storyConnections.map((sc, i) => (
+              <SurfaceCard key={i} className="h-full">
+                <p className="text-label-sm text-text-muted">{sc.source}</p>
+                <h2 className="mt-1 text-headline-sm text-primary">{sc.story}</h2>
+                <p className="mt-2 line-clamp-3 text-body-md text-text-muted">
+                  {sc.connection}
+                </p>
+                {sc.differentPerspective && (
+                  <p className="mt-3 rounded-xl bg-chalk p-3 text-body-sm text-text-muted">
+                    다른 시선 · {sc.differentPerspective}
+                  </p>
+                )}
+              </SurfaceCard>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyState
+          title={
+            hasReview ? "아직 닿은 이야기가 없어요" : "연결할 회고가 아직 없어요"
+          }
+          description={
+            hasReview
+              ? "회고 속 마음을 고전 속 이야기와 잇는 연결을 아직 만들지 않았어요."
+              : "회고를 남기시면, 반복되는 주제와 감정을 고전 속 이야기와 연결해 드립니다."
+          }
+          action={
+            <Link
+              href={hasReview ? "/story-mirror/reflect" : "/reviews"}
+              className="cta-primary"
+            >
+              {hasReview ? "이야기 찾기" : "회고 생성하기"}
+            </Link>
+          }
+        />
       )}
       {latestRagRun && (
         <section className="mt-10">

@@ -5,6 +5,8 @@
  */
 
 import { db } from "@/lib/db";
+import { normalizeReviewForDisplay } from "@/lib/review-display";
+import type { StructuredReview } from "@/lib/mimo";
 import { parseJsonArray } from "@/lib/utils";
 
 /**
@@ -99,6 +101,53 @@ export async function getLatestRagRun(userId: string) {
       },
     },
   });
+}
+
+/**
+ * 사용자의 최신 회고에서 이야기 거울 재료를 가져온다.
+ *
+ * - storyConnections: 회고 생성 시 AI가 연결한 고전·성경 속 닮은 이야기
+ * - seed: 회고 본문을 압축한 텍스트 (RAG 연결의 입력값)
+ *
+ * 회고가 없거나 연결된 이야기가 없으면 null을 반환한다.
+ */
+export async function getLatestReviewStoryMirror(userId: string) {
+  const report = await db.reviewReport.findFirst({
+    where: { userId, deletedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!report) return null;
+
+  let parsed: StructuredReview | null = null;
+  try {
+    parsed = JSON.parse(report.structuredOutput) as StructuredReview;
+  } catch {
+    parsed = null;
+  }
+  if (!parsed) return null;
+
+  const review = normalizeReviewForDisplay(parsed);
+  if (review.storyConnections.length === 0) return null;
+
+  const parts: string[] = [];
+  if (review.oneSentence) parts.push(review.oneSentence);
+  for (const o of [
+    ...review.themes,
+    ...review.emotions,
+    ...review.questions,
+  ]) {
+    if (o.title) parts.push(o.title);
+    if (o.body) parts.push(o.body);
+  }
+  const seed = parts.join("\n").slice(0, 4000);
+
+  return {
+    reviewId: report.id,
+    periodStart: report.periodStart,
+    periodEnd: report.periodEnd,
+    storyConnections: review.storyConnections,
+    seed,
+  };
 }
 
 /**
