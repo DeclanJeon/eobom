@@ -8,9 +8,8 @@ import { execFileSync, execSync } from "child_process";
 import { copyFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 const CODEX_IMAGEN = "/home/declan/bin/codex-imagen";
-const REMOTE_OUTPUT_DIR = "/home/declan/output/story-mirror-vis";
+export const VISUALIZATION_OUTPUT_DIR = "/home/declan/output/story-mirror-vis";
 const LOCAL_OUTPUT_DIR = "public/story-mirror/vis";
-const PUBLIC_OUTPUT_DIR = "/story-mirror/vis";
 const TIMEOUT = 120;
 
 export type ImageGenResult = {
@@ -25,7 +24,7 @@ export function generateImage(
   prompt: string,
   filename: string,
 ): ImageGenResult {
-  const remotePath = `${REMOTE_OUTPUT_DIR}/${filename}`;
+  const remotePath = `${VISUALIZATION_OUTPUT_DIR}/${filename}`;
   const localDir = join(process.cwd(), LOCAL_OUTPUT_DIR);
   const localPath = join(localDir, filename);
   const runsLocally = existsSync(CODEX_IMAGEN);
@@ -37,7 +36,7 @@ export function generateImage(
   // 운영 앱은 이미지 생성기와 같은 서버에서 실행되므로 SSH를 거치지 않는다.
   if (runsLocally) {
     try {
-      mkdirSync(REMOTE_OUTPUT_DIR, { recursive: true });
+      mkdirSync(VISUALIZATION_OUTPUT_DIR, { recursive: true });
       execFileSync(
         CODEX_IMAGEN,
         [prompt, "-o", remotePath, "--timeout", String(TIMEOUT)],
@@ -50,7 +49,7 @@ export function generateImage(
       copyFileSync(remotePath, localPath);
       return {
         success: true,
-        localPath: `${PUBLIC_OUTPUT_DIR}/${filename}`,
+        localPath: `/api/story-mirror/visualize?file=${encodeURIComponent(filename)}`,
         remotePath,
       };
     } catch (err) {
@@ -61,7 +60,7 @@ export function generateImage(
 
   try {
     // 로컬 개발 환경에서는 기존 원격 생성기를 사용한다.
-    execSync(`ssh ponslink "mkdir -p ${REMOTE_OUTPUT_DIR}"`, {
+    execSync(`ssh ponslink "mkdir -p ${VISUALIZATION_OUTPUT_DIR}"`, {
       timeout: 10000,
       encoding: "utf-8",
     });
@@ -83,7 +82,7 @@ export function generateImage(
 
     return {
       success: true,
-      localPath: `${PUBLIC_OUTPUT_DIR}/${filename}`,
+      localPath: `/api/story-mirror/visualize?file=${encodeURIComponent(filename)}`,
       remotePath,
     };
   } catch (err) {

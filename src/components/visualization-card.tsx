@@ -32,8 +32,10 @@ export function VisualizationCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const imageUrl =
-    vis?.imageUrl?.replace(/^\/public(\/story-mirror\/vis\/)/, "$1") ?? null;
+  const imageFile = vis?.imageUrl?.match(/(?:^|\/)([a-z0-9-]+\.png)(?:$|\?)/i)?.[1];
+  const imageUrl = imageFile
+    ? `/api/story-mirror/visualize?file=${encodeURIComponent(imageFile)}`
+    : null;
 
   const generate = useCallback(async () => {
     setLoading(true);

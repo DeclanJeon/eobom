@@ -5,10 +5,16 @@
  * GET은 사용자 시각화 목록을 반환한다.
  */
 
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { generateImage, buildVisualizationPrompt } from "@/lib/story-mirror/image-gen";
+import {
+  generateImage,
+  buildVisualizationPrompt,
+  VISUALIZATION_OUTPUT_DIR,
+} from "@/lib/story-mirror/image-gen";
 import { createHash } from "crypto";
 
 const KINDS = ["summary"] as const;
@@ -93,9 +99,26 @@ export async function POST(request: Request) {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+  const file = new URL(request.url).searchParams.get("file");
+  if (file) {
+    if (!/^[a-z0-9-]+\.png$/i.test(file)) {
+      return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+    }
+    try {
+      const image = await readFile(join(VISUALIZATION_OUTPUT_DIR, file));
+      return new Response(image, {
+        headers: {
+          "Cache-Control": "private, max-age=31536000, immutable",
+          "Content-Type": "image/png",
+        },
+      });
+    } catch {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
+  }
 
   const visualizations = await db.userVisualization.findMany({
     where: { userId: auth.user.id },
