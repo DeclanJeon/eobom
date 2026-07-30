@@ -9,10 +9,10 @@
 import { useState } from "react";
 
 const FEEDBACK_TYPES = [
-  { type: "helpful", label: "도움 됨", icon: "👍" },
-  { type: "inaccurate", label: "부정확함", icon: "❌" },
-  { type: "context_different", label: "맥락이 다름", icon: "🔄" },
-  { type: "exclude", label: "민감하므로 제외", icon: "⚠️" },
+  { type: "helpful", label: "도움이 됐어요" },
+  { type: "inaccurate", label: "사실과 달라요" },
+  { type: "context_different", label: "내 상황과 달라요" },
+  { type: "exclude", label: "다음엔 빼주세요" },
 ] as const;
 
 export function ObservationFeedback({
@@ -26,9 +26,11 @@ export function ObservationFeedback({
 }) {
   const [feedback, setFeedback] = useState<string[]>(initialFeedback ?? []);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
   async function sendFeedback(type: string) {
     setLoading(true);
+    setStatus("idle");
     try {
       const res = await fetch(`/api/reviews/${reviewId}/feedback`, {
         method: "POST",
@@ -38,31 +40,52 @@ export function ObservationFeedback({
       if (res.ok) {
         const data = await res.json();
         setFeedback(data.feedback ?? []);
+        setStatus("saved");
+      } else {
+        setStatus("error");
       }
     } catch {
-      // 실패 시 무시
+      setStatus("error");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {FEEDBACK_TYPES.map((fb) => (
-        <button
-          key={fb.type}
-          onClick={() => sendFeedback(fb.type)}
-          disabled={loading}
-          className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-label-xs transition disabled:opacity-50 ${
-            feedback.includes(fb.type)
-              ? "border-accent-gold bg-accent-gold/10 text-accent-gold-ink"
-              : "border-line text-text-muted hover:border-accent-gold/30"
-          }`}
-        >
-          <span>{fb.icon}</span>
-          <span>{fb.label}</span>
-        </button>
-      ))}
+    <div className="space-y-2">
+      <p className="text-label-xs text-text-muted">이 내용에 대해 알려주세요</p>
+      <div className="flex flex-wrap gap-2">
+        {FEEDBACK_TYPES.map((fb) => {
+          const selected = feedback.includes(fb.type);
+
+          return (
+            <button
+              key={fb.type}
+              type="button"
+              onClick={() => sendFeedback(fb.type)}
+              disabled={loading}
+              aria-pressed={selected}
+              className={`rounded-full border px-3 py-1.5 text-label-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold/60 disabled:cursor-wait disabled:opacity-50 ${
+                selected
+                  ? "border-accent-gold bg-accent-gold/10 text-accent-gold-ink"
+                  : "border-line text-text-muted hover:border-accent-gold/50 hover:bg-chalk"
+              }`}
+            >
+              {fb.label}
+            </button>
+          );
+        })}
+      </div>
+      {status === "saved" ? (
+        <p className="text-label-xs text-leaf" role="status" aria-live="polite">
+          의견을 반영했어요.
+        </p>
+      ) : null}
+      {status === "error" ? (
+        <p className="text-label-xs text-accent-terracotta" role="alert">
+          저장하지 못했어요. 잠시 후 다시 시도해 주세요.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
 
 type Visualization = {
   id: string;
@@ -104,9 +105,12 @@ export function VisualizationCard({
       )}
 
       {!loading && !error && vis?.status === "complete" && vis.imageUrl && (
-        <img
+          <Image
           src={vis.imageUrl}
           alt={KIND_LABELS[kind] ?? kind}
+          width={800}
+          height={600}
+          unoptimized
           className="w-full rounded-xl"
         />
       )}
