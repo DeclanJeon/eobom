@@ -10,6 +10,7 @@ import { join } from "path";
 const CODEX_IMAGEN = "/home/declan/bin/codex-imagen";
 const REMOTE_OUTPUT_DIR = "/home/declan/output/story-mirror-vis";
 const LOCAL_OUTPUT_DIR = "public/story-mirror/vis";
+const PUBLIC_OUTPUT_DIR = "/story-mirror/vis";
 const TIMEOUT = 120;
 
 export type ImageGenResult = {
@@ -49,7 +50,7 @@ export function generateImage(
       copyFileSync(remotePath, localPath);
       return {
         success: true,
-        localPath: `/${LOCAL_OUTPUT_DIR}/${filename}`,
+        localPath: `${PUBLIC_OUTPUT_DIR}/${filename}`,
         remotePath,
       };
     } catch (err) {
@@ -82,7 +83,7 @@ export function generateImage(
 
     return {
       success: true,
-      localPath: `/${LOCAL_OUTPUT_DIR}/${filename}`,
+      localPath: `${PUBLIC_OUTPUT_DIR}/${filename}`,
       remotePath,
     };
   } catch (err) {

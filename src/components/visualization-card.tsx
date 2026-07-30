@@ -32,6 +32,9 @@ export function VisualizationCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const imageUrl =
+    vis?.imageUrl?.replace(/^\/public(\/story-mirror\/vis\/)/, "$1") ?? null;
+
   const generate = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -71,7 +74,7 @@ export function VisualizationCard({
         <h3 className="text-headline-sm text-primary">
           {KIND_LABELS[kind] ?? kind}
         </h3>
-        {vis?.status === "complete" && vis.imageUrl && (
+        {vis?.status === "complete" && imageUrl && (
           <span className="rounded-full bg-accent-gold/10 px-2 py-0.5 text-label-xs text-accent-gold-ink">
             완료
           </span>
@@ -104,9 +107,9 @@ export function VisualizationCard({
         </div>
       )}
 
-      {!loading && !error && vis?.status === "complete" && vis.imageUrl && (
-          <Image
-          src={vis.imageUrl}
+      {!loading && !error && vis?.status === "complete" && imageUrl && (
+        <Image
+          src={imageUrl}
           alt={KIND_LABELS[kind] ?? kind}
           width={800}
           height={600}

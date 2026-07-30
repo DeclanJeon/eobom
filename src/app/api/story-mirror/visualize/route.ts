@@ -39,8 +39,8 @@ export async function POST(request: Request) {
       userId: auth.user.id,
       kind,
       periodStart,
-      periodEnd: now,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   if (existing?.imageUrl) {
