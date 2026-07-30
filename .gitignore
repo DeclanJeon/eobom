@@ -47,6 +47,9 @@ dev.log
 dev.out.log
 server.log
 
+# generated data
+data/story-mirror/*.json
+
 # local db
 /db/*.db
 /db/*.db-journal
@@ -61,6 +64,7 @@ ui_reference/
 Thumbs.db
 
 # agent session
+.omx/
 .gjc/
 ui_reference/
 db/
