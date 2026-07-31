@@ -1,16 +1,22 @@
 /**
  * Story Mirror — Image Generation via codex-imagen
  *
- * ponslink 서버의 codex-imagen을 SSH로 호출하여 이미지를 생성한다.
+ * 운영 서버의 codex-imagen을 로컬에서 호출해 이미지를 생성하고,
+ * 생성된 결과를 n8n이 사용하는 동일 Google Drive(gdrive 원격)에 백업한다.
  */
 
-import { execFileSync, execSync } from "child_process";
+import { execFileSync, execSync, spawn } from "child_process";
 import { copyFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 const CODEX_IMAGEN = "/home/declan/bin/codex-imagen";
 export const VISUALIZATION_OUTPUT_DIR = "/home/declan/output/story-mirror-vis";
 const LOCAL_OUTPUT_DIR = "public/story-mirror/vis";
 const TIMEOUT = 120;
+
+// 생성된 이미지를 n8n이 사용하는 동일 Google Drive에 백업한다 (rclone gdrive 원격).
+const RCLONE_BIN = process.env.RCLONE_BIN || "/usr/local/bin/rclone";
+const DRIVE_REMOTE = "gdrive:";
+const DRIVE_FOLDER_DEFAULT = "13_bible/eobom";
 
 export type ImageGenResult = {
   success: boolean;
@@ -19,7 +25,7 @@ export type ImageGenResult = {
   error?: string;
 };
 
-/** 원격 서버에서 이미지를 생성하고 로컬로 복사한다 */
+/** 운영 서버에서 이미지를 생성하고 로컬로 복사한다 */
 export function generateImage(
   prompt: string,
   filename: string,
@@ -47,6 +53,7 @@ export function generateImage(
         },
       );
       copyFileSync(remotePath, localPath);
+      uploadToDrive(remotePath, filename);
       return {
         success: true,
         localPath: `/api/story-mirror/visualize?file=${encodeURIComponent(filename)}`,
@@ -80,6 +87,7 @@ export function generateImage(
       encoding: "utf-8",
     });
 
+    uploadToDrive(remotePath, filename);
     return {
       success: true,
       localPath: `/api/story-mirror/visualize?file=${encodeURIComponent(filename)}`,
@@ -88,6 +96,51 @@ export function generateImage(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { success: false, error: msg };
+  }
+}
+
+/**
+ * 생성된 이미지를 Google Drive(gdrive 원격)에 업로드할 rclone 명령을 구성한다.
+ * n8n이 동일한 Drive를 사용하므로 운영 서버의 rclone gdrive 원격 구성을 그대로 활용한다.
+ */
+export type DriveUploadCommand = { bin: string; args: string[] };
+
+export function driveUploadCommand(
+  filePath: string,
+  filename: string,
+  folder: string = process.env.STORY_MIRROR_DRIVE_FOLDER || DRIVE_FOLDER_DEFAULT,
+): DriveUploadCommand {
+  const dest = `${DRIVE_REMOTE}${folder}`;
+  const logFile = join(VISUALIZATION_OUTPUT_DIR, `rclone-${filename}.log`);
+  return {
+    bin: RCLONE_BIN,
+    args: ["copy", filePath, dest, "--log-file", logFile, "--log-level", "INFO"],
+  };
+}
+
+/**
+ * 생성된 이미지를 Google Drive(gdrive 원격)에 비차단으로 업로드한다.
+ * 실패하더라도 이미지 생성 결과에는 영향을 주지 않도록 best-effort로 동작한다.
+ */
+export function uploadToDrive(filePath: string, filename: string): void {
+  if (process.env.STORY_MIRROR_DRIVE_ENABLED === "0") return;
+  const folder = process.env.STORY_MIRROR_DRIVE_FOLDER || DRIVE_FOLDER_DEFAULT;
+  const { bin, args } = driveUploadCommand(filePath, filename);
+  try {
+    const child = spawn(bin, args, {
+      detached: true,
+      stdio: "ignore",
+      env: process.env,
+    });
+    child.on("error", (err) =>
+      console.error(`[story-mirror] drive upload spawn failed (${filename}):`, err),
+    );
+    child.on("exit", (code) => {
+      if (code) console.error(`[story-mirror] drive upload exited ${code} (${filename})`);
+    });
+    child.unref();
+  } catch (err) {
+    console.error(`[story-mirror] drive upload failed (${filename}):`, err);
   }
 }
 
