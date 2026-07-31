@@ -39,7 +39,8 @@ export function VisualizationCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const imageFile = vis?.imageUrl?.match(/(?:^|\/)([a-z0-9-]+\.png)(?:$|\?)/i)?.[1];
+  const imageFile =
+    vis?.imageUrl?.match(/(?:file=|\/|^)([a-z0-9-]+\.png)/i)?.[1] ?? null;
   const imageUrl = imageFile
     ? `/api/story-mirror/visualize?file=${encodeURIComponent(imageFile)}`
     : null;
