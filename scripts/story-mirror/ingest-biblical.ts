@@ -7,7 +7,7 @@
 
 import { db } from "@/lib/db";
 
-const CORPUS_VERSION = "v4.3-corpus-expand";
+const CORPUS_VERSION = "v4.2-seed-1";
 
 type CharacterInput = {
   id: string;
