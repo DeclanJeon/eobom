@@ -222,3 +222,39 @@ export async function getRagRunById(userId: string, runId: string) {
     })),
   };
 }
+
+/**
+ * RAG StoryChunk 상세 + 관련 청크를 조회한다.
+ */
+export async function getChunkDetail(chunkId: string) {
+  const chunk = await db.storyChunk.findFirst({
+    where: {
+      id: chunkId,
+      rightsStatus: "approved",
+      language: "ko",
+    },
+    include: { work: true },
+  });
+  if (!chunk) return null;
+
+  const relatedIds = parseJsonArray(chunk.relatedChunkIds).slice(0, 4);
+  const related =
+    relatedIds.length === 0
+      ? []
+      : await db.storyChunk.findMany({
+          where: {
+            id: { in: relatedIds },
+            rightsStatus: "approved",
+            language: "ko",
+          },
+          include: { work: true },
+        });
+
+  // preserve ranking order from relatedChunkIds
+  const byId = new Map(related.map((r) => [r.id, r]));
+  const orderedRelated = relatedIds
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+
+  return { chunk, related: orderedRelated };
+}

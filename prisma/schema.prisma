@@ -522,6 +522,7 @@ model StoryChunk {
   themes          String   @default("[]")
   emotions        String   @default("[]")
   situations      String   @default("[]")
+  relatedChunkIds String   @default("[]")
   contentWarnings String   @default("[]")
   rightsStatus    String   @default("approved")
   citationAllowed Boolean  @default(false)

@@ -129,6 +129,7 @@ export default async function StoryMirrorPage() {
             {ragMatches.map((m) => (
               <StoryNarrativeCard
                 key={m.id}
+                href={`/story-mirror/${m.chunkId}`}
                 source={`${m.chunk.work.title}${m.chunk.locator ? ` · ${m.chunk.locator}` : ""}`}
                 title={m.chunk.title || "이야기"}
                 connection={m.connection || ""}
