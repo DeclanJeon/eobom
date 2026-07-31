@@ -6,13 +6,12 @@
  */
 
 import Link from "next/link";
-import { getLatestRun, getLatestRagRun } from "@/lib/story-mirror/db";
+import { getLatestRun } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 
 export async function StoryMirrorHomeCard({ userId, storyMirrorEnabled }: { userId: string; storyMirrorEnabled: boolean }) {
   if (!storyMirrorEnabled) return null;
   const run = await getLatestRun(userId);
-  const latestRagRun = await getLatestRagRun(userId);
   if (!run || run.matches.length === 0) return null;
 
   return (
@@ -30,14 +29,6 @@ export async function StoryMirrorHomeCard({ userId, storyMirrorEnabled }: { user
         >
           더 보기 →
         </Link>
-        {latestRagRun && (
-          <Link
-            href="/story-mirror/reflect"
-            className="text-label-sm text-leaf transition hover:text-primary"
-          >
-            거울 연결 →
-          </Link>
-        )}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">

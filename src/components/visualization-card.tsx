@@ -1,8 +1,7 @@
 /**
  * Story Mirror — Visualization Card
  *
- * 시각화 이미지를 표시하는 클라이언트 컴포넌트.
- * 이미지가 없으면 생성 요청, 생성 중이면 로딩 표시.
+ * 회고 기반 이미지 + AI 종합 해설을 표시한다.
  */
 
 "use client";
@@ -16,6 +15,13 @@ type Visualization = {
   status: string;
   imageUrl: string | null;
   dataJson?: string | null;
+};
+
+type SynthesisData = {
+  headline?: string;
+  synthesis?: string;
+  themes?: string[];
+  emotions?: string[];
 };
 
 const KIND_LABELS: Record<string, string> = {
@@ -38,19 +44,11 @@ export function VisualizationCard({
     ? `/api/story-mirror/visualize?file=${encodeURIComponent(imageFile)}`
     : null;
 
-  const rationale = useMemo(() => {
+  const synthesis = useMemo(() => {
     if (!vis?.dataJson) return null;
     try {
-      const d = JSON.parse(vis.dataJson) as {
-        summary?: string | null;
-        connections?: Array<{
-          workTitle?: string;
-          title?: string;
-          connection?: string;
-          differentPerspective?: boolean;
-        }>;
-      };
-      if (!d.summary && !(d.connections && d.connections.length)) return null;
+      const d = JSON.parse(vis.dataJson) as SynthesisData;
+      if (!d.synthesis?.trim() && !d.headline?.trim()) return null;
       return d;
     } catch {
       return null;
@@ -109,7 +107,7 @@ export function VisualizationCard({
           <div className="text-center">
             <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-2 border-accent-gold border-t-transparent" />
             <p className="text-label-sm text-text-muted">
-              이미지를 생성하고 있습니다...
+              회고를 읽고 이미지를 만들고 있습니다...
             </p>
             <p className="mt-1 text-label-xs text-text-muted">
               잠시만 기다려 주세요
@@ -133,7 +131,7 @@ export function VisualizationCard({
       {!loading && !error && vis?.status === "complete" && imageUrl && (
         <Image
           src={imageUrl}
-          alt={KIND_LABELS[kind] ?? kind}
+          alt={synthesis?.headline || KIND_LABELS[kind] || kind}
           width={800}
           height={600}
           unoptimized
@@ -141,37 +139,39 @@ export function VisualizationCard({
         />
       )}
 
-      {rationale && (
+      {synthesis && (
         <div className="mt-3 rounded-xl border border-line bg-chalk/60 p-4">
           <p className="mb-2 text-label-sm font-medium text-primary">
-            이 이미지가 만들어진 이유
+            이 이미지가 말하는 당신의 기록
           </p>
-          {rationale.summary && (
-            <p className="mb-3 text-label-sm leading-relaxed text-text-muted">
-              {rationale.summary.length > 220
-                ? `${rationale.summary.slice(0, 220).trimEnd()}…`
-                : rationale.summary}
+          {synthesis.headline && (
+            <p className="mb-2 text-headline-sm text-primary">{synthesis.headline}</p>
+          )}
+          {synthesis.synthesis && (
+            <p className="text-label-sm leading-relaxed text-text-muted">
+              {synthesis.synthesis}
             </p>
           )}
-          {rationale.connections && rationale.connections.length > 0 && (
-            <ul className="space-y-2">
-              {rationale.connections.slice(0, 5).map((c, i) => (
-                <li key={i} className="text-label-sm">
-                  <span className="text-primary">
-                    《{c.workTitle ?? ""}》 · {c.title ?? ""}
-                  </span>
-                  {c.differentPerspective && (
-                    <span className="ml-1 rounded-full bg-leaf/10 px-1.5 py-0.5 text-label-xs text-leaf">
-                      다른 시선
-                    </span>
-                  )}
-                  {c.connection && (
-                    <p className="mt-0.5 text-text-muted">{c.connection}</p>
-                  )}
-                </li>
+          {(synthesis.themes?.length || synthesis.emotions?.length) ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {(synthesis.themes ?? []).slice(0, 4).map((t) => (
+                <span
+                  key={`t-${t}`}
+                  className="rounded-full bg-white px-2 py-0.5 text-label-xs text-text-muted"
+                >
+                  {t}
+                </span>
               ))}
-            </ul>
-          )}
+              {(synthesis.emotions ?? []).slice(0, 3).map((e) => (
+                <span
+                  key={`e-${e}`}
+                  className="rounded-full bg-accent-gold/10 px-2 py-0.5 text-label-xs text-accent-gold-ink"
+                >
+                  {e}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -181,10 +181,23 @@ export function VisualizationCard({
           className="flex min-h-[200px] w-full items-center justify-center rounded-xl border-2 border-dashed border-line transition hover:border-accent-gold/30"
         >
           <span className="text-label-sm text-text-muted">
-            이미지 생성하기
+            회고로 이미지 만들기
           </span>
         </button>
       )}
+
+      {!loading &&
+        !error &&
+        vis?.status === "complete" &&
+        imageUrl &&
+        !synthesis && (
+          <button
+            onClick={generate}
+            className="mt-3 w-full rounded-xl border border-line py-2 text-label-sm text-leaf hover:text-primary"
+          >
+            회고 내용으로 다시 만들기
+          </button>
+        )}
     </div>
   );
 }

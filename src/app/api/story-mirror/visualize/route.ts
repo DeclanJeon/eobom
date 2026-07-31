@@ -1,8 +1,8 @@
 /**
  * POST /api/story-mirror/visualize
  *
- * codex-imagen으로 시각화 이미지를 생성한다.
- * GET은 사용자 시각화 목록을 반환한다.
+ * 회고·기록 원문으로 AI 브리프를 만들고, 그 브리프로 이미지를 생성한다.
+ * GET은 인증된 이미지 파일 또는 사용자 시각화 목록을 반환한다.
  */
 
 import { readFile } from "node:fs/promises";
@@ -10,12 +10,12 @@ import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { getLatestRagRun } from "@/lib/story-mirror/db";
 import {
   generateImage,
   buildVisualizationPrompt,
   VISUALIZATION_OUTPUT_DIR,
 } from "@/lib/story-mirror/image-gen";
+import { buildVisualizationBrief } from "@/lib/story-mirror/visualization-brief";
 import { createHash } from "crypto";
 
 const KINDS = ["summary"] as const;
@@ -25,11 +25,10 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const { kind }: { kind: string } = await request.json();
 
-  if (!KINDS.includes(kind as typeof KINDS[number])) {
+  if (!KINDS.includes(kind as (typeof KINDS)[number])) {
     return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
   }
 
-  // 기록 수 확인
   const count = await db.reflectionEntry.count({
     where: { userId: auth.user.id, deletedAt: null },
   });
@@ -37,7 +36,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "기록이 3개 이상 필요합니다" }, { status: 400 });
   }
 
-  // 기존 시각화 확인
   const now = new Date();
   const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -50,61 +48,93 @@ export async function POST(request: Request) {
     orderBy: { createdAt: "desc" },
   });
 
+  // 회고 기반 브리프가 이미 저장된 이미지는 캐시 반환
   if (existing?.imageUrl) {
-    return NextResponse.json({
-      id: existing.id,
-      status: "complete",
-      imageUrl: existing.imageUrl,
-      cached: true,
-    });
+    let hasSynthesis = false;
+    try {
+      const parsed = JSON.parse(existing.dataJson) as { synthesis?: string };
+      hasSynthesis = Boolean(parsed.synthesis?.trim());
+    } catch {
+      hasSynthesis = false;
+    }
+    if (hasSynthesis) {
+      return NextResponse.json({
+        id: existing.id,
+        status: "complete",
+        imageUrl: existing.imageUrl,
+        dataJson: existing.dataJson,
+        cached: true,
+      });
+    }
   }
-  // 회고 기반 연결(이야기 거울 재료) 가져오기
-  const run = await getLatestRagRun(auth.user.id);
-  const connections = run
-    ? run.matches.slice(0, 6).map((m) => ({
-        workTitle: m.chunk.work.title,
-        title: m.chunk.title,
-        connection: m.connection ?? "",
-        differentPerspective: m.differentPerspective,
-      }))
-    : [];
-  const rationale = { entryCount: count, summary: run?.summary ?? null, connections };
 
-  // 프롬프트 생성 (실제 회고 요약을 반영)
+  // 회고·기록 → AI 종합 브리프
+  const { brief, entryCount, reviewId, source } = await buildVisualizationBrief(
+    auth.user.id,
+  );
+  const dataPayload = {
+    entryCount,
+    reviewId,
+    source,
+    headline: brief.headline,
+    synthesis: brief.synthesis,
+    imageBrief: brief.imageBrief,
+    themes: brief.themes,
+    emotions: brief.emotions,
+  };
+
   const prompt = buildVisualizationPrompt(
-    kind as typeof KINDS[number],
-    run?.summary ?? `${count} entries`,
+    kind as (typeof KINDS)[number],
+    brief.imageBrief,
   );
 
-  // 파일명
+  // 내용 기반 해시: 같은 브리프면 파일명 안정, 내용이 바뀌면 새 파일
   const hash = createHash("md5")
-    .update(`${auth.user.id}:${kind}:${periodStart.toISOString()}`)
+    .update(
+      `${auth.user.id}:${kind}:${periodStart.toISOString()}:${brief.imageBrief}`,
+    )
     .digest("hex")
     .slice(0, 8);
   const filename = `${kind}-${hash}.png`;
 
-  // 이미지 생성
   const result = generateImage(prompt, filename);
-
   if (!result.success) {
-    return NextResponse.json({ error: "이미지 생성 패" }, { status: 500 });
+    return NextResponse.json(
+      { error: result.error || "이미지 생성 실패" },
+      { status: 500 },
+    );
   }
 
-  // DB 저장
-  const vis = await db.userVisualization.create({
-    data: {
-      userId: auth.user.id,
-      kind,
-      periodStart,
-      periodEnd: now,
-      imageUrl: result.localPath,
-      imagePrompt: prompt,
-      dataJson: JSON.stringify(rationale),
-      corpusVersion: "v1.0",
-      status: "complete",
-      completedAt: new Date(),
-    },
-  });
+  const dataJson = JSON.stringify(dataPayload);
+
+  // 같은 달 기존 행이 있으면 갱신 (브리프 없던 캐시 교체)
+  const vis = existing
+    ? await db.userVisualization.update({
+        where: { id: existing.id },
+        data: {
+          periodEnd: now,
+          imageUrl: result.localPath,
+          imagePrompt: prompt,
+          dataJson,
+          status: "complete",
+          completedAt: new Date(),
+          errorMsg: null,
+        },
+      })
+    : await db.userVisualization.create({
+        data: {
+          userId: auth.user.id,
+          kind,
+          periodStart,
+          periodEnd: now,
+          imageUrl: result.localPath,
+          imagePrompt: prompt,
+          dataJson,
+          corpusVersion: "v1.0",
+          status: "complete",
+          completedAt: new Date(),
+        },
+      });
 
   return NextResponse.json({
     id: vis.id,

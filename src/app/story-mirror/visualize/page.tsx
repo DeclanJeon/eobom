@@ -47,7 +47,9 @@ export default async function VisualizePage() {
       <section className="mb-8 max-w-2xl">
         <h1 className="text-display-lg text-primary">나의 기록을 시각적으로</h1>
         <p className="mt-3 text-body-md text-text-muted">
-          묵상 기록에서 주제·감정·시간의 흐름을 시각적으로 연결하여, 자기 자신의 서사를 입체적으로 이해하도록 돕습니다.
+          AI가 당신의 회고와 묵상 기록을 읽고, 그 흐름을 하나의 이미지와 해설로
+          보여 줍니다. 하드코딩된 그림이 아니라, 이번 계절의 기록에서 나온
+          장면입니다.
         </p>
       </section>
 

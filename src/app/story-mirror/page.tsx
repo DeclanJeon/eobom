@@ -48,9 +48,6 @@ export default async function StoryMirrorPage() {
         <Link href="/story-mirror" className="text-label-md text-primary border-b-2 border-primary pb-1">
           이야기
         </Link>
-        <Link href="/story-mirror/reflect" className="text-label-md text-text-muted hover:text-primary pb-1">
-          연결
-        </Link>
         <Link href="/story-mirror/visualize" className="text-label-md text-text-muted hover:text-primary pb-1">
           시각화
         </Link>
@@ -161,19 +158,19 @@ export default async function StoryMirrorPage() {
       ) : (
         <EmptyState
           title={
-            hasReview ? "아직 닿은 이야기가 없어요" : "연결할 회고가 아직 없어요"
+            hasReview ? "아직 닿은 이야기가 없어요" : "회고가 아직 없어요"
           }
           description={
             hasReview
-              ? "회고 속 마음을 고전 속 이야기와 잇는 연결을 아직 만들지 않았어요."
+              ? "회고 속 마음을 고전 속 이야기와 잇는 결과가 아직 없어요. 회고를 다시 만들면 이야기가 채워집니다."
               : "회고를 남기시면, 반복되는 주제와 감정을 고전 속 이야기와 연결해 드립니다."
           }
           action={
             <Link
-              href={hasReview ? "/story-mirror/reflect" : "/reviews"}
+              href="/reviews"
               className="cta-primary"
             >
-              {hasReview ? "이야기 찾기" : "회고 생성하기"}
+              {hasReview ? "회고 보기" : "회고 생성하기"}
             </Link>
           }
         />
