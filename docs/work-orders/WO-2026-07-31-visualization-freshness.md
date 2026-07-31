@@ -4,7 +4,7 @@
 |------|------|
 | 작성일 | 2026-07-31 |
 | 설계 | `docs/design/visualization-freshness-v1.md` |
-| 상태 | 구현 |
+| 상태 | 완료 (deployed `be0236b`+) |
 
 ---
 
@@ -34,75 +34,24 @@
 
 ## 3. 작업 분해
 
-### T1. Fingerprint + freshness helpers
-**파일:** `src/lib/story-mirror/visualization-fingerprint.ts` (신규)
+### T1. Fingerprint + freshness helpers — done
+**파일:** `src/lib/story-mirror/visualization-fingerprint.ts`
 
-Export:
-```ts
-computeVisualizationFingerprint(userId: string, opts?: { kind?: string; now?: Date }): Promise<string>
-buildFingerprintPayload(...) // testable pure if data injected
-getStoredFingerprint(dataJson: string | null | undefined): string | null
-deriveVisualizationFreshness(args: {
-  hasImage: boolean
-  hasSynthesis: boolean
-  storedFingerprint: string | null
-  currentFingerprint: string
-}): "none" | "fresh" | "stale"
-parseVisualizationDataJson(dataJson: string | null | undefined): Record<string, unknown>
-mergeFingerprintIntoDataJson(dataJson: object, fp: string): string
-```
-
-규칙: 설계 §4 준수. `crypto.createHash("sha256")`.
-
-**완료:** 단위 테스트 green.
-
-### T2. API POST/GET
+### T2. API POST/GET — done
 **파일:** `src/app/api/story-mirror/visualize/route.ts`
 
-POST:
-- `force?: boolean` body 허용
-- cache hit = image + synthesis + storedFp === currentFp && !force
-- 재생성 시 dataJson에 `contentFingerprint`, `fingerprintVersion: 1`
-- filename: `${kind}-${currentFp}.png` (또는 기존 hash 자리에 fp)
+### T3. UI card — done
+**파일:** `src/components/visualization-card.tsx`, `src/app/story-mirror/visualize/page.tsx`
 
-GET list:
-- 각 row에 `freshness`, `contentFingerprint`, `currentFingerprint` 포함
-- currentFp는 요청당 1회 계산 후 재사용
-
-**완료:** 테스트 또는 스크립트 smoke + tsc.
-
-### T3. UI card
-**파일:** `src/components/visualization-card.tsx`
-
-- props: `initial`에 freshness optional; 없으면 dataJson+client 비교 불가하므로 서버가 freshness 내려주거나 page에서 계산
-- page 서버에서 currentFp/freshness 계산해 card에 전달 권장
-- stale: 배지 + primary 다시 그리기 (`force: true` 또는 그냥 POST — mismatch면 재생성)
-- fresh: 기존 + 다시 만들기
-- force 시 body `{ kind, force: true }`
-
-**파일:** `src/app/story-mirror/visualize/page.tsx`
-- initial에 freshness 전달
-
-### T4. Lookback hub copy
+### T4. Lookback hub copy — done
 **파일:** `src/app/lookback/page.tsx`
-- viz complete + stale 가능하면 문구 분기 (서버에서 fp 비교 1회)
-- 부담되면 T4 skip 가능하나 권장
 
-### T5. Tests
-**파일:** `tests/visualization-fingerprint.test.ts` (신규)
-- 안정 해시 / entry updatedAt 변경 / review hash 변경 / 추가·삭제 / legacy freshness / derive helpers
+### T5. Tests — done
+**파일:** `tests/visualization-fingerprint.test.ts` (11 pass)
 
-## 6. DoD 체크
+---
 
-- [x] 설계 문서 존재
-- [x] 본 WO 존재
-- [x] fingerprint util + tests
-- [x] API cache/freshness
-- [x] UI stale
-- [x] tsc clean
-- [x] 커밋 메시지 Lore trailers
-
-## 4. 수용 기준 (설계 §10 동일)
+## 4. 수용 기준
 
 1. 동일 입력 POST ×2 → 두 번째 cached
 2. 입력 변경 후 POST → regenerate + 새 fp
@@ -115,19 +64,19 @@ GET list:
 
 ## 5. 구현 노트
 
-- `UserVisualization` unique는 `[userId, kind, periodStart, periodEnd]` — 기존처럼 `findFirst` by periodStart 유지
-- Prisma entry `updatedAt` 필드 존재 확인 후 select
-- `buildVisualizationBrief` 시그니처 변경 최소화
-- 클라이언트 periodStart 전송은 무시 가능 (서버 month)
+- fingerprint = sha256(review + recent 20 entries metadata).slice(0,16)
+- cache hit skips MiMo brief + image-gen
+- filename: `summary-{fingerprint}.png`
+- legacy rows without fp → stale
 
 ---
 
 ## 6. DoD 체크
 
-- [ ] 설계 문서 존재
-- [ ] 본 WO 존재
-- [ ] fingerprint util + tests
-- [ ] API cache/freshness
-- [ ] UI stale
-- [ ] tsc clean
-- [ ] 커밋 메시지 Lore trailers
+- [x] 설계 문서 존재
+- [x] 본 WO 존재
+- [x] fingerprint util + tests
+- [x] API cache/freshness
+- [x] UI stale
+- [x] tsc clean
+- [x] 커밋·푸시·배포
