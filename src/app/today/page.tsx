@@ -2,12 +2,11 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { EntryRow, SurfaceCard } from "@/components/ui-blocks";
-import { RereadScriptureList } from "@/components/reread-scripture-list";
 import { StoryMirrorHomeCard } from "@/components/story-mirror-home-card";
 import { listOpenActionSteps } from "@/lib/actions";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
+import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import { pastTodayDateRanges } from "@/lib/past-today";
 import {
   isReviewStaleForHome,
@@ -36,7 +35,7 @@ export default async function TodayPage() {
   ]);
 
   const recent = entryPool.slice(0, 5);
-  const latest = recent[0] ?? null;
+  const hasEntries = entryPool.length > 0;
   const primaryAction = openActions[0] ?? null;
   const moreActions = openActions.slice(1);
 
@@ -64,14 +63,26 @@ export default async function TodayPage() {
     scriptureRefs: parseJsonArray(entry.scriptureRefs),
   }));
 
+  // 오늘 홈 성구 표면은 1개만. 히어로/목록 중복 금지.
   const homeSelection = selectHomeRereadScriptures({
     report: latestReview,
     allowedRefs,
     fallbackEntries,
-    max: 2,
+    max: 1,
   });
-  const homeReread = homeSelection.items;
-  const fromReview = homeSelection.source === "review";
+  const heroItem = homeSelection.items[0] ?? null;
+  const heroRef =
+    heroItem && "ref" in heroItem && heroItem.ref ? heroItem.ref : "";
+  const heroReason =
+    heroItem && "reason" in heroItem && heroItem.reason?.trim()
+      ? heroItem.reason.trim()
+      : null;
+  const heroSourceLabel =
+    homeSelection.source === "review"
+      ? "지난 회고에서 이어진 말씀"
+      : homeSelection.source === "fallback"
+        ? "지난 기록에서 이어진 말씀"
+        : null;
 
   let pastToday: (typeof entryPool)[number] | null = null;
   if (flags.pastTodayEnabled) {
@@ -89,53 +100,68 @@ export default async function TodayPage() {
   }
 
   const greeting = user.displayName || user.name || "순례자";
-  const heroScripture =
-    homeReread[0] ??
-    (latest
-      ? {
-          ref: parseJsonArray(latest.scriptureRefs)[0] || "",
-          reason: latest.title || excerpt(latest.reflectionBody, 80),
-        }
-      : null);
 
   return (
     <AppShell wide bare>
-      {/* 1. 지배적 장면 */}
+      {/* 1. 지배적 장면 — 성구 1개 또는 첫 기록 유도 */}
       <section className="mb-10 rounded-3xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
         <p className="text-eyebrow">{formatDateKo(now)}</p>
         <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
           {greeting}님,
-          <span className="mt-1 block">오늘 붙들 말씀</span>
+          <span className="mt-1 block">
+            {heroRef
+              ? "오늘 붙들 말씀"
+              : hasEntries
+                ? "오늘 한 줄을 남겨 보세요"
+                : "첫 묵상을 남겨 보세요"}
+          </span>
         </h1>
-        {heroScripture && "ref" in heroScripture && heroScripture.ref ? (
+
+        {heroRef ? (
           <div className="mt-6 max-w-2xl">
-            <p className="font-journal text-xl leading-relaxed text-primary md:text-2xl">
-              {heroScripture.ref}
-            </p>
-            {"reason" in heroScripture && heroScripture.reason ? (
-              <p className="mt-3 text-body-md text-text-muted">
-                {heroScripture.reason}
+            {heroSourceLabel ? (
+              <p className="mb-2 text-label-sm text-accent-gold-ink">
+                {heroSourceLabel}
               </p>
             ) : null}
+            <p className="font-journal text-xl leading-relaxed text-primary md:text-2xl">
+              {heroRef}
+            </p>
+            {heroReason ? (
+              <p className="mt-3 text-body-md text-text-muted">{heroReason}</p>
+            ) : null}
           </div>
+        ) : hasEntries ? (
+          <p className="mt-4 max-w-xl text-body-md text-text-muted">
+            기록은 있지만, 아직 다시 머물 성구가 이어지지 않았어요. 오늘 본문
+            한 줄을 남기면 내일의 내가 다시 만납니다.
+          </p>
         ) : (
           <p className="mt-4 max-w-xl text-body-md text-text-muted">
-            오늘 머문 말씀이, 내일의 나를 만납니다. 한 줄이라도 남겨 보세요.
+            아직 남긴 기록이 없어요. 첫 묵상을 남기면, 그 말씀이 여기에 다시
+            이어집니다.
           </p>
         )}
+
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            href="/entries/new"
+            href={
+              heroRef
+                ? `/entries/new?scripture=${encodeURIComponent(heroRef)}`
+                : "/entries/new"
+            }
             className="cta-primary min-h-11 px-6 py-3"
           >
-            묵상 기록하기
+            {hasEntries ? "묵상 기록하기" : "첫 묵상 남기기"}
           </Link>
-          <Link
-            href="/lookback"
-            className="cta-secondary min-h-11 px-6 py-3"
-          >
-            돌아보기
-          </Link>
+          {hasEntries ? (
+            <Link
+              href="/lookback"
+              className="cta-secondary min-h-11 px-6 py-3"
+            >
+              돌아보기
+            </Link>
+          ) : null}
         </div>
       </section>
 
@@ -155,7 +181,9 @@ export default async function TodayPage() {
                 더 보기 ({openActions.length})
               </Link>
             ) : (
-              <p className="text-label-sm text-text-muted">평가가 아니라 기억입니다</p>
+              <p className="text-label-sm text-text-muted">
+                평가가 아니라 기억입니다
+              </p>
             )}
           </div>
           <div className="max-w-xl">
@@ -164,31 +192,7 @@ export default async function TodayPage() {
         </section>
       ) : null}
 
-      {/* 3. 조용한 목록: 다시 읽을 말씀 */}
-      {homeReread.length ? (
-        <section className="mb-10 md:mb-12">
-          <RereadScriptureList
-            items={homeReread}
-            variant="home"
-            title={fromReview ? "다시 머물 수 있는 본문" : "최근에 머문 본문"}
-            subtitle={
-              fromReview
-                ? "최근 회고에서 이어진 말씀입니다."
-                : "직접 기록에 남긴 성구입니다."
-            }
-            meta={
-              fromReview && latestReview
-                ? `${latestReview.reportType} 회고 · ${formatDateShort(latestReview.periodEnd)} 기준`
-                : undefined
-            }
-            reviewHref={
-              fromReview && latestReview ? `/reviews/${latestReview.id}` : undefined
-            }
-          />
-        </section>
-      ) : null}
-
-      {/* 3b. 조용한 보조 카드: 최근 1건 + 과거 오늘 + 회고 미리보기 */}
+      {/* 3. 조용한 보조 카드: 과거 오늘 + 회고 미리보기 */}
       <div className="mb-10 grid gap-4 md:grid-cols-2">
         {flags.pastTodayEnabled ? (
           pastToday ? (
@@ -231,16 +235,18 @@ export default async function TodayPage() {
         ) : null}
       </div>
 
-      {/* 3c. 최근 기록 — EntryRow */}
+      {/* 4. 최근 기록 */}
       <section className="mb-10 md:mb-12">
         <div className="mb-3 flex items-end justify-between gap-3">
           <h2 className="text-headline-sm text-primary">최근 기록</h2>
-          <Link
-            href="/entries"
-            className="text-label-md text-text-muted hover:text-primary"
-          >
-            전체 보기
-          </Link>
+          {hasEntries ? (
+            <Link
+              href="/entries"
+              className="text-label-md text-text-muted hover:text-primary"
+            >
+              전체 보기
+            </Link>
+          ) : null}
         </div>
         {recent.length ? (
           <div className="rounded-2xl border border-border/70 bg-white/80 px-4">
@@ -266,7 +272,7 @@ export default async function TodayPage() {
             </p>
             <div className="mt-4">
               <Link href="/entries/new" className="cta-primary">
-                묵상 기록하기
+                첫 묵상 남기기
               </Link>
             </div>
           </SurfaceCard>
