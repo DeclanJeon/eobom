@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
+import { getLatestRagRun } from "@/lib/story-mirror/db";
 import {
   generateImage,
   buildVisualizationPrompt,
@@ -57,9 +58,23 @@ export async function POST(request: Request) {
       cached: true,
     });
   }
+  // 회고 기반 연결(이야기 거울 재료) 가져오기
+  const run = await getLatestRagRun(auth.user.id);
+  const connections = run
+    ? run.matches.slice(0, 6).map((m) => ({
+        workTitle: m.chunk.work.title,
+        title: m.chunk.title,
+        connection: m.connection ?? "",
+        differentPerspective: m.differentPerspective,
+      }))
+    : [];
+  const rationale = { entryCount: count, summary: run?.summary ?? null, connections };
 
-  // 프롬프트 생성
-  const prompt = buildVisualizationPrompt(kind as typeof KINDS[number], `${count} entries`);
+  // 프롬프트 생성 (실제 회고 요약을 반영)
+  const prompt = buildVisualizationPrompt(
+    kind as typeof KINDS[number],
+    run?.summary ?? `${count} entries`,
+  );
 
   // 파일명
   const hash = createHash("md5")
@@ -84,7 +99,7 @@ export async function POST(request: Request) {
       periodEnd: now,
       imageUrl: result.localPath,
       imagePrompt: prompt,
-      dataJson: JSON.stringify({ entryCount: count }),
+      dataJson: JSON.stringify(rationale),
       corpusVersion: "v1.0",
       status: "complete",
       completedAt: new Date(),
@@ -95,6 +110,7 @@ export async function POST(request: Request) {
     id: vis.id,
     status: "complete",
     imageUrl: result.localPath,
+    dataJson: vis.dataJson,
     cached: false,
   });
 }
@@ -132,6 +148,7 @@ export async function GET(request: Request) {
       kind: v.kind,
       status: v.status,
       imageUrl: v.imageUrl,
+      dataJson: v.dataJson,
       createdAt: v.createdAt.toISOString(),
     })),
   });

@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 
 type Visualization = {
@@ -15,6 +15,7 @@ type Visualization = {
   kind: string;
   status: string;
   imageUrl: string | null;
+  dataJson?: string | null;
 };
 
 const KIND_LABELS: Record<string, string> = {
@@ -36,6 +37,25 @@ export function VisualizationCard({
   const imageUrl = imageFile
     ? `/api/story-mirror/visualize?file=${encodeURIComponent(imageFile)}`
     : null;
+
+  const rationale = useMemo(() => {
+    if (!vis?.dataJson) return null;
+    try {
+      const d = JSON.parse(vis.dataJson) as {
+        summary?: string | null;
+        connections?: Array<{
+          workTitle?: string;
+          title?: string;
+          connection?: string;
+          differentPerspective?: boolean;
+        }>;
+      };
+      if (!d.summary && !(d.connections && d.connections.length)) return null;
+      return d;
+    } catch {
+      return null;
+    }
+  }, [vis?.dataJson]);
 
   const generate = useCallback(async () => {
     setLoading(true);
@@ -59,6 +79,7 @@ export function VisualizationCard({
           kind,
           status: data.status,
           imageUrl: data.imageUrl,
+          dataJson: data.dataJson ?? null,
         });
       } else {
         setError(data.error || "이미지 생성에 실패했습니다.");
@@ -118,6 +139,40 @@ export function VisualizationCard({
           unoptimized
           className="w-full rounded-xl"
         />
+      )}
+
+      {rationale && (
+        <div className="mt-3 rounded-xl border border-line bg-chalk/60 p-4">
+          <p className="mb-2 text-label-sm font-medium text-primary">
+            이 이미지가 만들어진 이유
+          </p>
+          {rationale.summary && (
+            <p className="mb-3 text-label-sm leading-relaxed text-text-muted">
+              {rationale.summary.length > 220
+                ? `${rationale.summary.slice(0, 220).trimEnd()}…`
+                : rationale.summary}
+            </p>
+          )}
+          {rationale.connections && rationale.connections.length > 0 && (
+            <ul className="space-y-2">
+              {rationale.connections.slice(0, 5).map((c, i) => (
+                <li key={i} className="text-label-sm">
+                  <span className="text-primary">
+                    《{c.workTitle ?? ""}》 · {c.title ?? ""}
+                  </span>
+                  {c.differentPerspective && (
+                    <span className="ml-1 rounded-full bg-leaf/10 px-1.5 py-0.5 text-label-xs text-leaf">
+                      다른 시선
+                    </span>
+                  )}
+                  {c.connection && (
+                    <p className="mt-0.5 text-text-muted">{c.connection}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {!loading && !error && (!vis || vis.status === "failed") && (

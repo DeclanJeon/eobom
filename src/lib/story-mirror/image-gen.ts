@@ -143,15 +143,17 @@ export function uploadToDrive(filePath: string, filename: string): void {
     console.error(`[story-mirror] drive upload failed (${filename}):`, err);
   }
 }
-
-/**
- * 시각화 프롬프트 생성 (v4.2: summary 단일 종류).
- * 사용자의 묵상 한 계절을 하나의 조용한 통찰로 담는 추상 수채화.
- */
-export function buildVisualizationPrompt(kind: "summary", _dataSummary: string): string {
+export function buildVisualizationPrompt(
+  kind: "summary",
+  dataSummary: string,
+): string {
   const base = `Warm, calm, contemplative mood. Korean minimal aesthetics. Palette: linen (#fbf9f6), forest (#061b0e), gold (#c5a059), clay (#b36a5e). No faces, no people, no text, no UI elements. Handmade watercolor paper texture. Square format.`;
   if (kind === "summary") {
-    return `Create a single square summary illustration, an editorial-quality abstract watercolor image that gently encapsulates a season of personal spiritual reflection as one quiet insight. No text, labels, numbers, or recognizable figures. Suggest a calm inner landscape: a soft horizon, a single vessel or seed, gentle light, layered translucent washes that breathe. Emphasize stillness, warmth, and quiet hope. Handmade watercolor paper texture, soft bleeding pigments, delicate brush edges. ${base}`;
+    const themeNote =
+      dataSummary && dataSummary.trim()
+        ? ` Let the composition be quietly informed by these personal reflection themes — suggest their emotional weather and inner movement without depicting literal scenes, texts, or symbols: ${dataSummary.slice(0, 600)}.`
+        : "";
+    return `Create a single square summary illustration, an editorial-quality abstract watercolor image that gently encapsulates a season of personal spiritual reflection as one quiet insight. No text, labels, numbers, or recognizable figures. Suggest a calm inner landscape: a soft horizon, a single vessel or seed, gentle light, layered translucent washes that breathe. Emphasize stillness, warmth, and quiet hope. Handmade watercolor paper texture, soft bleeding pigments, delicate brush edges.${themeNote} ${base}`;
   }
   return base;
 }
