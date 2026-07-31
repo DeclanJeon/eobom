@@ -92,14 +92,15 @@ GET list:
 **파일:** `tests/visualization-fingerprint.test.ts` (신규)
 - 안정 해시 / entry updatedAt 변경 / review hash 변경 / 추가·삭제 / legacy freshness / derive helpers
 
-가능하면 API 캐시 분기는 mock 없이 pure helper로 검증.
+## 6. DoD 체크
 
-### T6. Verify
-- `bun test tests/visualization-fingerprint.test.ts` (+ 관련)
-- `bunx tsc --noEmit`
-- 배포는 리더 판단
-
----
+- [x] 설계 문서 존재
+- [x] 본 WO 존재
+- [x] fingerprint util + tests
+- [x] API cache/freshness
+- [x] UI stale
+- [x] tsc clean
+- [x] 커밋 메시지 Lore trailers
 
 ## 4. 수용 기준 (설계 §10 동일)
 
