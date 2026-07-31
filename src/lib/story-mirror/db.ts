@@ -8,6 +8,24 @@ import { db } from "@/lib/db";
 import { normalizeReviewForDisplay } from "@/lib/review-display";
 import type { StructuredReview } from "@/lib/mimo";
 import { parseJsonArray } from "@/lib/utils";
+import {
+  buildStoryDetailHref,
+  toReviewStoryItems,
+  type StoryCorpusCandidate,
+  type StoryMirrorItem,
+} from "@/lib/story-mirror/story-links";
+import type { StoryCard, StoryChunk, StoryPassage, StoryWork } from "@prisma/client";
+
+export type StoryCardDetail = StoryCard & {
+  work: StoryWork;
+  passages: StoryPassage[];
+};
+
+export type StoryChunkDetail = StoryChunk & {
+  work: StoryWork;
+};
+
+
 
 /**
  * 승인된(published) StoryCard 목록을 반환한다.
@@ -34,7 +52,9 @@ export async function listPublishedCards(opts: {
 /**
  * 단일 StoryCard를 상세 포함하여 조회한다.
  */
-export async function getCardDetail(cardId: string) {
+export async function getCardDetail(
+  cardId: string,
+): Promise<StoryCardDetail | null> {
   return db.storyCard.findUnique({
     where: { id: cardId },
     include: {
@@ -224,9 +244,11 @@ export async function getRagRunById(userId: string, runId: string) {
 }
 
 /**
- * RAG StoryChunk 상세 + 관련 청크를 조회한다.
+ * RAG StoryChunk 상세를 조회한다. (관련 추천은 목록 단계에서 이미 제공하므로 제외)
  */
-export async function getChunkDetail(chunkId: string) {
+export async function getChunkDetail(
+  chunkId: string,
+): Promise<{ chunk: StoryChunkDetail } | null> {
   const chunk = await db.storyChunk.findFirst({
     where: {
       id: chunkId,
@@ -236,25 +258,137 @@ export async function getChunkDetail(chunkId: string) {
     include: { work: true },
   });
   if (!chunk) return null;
+  return { chunk };
+}
 
-  const relatedIds = parseJsonArray(chunk.relatedChunkIds).slice(0, 4);
-  const related =
-    relatedIds.length === 0
-      ? []
-      : await db.storyChunk.findMany({
-          where: {
-            id: { in: relatedIds },
-            rightsStatus: "approved",
-            language: "ko",
-          },
-          include: { work: true },
-        });
+/**
+ * 회고 storyConnections 텍스트 매칭용 corpus 후보.
+ * published card + approved korean chunk.
+ */
+export async function listStoryCorpusCandidates(
+  limit = 400,
+): Promise<StoryCorpusCandidate[]> {
+  const [cards, chunks] = await Promise.all([
+    db.storyCard.findMany({
+      where: { reviewStatus: "published" },
+      include: { work: true },
+      take: Math.ceil(limit / 2),
+      orderBy: { createdAt: "desc" },
+    }),
+    db.storyChunk.findMany({
+      where: { rightsStatus: "approved", language: "ko" },
+      include: { work: true },
+      take: Math.ceil(limit / 2),
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  // preserve ranking order from relatedChunkIds
-  const byId = new Map(related.map((r) => [r.id, r]));
-  const orderedRelated = relatedIds
-    .map((id) => byId.get(id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+  const out: StoryCorpusCandidate[] = [];
+  for (const c of cards) {
+    out.push({
+      id: c.id,
+      kind: "card",
+      name: c.name,
+      title: c.name,
+      workTitle: c.work.title,
+      author: c.work.author,
+      themes: parseJsonArray(c.themes),
+    });
+  }
+  for (const c of chunks) {
+    out.push({
+      id: c.id,
+      kind: "chunk",
+      name: c.title,
+      title: c.title,
+      workTitle: c.work.title,
+      author: c.work.author,
+      themes: parseJsonArray(c.themes),
+    });
+  }
+  return out;
+}
 
-  return { chunk, related: orderedRelated };
+/**
+ * 회고 상세/이야기 탭에서 쓸 이야기 목록을 한 계약으로 만든다.
+ *
+ * 우선순위:
+ * 1) 이 회고의 storyConnections (가능하면 corpus id resolve)
+ * 2) 없으면 최신 RAG matches
+ * 3) 없으면 최신 card matches
+ */
+export async function getReviewScopedStoryItems(opts: {
+  userId: string;
+  storyConnections?: StructuredReview["storyConnections"];
+  preferReviewConnections?: boolean;
+}): Promise<StoryMirrorItem[]> {
+  const preferReview = opts.preferReviewConnections !== false;
+  const reviewConnections = opts.storyConnections ?? [];
+
+  if (preferReview && reviewConnections.length > 0) {
+    const candidates = await listStoryCorpusCandidates();
+    const items = toReviewStoryItems(reviewConnections, candidates);
+    if (items.length > 0) return items;
+  }
+
+  const [ragRun, cardRun] = await Promise.all([
+    getLatestRagRun(opts.userId),
+    getLatestRun(opts.userId),
+  ]);
+
+  const ragItems: StoryMirrorItem[] =
+    ragRun?.matches
+      .filter((m) => Boolean(m.connection?.trim()))
+      .slice(0, 3)
+      .map((m) => {
+        const source = `${m.chunk.work.title}${
+          m.chunk.locator ? ` · ${m.chunk.locator}` : ""
+        }`;
+        return {
+          key: `rag-${m.id}`,
+          title: m.chunk.title || m.chunk.work.title || "이야기",
+          source,
+          connection: m.connection!.trim(),
+          differentPerspective: m.differentPerspective,
+          href: buildStoryDetailHref(m.chunkId, {
+            connection: m.connection,
+            differentPerspective: m.differentPerspective,
+            sourceLabel: source,
+          }),
+          origin: "rag" as const,
+        };
+      }) ?? [];
+
+  if (ragItems.length > 0) return ragItems;
+
+  const cardItems: StoryMirrorItem[] =
+    cardRun?.matches.slice(0, 3).map((m) => {
+      const source = `${m.card.work.title}${
+        m.card.work.author ? ` · ${m.card.work.author}` : ""
+      }`;
+      const connection =
+        m.narrativeBridge ||
+        m.matchReason ||
+        parseJsonArray(m.matchThemes).slice(0, 3).join(" · ") ||
+        "이 이야기와 당신의 기록이 맞닿아 있습니다.";
+      const theme0 = parseJsonArray(m.matchThemes)[0];
+      const differentPerspective = theme0
+        ? `이 인물 안에서 반복되는 주제는 ‘${theme0}’입니다.`
+        : null;
+      return {
+        key: `card-${m.id}`,
+        title: m.card.name,
+        source,
+        connection,
+        differentPerspective,
+        href: buildStoryDetailHref(m.card.id, {
+          connection,
+          differentPerspective,
+          sourceLabel: source,
+        }),
+        origin: "card" as const,
+      };
+    }) ?? [];
+
+  return cardItems;
 }

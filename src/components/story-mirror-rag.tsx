@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { SurfaceCard, SoftBadge } from "@/components/ui-blocks";
 import { StoryNarrativeCard } from "@/components/story-narrative-card";
+import { buildStoryDetailHref } from "@/lib/story-mirror/story-links";
 import type { StoryConnection } from "@/lib/mimo";
 
 type Candidate = {
@@ -446,19 +447,25 @@ export function StoryMirrorRag({
               <p className="text-body-lg text-primary">{summary}</p>
             </SurfaceCard>
           )}
-          {connections.map((conn, i) => (
-            <StoryNarrativeCard
-              key={`${conn.chunkId}-${i}`}
-              source={
-                conn.workTitle
-                  ? `${conn.workTitle}${conn.locator ? ` · ${conn.locator}` : ""}`
-                  : null
-              }
-              title={conn.title ?? "이야기"}
-              connection={conn.connection}
-              differentPerspective={conn.differentPerspective}
-            />
-          ))}
+          {connections.map((conn, i) => {
+            const source = conn.workTitle
+              ? `${conn.workTitle}${conn.locator ? ` · ${conn.locator}` : ""}`
+              : null;
+            return (
+              <StoryNarrativeCard
+                key={`${conn.chunkId}-${i}`}
+                href={buildStoryDetailHref(conn.chunkId, {
+                  connection: conn.connection,
+                  differentPerspective: conn.differentPerspective,
+                  sourceLabel: source,
+                })}
+                source={source}
+                title={conn.title ?? "이야기"}
+                connection={conn.connection}
+                differentPerspective={conn.differentPerspective}
+              />
+            );
+          })}
           <div className="flex justify-center">
             <button type="button" onClick={reset} className="cta-secondary">
               다시 쓰기

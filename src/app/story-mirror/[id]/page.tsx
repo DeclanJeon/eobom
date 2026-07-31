@@ -1,14 +1,23 @@
 /**
- * /story-mirror/[id] — 이야기 거울 상세 페이지
+ * /story-mirror/[id] — 이야기 거울 상세
  *
- * StoryCard 또는 StoryChunk 상세를 표시한다.
- * 청크인 경우 themes 겹침 기반 "함께 읽을 이야기"를 노출한다.
+ * 목록/회고에서 본 개인화 서사(connection)를 우선 보여 주고,
+ * 이어서 원문·출처를 읽게 한다. 관련 추천("함께 읽을 이야기")은 노출하지 않는다.
  */
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { SurfaceCard } from "@/components/ui-blocks";
-import { getCardDetail, getChunkDetail } from "@/lib/story-mirror/db";
+import {
+  getCardDetail,
+  getChunkDetail,
+  type StoryCardDetail,
+  type StoryChunkDetail,
+} from "@/lib/story-mirror/db";
+import {
+  parseStoryDetailContext,
+  type StoryDetailContext,
+} from "@/lib/story-mirror/story-links";
 import { parseJsonArray } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { StoryMirrorFeedback } from "@/components/story-mirror-feedback";
@@ -30,31 +39,40 @@ export async function generateMetadata({
 
 export default async function StoryMirrorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
-  const card = await getCardDetail(id);
+  const sp = await searchParams;
+  const ctx = parseStoryDetailContext(sp);
 
+  const card = await getCardDetail(id);
   if (card && card.reviewStatus === "published") {
-    return <CardDetailView card={card} />;
+    return <CardDetailView card={card} ctx={ctx} />;
   }
 
   const chunkView = await getChunkDetail(id);
   if (!chunkView) notFound();
-  return <ChunkDetailView chunk={chunkView.chunk} related={chunkView.related} />;
+  return <ChunkDetailView chunk={chunkView.chunk} ctx={ctx} />;
 }
 
 function CardDetailView({
   card,
+  ctx,
 }: {
-  card: NonNullable<Awaited<ReturnType<typeof getCardDetail>>>;
+  card: StoryCardDetail;
+  ctx: StoryDetailContext;
 }) {
   const themes = parseJsonArray(card.themes);
   const emotions = parseJsonArray(card.emotions);
   const situations = parseJsonArray(card.situations);
   const warnings = parseJsonArray(card.contentWarnings);
   const counterPatterns = parseJsonArray(card.counterPatterns);
+  const sourceLabel =
+    ctx.sourceLabel ||
+    `${card.work.title}${card.work.author ? ` · ${card.work.author}` : ""}`;
 
   return (
     <AppShell wide bare>
@@ -69,10 +87,7 @@ function CardDetailView({
 
       <article className="max-w-2xl">
         <header className="mb-8">
-          <p className="text-eyebrow text-accent-gold-ink">
-            {card.work.title}
-            {card.work.author ? ` · ${card.work.author}` : ""}
-          </p>
+          <p className="text-eyebrow text-accent-gold-ink">{sourceLabel}</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
             {card.name}
           </h1>
@@ -80,6 +95,11 @@ function CardDetailView({
             <p className="mt-1 text-label-md text-text-muted">{card.work.era}</p>
           )}
         </header>
+
+        <PersonalOverlapSection
+          connection={ctx.connection}
+          differentPerspective={ctx.differentPerspective}
+        />
 
         {warnings.length > 0 && (
           <div className="mb-6 rounded-xl border border-safety/30 bg-safety/5 p-4">
@@ -175,14 +195,19 @@ function CardDetailView({
 
 function ChunkDetailView({
   chunk,
-  related,
+  ctx,
 }: {
-  chunk: NonNullable<Awaited<ReturnType<typeof getChunkDetail>>>["chunk"];
-  related: NonNullable<Awaited<ReturnType<typeof getChunkDetail>>>["related"];
+  chunk: StoryChunkDetail;
+  ctx: StoryDetailContext;
 }) {
   const themes = parseJsonArray(chunk.themes);
   const emotions = parseJsonArray(chunk.emotions);
   const situations = parseJsonArray(chunk.situations);
+  const sourceLabel =
+    ctx.sourceLabel ||
+    `${chunk.work.title}${chunk.work.author ? ` · ${chunk.work.author}` : ""}${
+      chunk.locator ? ` · ${chunk.locator}` : ""
+    }`;
 
   return (
     <AppShell wide bare>
@@ -197,11 +222,7 @@ function ChunkDetailView({
 
       <article className="max-w-2xl">
         <header className="mb-8">
-          <p className="text-eyebrow text-accent-gold-ink">
-            {chunk.work.title}
-            {chunk.work.author ? ` · ${chunk.work.author}` : ""}
-            {chunk.locator ? ` · ${chunk.locator}` : ""}
-          </p>
+          <p className="text-eyebrow text-accent-gold-ink">{sourceLabel}</p>
           <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
             {chunk.title || chunk.work.title}
           </h1>
@@ -209,6 +230,11 @@ function ChunkDetailView({
             <p className="mt-1 text-label-md text-text-muted">{chunk.work.era}</p>
           )}
         </header>
+
+        <PersonalOverlapSection
+          connection={ctx.connection}
+          differentPerspective={ctx.differentPerspective}
+        />
 
         <section className="mb-8">
           <h2 className="text-headline-sm text-primary">어떤 이야기인가</h2>
@@ -230,32 +256,6 @@ function ChunkDetailView({
 
         <TagSection themes={themes} emotions={emotions} situations={situations} />
 
-        {related.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-headline-sm text-primary">함께 읽을 이야기</h2>
-            <p className="mt-2 text-body-sm text-text-muted">
-              주제·감정이 맞닿은 다른 이야기입니다.
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {related.map((r) => (
-                <Link key={r.id} href={`/story-mirror/${r.id}`} className="block">
-                  <SurfaceCard className="h-full border-l-4 border-l-accent-gold/40 transition hover:border-accent-gold/50">
-                    <p className="text-label-xs text-accent-gold-ink">
-                      {r.work.title}
-                    </p>
-                    <p className="mt-1 text-headline-sm text-primary">
-                      {r.title || r.work.title}
-                    </p>
-                    <p className="mt-2 line-clamp-3 text-body-sm text-text-muted">
-                      {r.excerpt || r.text}
-                    </p>
-                  </SurfaceCard>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         <SourceSection
           title={chunk.work.title}
           titleOriginal={chunk.work.titleOriginal}
@@ -276,6 +276,39 @@ function ChunkDetailView({
   );
 }
 
+function PersonalOverlapSection({
+  connection,
+  differentPerspective,
+}: {
+  connection?: string | null;
+  differentPerspective?: string | null;
+}) {
+  if (!connection?.trim() && !differentPerspective?.trim()) return null;
+
+  return (
+    <section className="mb-8">
+      <SurfaceCard className="border-l-4 border-l-accent-gold/60">
+        <p className="text-label-xs uppercase tracking-wide text-accent-gold-ink">
+          나의 기록과 겹치는 지점
+        </p>
+        {connection?.trim() ? (
+          <p className="mt-3 text-body-md leading-relaxed text-ink">
+            {connection}
+          </p>
+        ) : null}
+        {differentPerspective?.trim() ? (
+          <div className="mt-4 rounded-xl bg-surface-shared/80 p-3">
+            <p className="text-label-xs font-medium text-leaf">한 문장으로 보면</p>
+            <p className="mt-1 text-body-sm leading-relaxed text-primary">
+              {differentPerspective}
+            </p>
+          </div>
+        ) : null}
+      </SurfaceCard>
+    </section>
+  );
+}
+
 function TagSection({
   themes,
   emotions,
@@ -285,6 +318,10 @@ function TagSection({
   emotions: string[];
   situations: string[];
 }) {
+  if (themes.length === 0 && emotions.length === 0 && situations.length === 0) {
+    return null;
+  }
+
   return (
     <section className="mb-8">
       <h2 className="text-headline-sm text-primary">주제와 감정</h2>
@@ -350,14 +387,16 @@ function SourceSection({
         {author && <p>저자: {author}</p>}
         {translator && <p>번역: {translator}</p>}
         <p>권리: {rightsBasis}</p>
-        <a
-          href={sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block text-leaf hover:text-primary"
-        >
-          원문 보기 →
-        </a>
+        {sourceUrl ? (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-leaf hover:text-primary"
+          >
+            원문 보기 →
+          </a>
+        ) : null}
       </div>
     </section>
   );

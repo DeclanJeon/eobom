@@ -50,6 +50,32 @@ export type DisplayReview = {
   disclaimer: string | null;
 };
 
+export type SimpleReviewStory = {
+  title: string;
+  source?: string | null;
+  line: string;
+  href?: string;
+};
+
+export type SimpleReviewScripture = {
+  ref: string;
+  why: string;
+};
+
+export type SimpleReviewCompanion = {
+  role: string;
+  why: string;
+};
+
+export type SimpleReviewView = {
+  headline: string;
+  summary: string;
+  stories: SimpleReviewStory[];
+  scriptures: SimpleReviewScripture[];
+  companions: SimpleReviewCompanion[];
+};
+
+
 function mapObservation(item: ReviewObservation): DisplayObservation {
   return {
     key: item.key,
@@ -65,11 +91,12 @@ function mapObservation(item: ReviewObservation): DisplayObservation {
 }
 
 function capAndFilter<T>(
-  items: T[] | undefined,
+  items: T[] | undefined | null,
   keep: (item: T) => boolean,
   max: number,
 ): T[] {
-  return (items ?? []).filter(keep).slice(0, max);
+  const list = Array.isArray(items) ? items : [];
+  return list.filter(keep).slice(0, max);
 }
 
 const DEFAULT_LIMITATIONS =
@@ -149,4 +176,183 @@ export function reportTypeLabel(type?: string | null): string {
   if (!type) return "회고";
   const key = type.trim().toLowerCase();
   return REPORT_TYPE_LABEL[key] ?? type.trim();
+}
+
+function uniqueLines(lines: string[], max: number): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of lines) {
+    const line = raw.replace(/\s+/g, " ").trim();
+    if (!line) continue;
+    const key = line.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(line);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+
+function buildSummaryProse(display: DisplayReview): string {
+  const chunks: string[] = [];
+
+  const themeBits = display.themes
+    .slice(0, 3)
+    .map((t) => t.title || t.body)
+    .filter(Boolean);
+  if (themeBits.length) {
+    chunks.push(`이 기간의 기록에서는 ${themeBits.join(", ")} 흐름이 자주 보였습니다.`);
+  }
+
+  const emotionBits = display.emotions
+    .slice(0, 3)
+    .map((e) => e.title || e.body)
+    .filter(Boolean);
+  if (emotionBits.length) {
+    chunks.push(`마음 한편에는 ${emotionBits.join(", ")} 같은 결이 반복되었습니다.`);
+  }
+
+  const questionBits = display.questions
+    .slice(0, 2)
+    .map((q) => q.title || q.body)
+    .filter(Boolean);
+  if (questionBits.length) {
+    chunks.push(`붙들고 있던 질문은 ‘${questionBits.join("’, ‘")}’ 쪽이었습니다.`);
+  }
+
+  if (display.changesOrUnknown) {
+    chunks.push(display.changesOrUnknown);
+  }
+
+  if (chunks.length === 0 && display.oneSentence) {
+    return display.oneSentence;
+  }
+
+  return chunks.join(" ");
+}
+
+function peopleOriented(text: string): boolean {
+  return /사람|친구|동반|멘토|목회|상담|가족|공동체|나눔|함께|대화|동역|그룹|선배|이웃/.test(
+    text,
+  );
+}
+
+function buildCompanions(display: DisplayReview): SimpleReviewCompanion[] {
+  const out: SimpleReviewCompanion[] = [];
+
+  for (const step of display.nextSteps) {
+    const blob = `${step.action} ${step.reason ?? ""}`;
+    if (!peopleOriented(blob)) continue;
+    out.push({
+      role: step.action.trim(),
+      why: step.reason?.trim() || "이 시기의 기록과 맞닿아 있는 다음 관계 한 걸음입니다.",
+    });
+  }
+
+  for (const p of display.prayerPrompts) {
+    const blob = `${p.topic} ${p.suggestion ?? ""}`;
+    if (!peopleOriented(blob)) continue;
+    out.push({
+      role: p.topic.trim(),
+      why: p.suggestion?.trim() || "기도 안에서 함께 붙들 수 있는 관계의 방향입니다.",
+    });
+  }
+
+  if (out.length === 0) {
+    const theme = display.themes[0]?.title;
+    const emotion = display.emotions[0]?.title;
+    if (theme || emotion) {
+      out.push({
+        role: "같은 질문을 들어줄 동반자",
+        why: [
+          theme ? `‘${theme}’ 이야기를` : "이 기간의 이야기를",
+          "판단 없이 들어 줄 한 사람이 있으면 숨통이 트입니다.",
+        ].join(" "),
+      });
+      out.push({
+        role: "말씀을 같이 읽어 줄 사람",
+        why: "혼자 해석을 확정하기보다, 본문을 나란히 읽고 질문만 나눠도 충분합니다.",
+      });
+      if (emotion) {
+        out.push({
+          role: "마음을 안전하게 나눌 작은 관계",
+          why: `‘${emotion}’ 같은 결을 숨기지 않아도 되는 자리 하나가 도움이 됩니다.`,
+        });
+      }
+    } else {
+      out.push({
+        role: "조용히 함께 걸어 줄 한 사람",
+        why: "조언을 많이 주기보다, 기록을 들어 주고 기도로 동행해 줄 관계가 필요합니다.",
+      });
+    }
+  }
+
+  return uniqueLines(
+    out.map((c) => `${c.role}|||${c.why}`),
+    3,
+  ).map((line) => {
+    const [role, why] = line.split("|||");
+    return { role, why };
+  });
+}
+
+/**
+ * 회고 상세를 4블록 단순 뷰로 접는다.
+ * stories href는 호출측에서 채워도 되고, 여기선 텍스트만 준비한다.
+ */
+export function toSimpleReviewView(
+  display: DisplayReview,
+  opts?: {
+    stories?: SimpleReviewStory[];
+    communityQuestions?: string[];
+  },
+): SimpleReviewView {
+  const headline =
+    display.oneSentence ||
+    display.themes[0]?.title ||
+    "이 기간의 기록을 한곳에 모아 보았습니다";
+
+  const summary = buildSummaryProse(display);
+
+  const stories: SimpleReviewStory[] =
+    opts?.stories?.slice(0, 3) ??
+    display.storyConnections.slice(0, 3).map((sc) => ({
+      title: sc.story,
+      source: sc.source,
+      line:
+        sc.differentPerspective?.trim() ||
+        sc.connection.split(/(?<=[.!?。…])\s+/)[0] ||
+        sc.connection,
+    }));
+
+  const scriptures: SimpleReviewScripture[] = display.scriptureReadings
+    .slice(0, 3)
+    .map((s) => ({
+      ref: s.ref,
+      why: s.reason?.trim() || s.focus?.trim() || "이 시기에 다시 머물 만한 본문입니다.",
+    }));
+
+  const companions = buildCompanions(display);
+
+  // community questions can enrich companions if still short
+  if (companions.length < 3 && opts?.communityQuestions?.length) {
+    for (const q of opts.communityQuestions) {
+      if (companions.length >= 3) break;
+      const text = q.trim();
+      if (!text) continue;
+      companions.push({
+        role: "나눔이 가능한 관계",
+        why: `함께 나눠볼 질문: ${text}`,
+      });
+    }
+  }
+
+  return {
+    headline,
+    summary: summary || headline,
+    stories,
+    scriptures,
+    companions: companions.slice(0, 3),
+  };
 }

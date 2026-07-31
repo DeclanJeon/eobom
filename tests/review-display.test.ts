@@ -4,6 +4,7 @@ import {
   meaningfulObservation,
   reportTypeLabel,
   reviewLimitationsText,
+  toSimpleReviewView,
 } from "@/lib/review-display";
 import type { StructuredReview } from "@/lib/mimo";
 
@@ -119,5 +120,105 @@ describe("reviewLimitationsText", () => {
   it("limitations가 있으면 그것을 우선한다", () => {
     const got = normalizeReviewForDisplay(baseReview({ limitations: "한계 문구", disclaimer: "고정 문구" }));
     expect(reviewLimitationsText(got)).toBe("한계 문구");
+  });
+});
+
+describe("toSimpleReviewView", () => {
+  it("folds themes/emotions/questions into one summary prose", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        oneSentence: "기다림 가운데 머문 한 달",
+        themes: [
+          {
+            key: "t1",
+            title: "기다림",
+            body: "응답을 기다리는 기록이 반복됨",
+            confidence: "high",
+            evidence: [],
+          },
+        ],
+        emotions: [
+          {
+            key: "e1",
+            title: "불안",
+            body: "앞이 보이지 않을 때의 긴장",
+            confidence: "medium",
+            evidence: [],
+          },
+        ],
+        questions: [
+          {
+            key: "q1",
+            title: "언제까지 기다려야 하나",
+            body: "",
+            confidence: "medium",
+            evidence: [],
+          },
+        ],
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    expect(simple.headline).toBe("기다림 가운데 머문 한 달");
+    expect(simple.summary).toContain("기다림");
+    expect(simple.summary).toContain("불안");
+    expect(simple.summary).toContain("언제까지 기다려야 하나");
+  });
+
+  it("keeps at most three stories and scriptures", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        storyConnections: Array.from({ length: 5 }, (_, i) => ({
+          story: `이야기${i}`,
+          source: "성경",
+          connection: `연결 ${i}`,
+          differentPerspective: `한 줄 ${i}`,
+        })),
+        scriptureReadings: Array.from({ length: 5 }, (_, i) => ({
+          ref: `시편 ${i + 1}편`,
+          reason: `이유 ${i}`,
+          focus: "",
+        })),
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    expect(simple.stories).toHaveLength(3);
+    expect(simple.scriptures).toHaveLength(3);
+    expect(simple.stories[0].line).toContain("한 줄");
+  });
+
+  it("suggests companions even without explicit people fields", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        themes: [
+          {
+            key: "t1",
+            title: "외로움",
+            body: "혼자 버티는 기록",
+            confidence: "high",
+            evidence: [],
+          },
+        ],
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    expect(simple.companions.length).toBeGreaterThan(0);
+    expect(simple.companions[0].role.length).toBeGreaterThan(0);
+  });
+
+  it("prefers people-oriented next steps for companions", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        nextSteps: [
+          { action: "혼자 운동하기", reason: "체력" },
+          {
+            action: "멘토와 대화하기",
+            reason: "이 시기의 질문을 함께 나누기",
+          },
+        ],
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    expect(simple.companions.some((c) => c.role.includes("멘토"))).toBe(true);
+    expect(simple.companions.some((c) => c.role.includes("운동"))).toBe(false);
   });
 });
