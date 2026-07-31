@@ -12,6 +12,12 @@ import { db } from "@/lib/db";
 import { getLatestRun, getLatestRagRun } from "@/lib/story-mirror/db";
 import { formatDateShort } from "@/lib/utils";
 import { reportTypeLabel } from "@/lib/review-display";
+import {
+  computeVisualizationFingerprint,
+  deriveVisualizationFreshness,
+  getStoredFingerprint,
+  hasSynthesisInDataJson,
+} from "@/lib/story-mirror/visualization-fingerprint";
 
 export const metadata = { title: "돌아보기" };
 
@@ -37,6 +43,19 @@ export default async function LookbackPage() {
   const storyCount =
     (storyRun?.matches.length ?? 0) ||
     (ragRun?.matches.filter((m) => m.connection?.trim()).length ?? 0);
+
+  let vizFreshness: "none" | "fresh" | "stale" = "none";
+  if (viz?.imageUrl) {
+    const currentFp = await computeVisualizationFingerprint(user.id, {
+      kind: viz.kind || "summary",
+    });
+    vizFreshness = deriveVisualizationFreshness({
+      hasImage: true,
+      hasSynthesis: hasSynthesisInDataJson(viz.dataJson),
+      storedFingerprint: getStoredFingerprint(viz.dataJson),
+      currentFingerprint: currentFp,
+    });
+  }
 
   return (
     <AppShell wide bare>
@@ -110,7 +129,9 @@ export default async function LookbackPage() {
               <h2 className="mt-1 text-headline-sm text-primary">이미지로 기억</h2>
               {viz ? (
                 <p className="mt-2 text-body-md text-text-muted">
-                  이번 계절의 기록이 하나의 장면으로 남아 있습니다.
+                  {vizFreshness === "stale"
+                    ? "기록이 달라졌어요. 새 장면으로 다시 그릴 수 있습니다."
+                    : "이번 계절의 기록이 하나의 장면으로 남아 있습니다."}
                 </p>
               ) : (
                 <p className="mt-2 text-body-md text-text-muted">
@@ -118,7 +139,11 @@ export default async function LookbackPage() {
                 </p>
               )}
               <p className="mt-4 text-label-sm text-leaf">
-                {viz ? "시각화 보기 →" : "이미지 만들기 →"}
+                {viz
+                  ? vizFreshness === "stale"
+                    ? "다시 그리기 →"
+                    : "시각화 보기 →"
+                  : "이미지 만들기 →"}
               </p>
             </SurfaceCard>
           </Link>

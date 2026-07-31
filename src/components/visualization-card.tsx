@@ -1,6 +1,6 @@
 /**
  * Story Mirror — Visualization Card
- * 회고 기반 이미지 + AI 종합 해설 + 근거/다음 행동
+ * 회고 기반 이미지 + AI 종합 해설 + freshness(stale) UI
  */
 
 "use client";
@@ -8,6 +8,7 @@
 import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import type { VisualizationFreshness } from "@/lib/story-mirror/visualization-fingerprint";
 
 type Visualization = {
   id: string;
@@ -15,6 +16,7 @@ type Visualization = {
   status: string;
   imageUrl: string | null;
   dataJson?: string | null;
+  freshness?: VisualizationFreshness;
 };
 
 type SynthesisData = {
@@ -37,11 +39,16 @@ const AI_LIMIT =
 export function VisualizationCard({
   kind,
   initial,
+  initialFreshness = "none",
 }: {
   kind: string;
   initial?: Visualization;
+  initialFreshness?: VisualizationFreshness;
 }) {
   const [vis, setVis] = useState<Visualization | null>(initial ?? null);
+  const [freshness, setFreshness] = useState<VisualizationFreshness>(
+    initial?.freshness ?? initialFreshness,
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
@@ -63,47 +70,59 @@ export function VisualizationCard({
     }
   }, [vis?.dataJson]);
 
-  const generate = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const periodEnd = now.toISOString();
-    try {
-      const res = await fetch("/api/story-mirror/visualize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind, periodStart, periodEnd }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setVis({
-          id: data.id,
-          kind,
-          status: data.status,
-          imageUrl: data.imageUrl,
-          dataJson: data.dataJson ?? null,
+  const generate = useCallback(
+    async (force = false) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/story-mirror/visualize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kind, force }),
         });
-        setOpenDetail(true);
-      } else {
-        setError(data.error || "이미지 생성에 실패했습니다.");
+        const data = await res.json();
+        if (res.ok) {
+          setVis({
+            id: data.id,
+            kind,
+            status: data.status,
+            imageUrl: data.imageUrl,
+            dataJson: data.dataJson ?? null,
+            freshness: data.freshness ?? "fresh",
+          });
+          setFreshness(
+            (data.freshness as VisualizationFreshness | undefined) ?? "fresh",
+          );
+          setOpenDetail(true);
+        } else {
+          setError(data.error || "이미지 생성에 실패했습니다.");
+        }
+      } catch {
+        setError("네트워크 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setError("네트워크 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, [kind]);
+    },
+    [kind],
+  );
+
+  const isStale = freshness === "stale" && Boolean(imageUrl);
+  const isFresh = freshness === "fresh" && Boolean(imageUrl);
 
   return (
     <div className="rounded-2xl border border-border/80 bg-surface-shared/40 p-4">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-headline-sm text-primary">
           {KIND_LABELS[kind] ?? kind}
         </h3>
-        {vis?.status === "complete" && imageUrl ? (
+        {isFresh ? (
           <span className="rounded-full bg-accent-gold/15 px-2 py-0.5 text-label-xs text-accent-gold-ink">
-            완료
+            최신
+          </span>
+        ) : null}
+        {isStale ? (
+          <span className="rounded-full bg-accent-terracotta/15 px-2 py-0.5 text-label-xs text-accent-terracotta">
+            기록이 달라졌어요
           </span>
         ) : null}
       </div>
@@ -124,7 +143,7 @@ export function VisualizationCard({
           <p className="text-label-sm text-destructive">{error}</p>
           <button
             type="button"
-            onClick={generate}
+            onClick={() => generate(true)}
             className="mt-2 min-h-11 text-label-sm text-leaf hover:text-primary"
           >
             다시 시도
@@ -132,18 +151,36 @@ export function VisualizationCard({
         </div>
       ) : null}
 
-      {!loading && !error && vis?.status === "complete" && imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={synthesis?.headline || KIND_LABELS[kind] || kind}
-          width={800}
-          height={600}
-          unoptimized
-          className="w-full rounded-xl"
-        />
+      {!loading && !error && imageUrl ? (
+        <div className={isStale ? "opacity-80" : undefined}>
+          <Image
+            src={imageUrl}
+            alt={synthesis?.headline || KIND_LABELS[kind] || kind}
+            width={800}
+            height={600}
+            unoptimized
+            className="w-full rounded-xl"
+          />
+        </div>
       ) : null}
 
-      {synthesis ? (
+      {isStale && !loading ? (
+        <div className="mt-3 rounded-xl border border-accent-terracotta/30 bg-white/90 p-4">
+          <p className="text-body-sm text-text-muted">
+            기록이 더 쌓이거나 회고가 달라졌어요. 이전 장면은 남겨 두었으니, 지금
+            흐름으로 다시 그릴 수 있습니다.
+          </p>
+          <button
+            type="button"
+            onClick={() => generate(true)}
+            className="cta-primary mt-3 min-h-11"
+          >
+            이 흐름으로 다시 그리기
+          </button>
+        </div>
+      ) : null}
+
+      {synthesis && !loading ? (
         <div className="mt-3 rounded-xl border border-border/70 bg-white/90 p-4">
           <p className="text-label-sm font-medium text-primary">
             {synthesis.headline || "이 이미지가 말하는 당신의 기록"}
@@ -152,6 +189,7 @@ export function VisualizationCard({
             <p className="mt-1 text-label-xs text-text-muted">
               기록 {synthesis.entryCount}개
               {synthesis.reviewId ? " · 회고 1개" : ""}에서 도출
+              {isFresh ? " · 같은 기록 기준으로 만든 장면" : ""}
             </p>
           ) : null}
 
@@ -192,27 +230,29 @@ export function VisualizationCard({
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href="/entries/new"
-              className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-3 text-label-sm text-primary transition hover:border-accent-gold/40"
-            >
-              기도문으로 남기기
-            </Link>
-            <Link
-              href="/entries/new"
-              className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-3 text-label-sm text-primary transition hover:border-accent-gold/40"
-            >
-              결단 이어 쓰기
-            </Link>
-            <button
-              type="button"
-              onClick={generate}
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-label-sm text-leaf hover:text-primary"
-            >
-              회고로 다시 만들기
-            </button>
-          </div>
+          {isFresh ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/entries/new"
+                className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-3 text-label-sm text-primary transition hover:border-accent-gold/40"
+              >
+                기도문으로 남기기
+              </Link>
+              <Link
+                href="/entries/new"
+                className="inline-flex min-h-11 items-center rounded-xl border border-border bg-white px-3 text-label-sm text-primary transition hover:border-accent-gold/40"
+              >
+                결단 이어 쓰기
+              </Link>
+              <button
+                type="button"
+                onClick={() => generate(true)}
+                className="inline-flex min-h-11 items-center rounded-xl px-3 text-label-sm text-leaf hover:text-primary"
+              >
+                다시 만들기
+              </button>
+            </div>
+          ) : null}
 
           <p className="mt-4 text-label-xs leading-relaxed text-text-muted">
             {AI_LIMIT}
@@ -220,29 +260,15 @@ export function VisualizationCard({
         </div>
       ) : null}
 
-      {!loading && !error && (!vis || vis.status === "failed") ? (
+      {!loading && !error && !imageUrl ? (
         <button
           type="button"
-          onClick={generate}
+          onClick={() => generate(false)}
           className="flex min-h-[200px] w-full items-center justify-center rounded-xl border-2 border-dashed border-border transition hover:border-accent-gold/30"
         >
           <span className="text-label-sm text-text-muted">
-            회고로 이미지 만들기
+            회고와 기록으로 이미지 만들기
           </span>
-        </button>
-      ) : null}
-
-      {!loading &&
-      !error &&
-      vis?.status === "complete" &&
-      imageUrl &&
-      !synthesis ? (
-        <button
-          type="button"
-          onClick={generate}
-          className="mt-3 w-full min-h-11 rounded-xl border border-border py-2 text-label-sm text-leaf hover:text-primary"
-        >
-          회고 내용으로 다시 만들기
         </button>
       ) : null}
     </div>

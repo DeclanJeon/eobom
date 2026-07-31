@@ -9,6 +9,12 @@ import { EmptyState } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { VisualizationCard } from "@/components/visualization-card";
+import {
+  computeVisualizationFingerprint,
+  deriveVisualizationFreshness,
+  getStoredFingerprint,
+  hasSynthesisInDataJson,
+} from "@/lib/story-mirror/visualization-fingerprint";
 
 export const metadata = { title: "돌아보기 · 시각화" };
 
@@ -19,15 +25,34 @@ export default async function VisualizePage() {
     where: { userId: user.id, deletedAt: null },
   });
 
+  const currentFingerprint =
+    entryCount >= 3
+      ? await computeVisualizationFingerprint(user.id, { kind: "summary" })
+      : "";
+
   const vis = await db.userVisualization.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     take: 4,
   });
 
-  const visByKind = new Map<string, (typeof vis)[0]>();
+  const visByKind = new Map<
+    string,
+    (typeof vis)[0] & {
+      freshness: ReturnType<typeof deriveVisualizationFreshness>;
+    }
+  >();
   for (const v of vis) {
-    if (!visByKind.has(v.kind)) visByKind.set(v.kind, v);
+    if (visByKind.has(v.kind)) continue;
+    const storedFingerprint = getStoredFingerprint(v.dataJson);
+    const freshness = deriveVisualizationFreshness({
+      hasImage: Boolean(v.imageUrl),
+      hasSynthesis: hasSynthesisInDataJson(v.dataJson),
+      storedFingerprint,
+      currentFingerprint:
+        v.kind === "summary" ? currentFingerprint : storedFingerprint ?? "",
+    });
+    visByKind.set(v.kind, { ...v, freshness });
   }
 
   const kinds = ["summary"] as const;
@@ -40,8 +65,8 @@ export default async function VisualizePage() {
         <h1 className="text-display-lg text-primary">나의 기록을 시각적으로</h1>
         <p className="mt-3 text-body-md text-text-muted">
           AI가 당신의 회고와 묵상 기록을 읽고, 그 흐름을 하나의 이미지와 해설로
-          보여 줍니다. 하드코딩된 그림이 아니라, 이번 계절의 기록에서 나온
-          장면입니다.
+          보여 줍니다. 기록이 달라지면 장면이 옛것이 되고, 다시 그리면 지금
+          흐름을 반영합니다.
         </p>
       </section>
 
@@ -57,13 +82,28 @@ export default async function VisualizePage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {kinds.map((kind) => (
-            <VisualizationCard
-              key={kind}
-              kind={kind}
-              initial={visByKind.get(kind)}
-            />
-          ))}
+          {kinds.map((kind) => {
+            const row = visByKind.get(kind);
+            return (
+              <VisualizationCard
+                key={kind}
+                kind={kind}
+                initial={
+                  row
+                    ? {
+                        id: row.id,
+                        kind: row.kind,
+                        status: row.status,
+                        imageUrl: row.imageUrl,
+                        dataJson: row.dataJson,
+                        freshness: row.freshness,
+                      }
+                    : undefined
+                }
+                initialFreshness={row?.freshness ?? "none"}
+              />
+            );
+          })}
         </div>
       )}
     </AppShell>
