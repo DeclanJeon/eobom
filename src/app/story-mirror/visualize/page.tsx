@@ -1,17 +1,16 @@
 /**
- * /story-mirror/visualize — 이야기 거울 시각화 페이지
- *
- * 사용자의 기록을 시각적으로 연결한다.
+ * /story-mirror/visualize — 돌아보기 · 시각화
  */
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { LookbackTabs } from "@/components/lookback-tabs";
 import { EmptyState } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { VisualizationCard } from "@/components/visualization-card";
 
-export const metadata = { title: "시각화 · 이야기 거울" };
+export const metadata = { title: "돌아보기 · 시각화" };
 
 export default async function VisualizePage() {
   const user = await requireUser();
@@ -26,7 +25,7 @@ export default async function VisualizePage() {
     take: 4,
   });
 
-  const visByKind = new Map<string, typeof vis[0]>();
+  const visByKind = new Map<string, (typeof vis)[0]>();
   for (const v of vis) {
     if (!visByKind.has(v.kind)) visByKind.set(v.kind, v);
   }
@@ -35,14 +34,7 @@ export default async function VisualizePage() {
 
   return (
     <AppShell wide bare>
-      <div className="mb-6 flex gap-3">
-        <Link href="/story-mirror" className="text-label-md text-text-muted hover:text-primary pb-1">
-          이야기
-        </Link>
-        <Link href="/story-mirror/visualize" className="text-label-md text-primary border-b-2 border-primary pb-1">
-          시각화
-        </Link>
-      </div>
+      <LookbackTabs pathname="/story-mirror/visualize" />
 
       <section className="mb-8 max-w-2xl">
         <h1 className="text-display-lg text-primary">나의 기록을 시각적으로</h1>
@@ -66,7 +58,11 @@ export default async function VisualizePage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {kinds.map((kind) => (
-            <VisualizationCard key={kind} kind={kind} initial={visByKind.get(kind)} />
+            <VisualizationCard
+              key={kind}
+              kind={kind}
+              initial={visByKind.get(kind)}
+            />
           ))}
         </div>
       )}

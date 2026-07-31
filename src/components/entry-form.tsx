@@ -46,6 +46,15 @@ function splitList(value?: string) {
     .filter(Boolean);
 }
 
+function titleFromBody(body: string): string {
+  const plain = body
+    .replace(/[#>*_`~\-\[\]()!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return "오늘의 묵상";
+  return plain.slice(0, 40) + (plain.length > 40 ? "…" : "");
+}
+
 export function EntryForm({
   initial,
   entryId,
@@ -60,6 +69,7 @@ export function EntryForm({
   const seedApplied = useRef(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
+  const [autosaveLabel, setAutosaveLabel] = useState("초안 대기");
   const [values, setValues] = useState<EntryFormValues>(
     initial || {
       entryDate: new Date().toISOString().slice(0, 10),
@@ -76,10 +86,10 @@ export function EntryForm({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState({
-    gratitude: false,
-    question: false,
-    prayer: false,
-    action: false,
+    gratitude: Boolean(initial?.gratitude?.trim()),
+    question: Boolean(initial?.question?.trim()),
+    prayer: Boolean(initial?.prayer?.trim()),
+    action: Boolean(initial?.actionStep?.trim()),
   });
 
   useEffect(() => {
@@ -97,6 +107,7 @@ export function EntryForm({
         if (draft.open) setOpen(draft.open);
         if (draft.savedAt) {
           setDraftMessage("이전에 작성하던 초안을 복구했습니다.");
+          setAutosaveLabel("초안 복구됨");
         }
       }
     } catch {
@@ -104,8 +115,6 @@ export function EntryForm({
     } finally {
       setIsDraftLoaded(true);
     }
-  // Restore only once for this entry.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
 
   useEffect(() => {
@@ -121,21 +130,20 @@ export function EntryForm({
         Boolean(values.actionStep?.trim());
       if (!hasContent) {
         localStorage.removeItem(draftKey);
-        setDraftMessage("");
+        setAutosaveLabel("초안 대기");
         return;
       }
       localStorage.setItem(
         draftKey,
         JSON.stringify({ values, bindings, open, savedAt: Date.now() }),
       );
-      setDraftMessage("초안이 이 기기에 자동 저장되었습니다.");
-    }, 500);
+      setAutosaveLabel("임시 저장됨");
+    }, 5000);
     return () => window.clearTimeout(timer);
   }, [bindings, draftKey, isDraftLoaded, open, values]);
 
   useEffect(() => {
-    if (!isDraftLoaded || seedApplied.current || !seedScripture?.trim()) return;
-    // Draft wins over query seed; mark applied so we do not re-check every keystroke.
+    if (!isDraftLoaded || seedApplied.current) return;
     if (
       !shouldApplyScriptureSeed({
         seedScripture,
@@ -146,7 +154,6 @@ export function EntryForm({
       seedApplied.current = true;
       return;
     }
-
     seedApplied.current = true;
     void (async () => {
       try {
@@ -158,17 +165,15 @@ export function EntryForm({
         const data = await res.json();
         if (res.ok && data.ok?.length) addBindings(data.ok);
       } catch {
-        // A malformed seed must not interfere with creating a new entry.
+        // ignore seed parse failures
       }
     })();
   }, [bindings.length, isDraftLoaded, seedScripture, values]);
 
-  const canSave = useMemo(() => {
-    const hasBody = Boolean(values.reflectionBody.trim());
-    const hasTitle = Boolean(values.title?.trim());
-    const hasScripture = bindings.length > 0;
-    return hasBody && (hasTitle || hasScripture);
-  }, [values, bindings]);
+  const canSave = useMemo(
+    () => Boolean(values.reflectionBody.trim()),
+    [values.reflectionBody],
+  );
 
   function addBindings(next: ScriptureBinding[]) {
     setBindings((prev) => {
@@ -186,9 +191,11 @@ export function EntryForm({
     if (!canSave || saving) return;
     setSaving(true);
     setError("");
+    const resolvedTitle =
+      values.title?.trim() || titleFromBody(values.reflectionBody);
     const payload = {
       entryDate: values.entryDate,
-      title: values.title,
+      title: resolvedTitle,
       scriptureBindings: bindings,
       scriptureRefs: bindings.map((b) => b.display),
       scriptureExcerpt: bindings[0]?.excerpt || values.scriptureExcerpt,
@@ -231,7 +238,7 @@ export function EntryForm({
         <button
           type="button"
           onClick={() => setOpen((v) => ({ ...v, [key]: !v[key] }))}
-          className="flex w-full items-center justify-between px-4 py-3.5 text-left text-label-md text-text-main"
+          className="flex min-h-11 w-full items-center justify-between px-4 py-3.5 text-left text-label-md text-text-main"
         >
           <span>{label}</span>
           <span className="text-text-muted">{isOpen ? "▴" : "▾"}</span>
@@ -255,25 +262,23 @@ export function EntryForm({
 
   return (
     <>
-      <form onSubmit={onSubmit} className="space-y-5">
+      <form
+        id="entry-form"
+        onSubmit={onSubmit}
+        className="space-y-8 pb-36 md:pb-28"
+      >
         <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={() => router.back()}
-            className="text-label-md text-text-muted"
+            className="min-h-11 text-label-md text-text-muted"
           >
             닫기
           </button>
           <h1 className="text-headline-sm text-primary">
             {entryId ? "기록 수정" : "오늘의 묵상"}
           </h1>
-          <button
-            type="submit"
-            disabled={!canSave || saving}
-            className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98] disabled:opacity-40"
-          >
-            {saving ? "…" : "저장"}
-          </button>
+          <span className="w-12" aria-hidden />
         </div>
 
         {draftMessage ? (
@@ -282,18 +287,26 @@ export function EntryForm({
           </p>
         ) : null}
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-label-md text-gold-ink">성구</p>
-            <button
-              type="button"
-              disabled={bindings.length >= 5}
-              onClick={() => setPickerOpen(true)}
-              className="text-label-md text-primary disabled:opacity-40"
-            >
-              + 성구 선택
-            </button>
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-label-sm font-medium text-primary">
+              1 · 오늘 묵상한 말씀
+            </p>
+            <p className="text-label-xs text-text-muted">선택</p>
           </div>
+          <button
+            type="button"
+            disabled={bindings.length >= 5}
+            onClick={() => setPickerOpen(true)}
+            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-[#E0DDD7] bg-white px-4 py-3 text-left transition hover:border-accent-gold/40 disabled:opacity-40"
+          >
+            <span className="text-label-md text-text-muted">
+              {bindings.length
+                ? `성구 ${bindings.length}개 선택됨 · 추가하기`
+                : "성경 구절을 선택하세요"}
+            </span>
+            <span className="text-text-muted">›</span>
+          </button>
           <ScriptureChipList
             bindings={bindings}
             onRemove={(slug) =>
@@ -304,7 +317,7 @@ export function EntryForm({
           <button
             type="button"
             onClick={() => setShowQuick((v) => !v)}
-            className="text-label-sm text-text-muted underline-offset-2 hover:underline"
+            className="min-h-11 text-label-sm text-text-muted underline-offset-2 hover:underline"
           >
             {showQuick ? "직접 입력 닫기" : "직접 입력"}
           </button>
@@ -317,15 +330,12 @@ export function EntryForm({
           <p className="text-label-sm text-text-muted">
             본문은 한국어 성경(Open Bibles)입니다. 개역개정이 아닙니다.
           </p>
-        </div>
+        </section>
 
-        <div>
-          <input
-            value={values.title || ""}
-            onChange={(e) => setValues((v) => ({ ...v, title: e.target.value }))}
-            placeholder="제목 (선택)"
-            className="mb-3 w-full border-0 bg-transparent py-1 text-headline-sm text-primary outline-none placeholder:text-zinc-500"
-          />
+        <section className="space-y-3">
+          <p className="text-label-sm font-medium text-primary">
+            2 · 마음에 남은 것
+          </p>
           <div className="writing-margin">
             <ReflectionEditor
               markdown={values.reflectionBody}
@@ -335,17 +345,43 @@ export function EntryForm({
               placeholder="이곳에 당신의 묵상을 자유롭게 남겨보세요."
             />
           </div>
-          <p className="mt-2 text-label-sm text-text-muted">
-            이미지 드래그앤드롭과 붙여넣기를 지원합니다. 상단 전환 버튼에서 Markdown 원문을 편집할 수 있습니다.
+          <p className="text-label-sm text-text-muted">
+            제목은 저장 시 첫 문장으로 자동 붙습니다. 이미지 드래그앤드롭과
+            붙여넣기를 지원합니다.
           </p>
-        </div>
+          <div className="space-y-3">
+            {optionalBlock(
+              "gratitude",
+              "감사의 제목",
+              "gratitude",
+              "감사한 마음을 적어 주세요",
+            )}
+            {optionalBlock(
+              "question",
+              "하나님께 드리는 질문",
+              "question",
+              "마음에 남은 질문",
+            )}
+            {optionalBlock(
+              "prayer",
+              "오늘의 기도",
+              "prayer",
+              "기도문을 적어 주세요",
+            )}
+          </div>
+        </section>
 
-        <div className="space-y-3">
-          {optionalBlock("gratitude", "감사의 제목", "gratitude", "감사한 마음을 적어 주세요")}
-          {optionalBlock("question", "하나님께 드리는 질문", "question", "마음에 남은 질문")}
-          {optionalBlock("prayer", "오늘의 기도", "prayer", "기도문을 적어 주세요")}
-          {optionalBlock("action", "삶으로의 결단", "actionStep", "작게 실천할 한 가지")}
-        </div>
+        <section className="space-y-3">
+          <p className="text-label-sm font-medium text-primary">
+            3 · 오늘 살아낼 한 가지
+          </p>
+          {optionalBlock(
+            "action",
+            "삶으로의 결단",
+            "actionStep",
+            "작게 실천할 한 가지",
+          )}
+        </section>
 
         {error ? (
           <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
@@ -353,6 +389,25 @@ export function EntryForm({
           </p>
         ) : null}
       </form>
+
+      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-border/70 bg-background/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:pb-safe">
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
+          <p className="text-label-sm text-text-muted" role="status">
+            {autosaveLabel}
+          </p>
+          <button
+            type="button"
+            disabled={!canSave || saving}
+            onClick={() => {
+              const form = document.getElementById("entry-form");
+              if (form instanceof HTMLFormElement) form.requestSubmit();
+            }}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-label-md text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98] disabled:opacity-40"
+          >
+            {saving ? "저장 중…" : entryId ? "수정 완료" : "묵상 마치기"}
+          </button>
+        </div>
+      </div>
 
       <ScripturePicker
         open={pickerOpen}

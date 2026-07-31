@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { SurfaceCard, SoftBadge } from "@/components/ui-blocks";
 import { ObservationFeedback } from "@/components/observation-feedback";
+import { EvidenceDrawer } from "@/components/review/evidence-drawer";
 import type { DisplayObservation } from "@/lib/review-display";
 
 export function ReviewObservationGroup({
@@ -28,27 +28,14 @@ export function ReviewObservationGroup({
             {item.confidenceLabel ? (
               <SoftBadge>{item.confidenceLabel}</SoftBadge>
             ) : null}
+            {item.evidence.length ? (
+              <SoftBadge>기록 {item.evidence.length}개 기반</SoftBadge>
+            ) : null}
           </div>
           {item.body ? (
             <p className="mt-2 text-body-md text-text-muted">{item.body}</p>
           ) : null}
-          {item.evidence.length ? (
-            <div className="mt-3 space-y-2 border-t border-border pt-3">
-              {item.evidence.map((ev, idx) => (
-                <div key={idx} className="text-label-sm text-text-muted">
-                  <Link
-                    href={`/entries/${ev.entryId}`}
-                    className="text-primary hover:underline"
-                  >
-                    {ev.date ? `${ev.date.slice(0, 10)} 기록 열기` : "기록 열기"}
-                  </Link>
-                  {ev.excerpt ? (
-                    <p className="mt-1 text-text-main">“{ev.excerpt}”</p>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          ) : null}
+          <EvidenceDrawer items={item.evidence} />
           {reviewId ? (
             <div className="mt-3">
               <ObservationFeedback

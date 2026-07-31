@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
-import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { EntryRow, SurfaceCard } from "@/components/ui-blocks";
 import { RereadScriptureList } from "@/components/reread-scripture-list";
 import { StoryMirrorHomeCard } from "@/components/story-mirror-home-card";
 import { listOpenActionSteps } from "@/lib/actions";
@@ -35,8 +35,10 @@ export default async function TodayPage() {
     }),
   ]);
 
-  const recent = entryPool.slice(0, 4);
+  const recent = entryPool.slice(0, 5);
   const latest = recent[0] ?? null;
+  const primaryAction = openActions[0] ?? null;
+  const moreActions = openActions.slice(1);
 
   let allowedRefs: string[] = [];
   if (latestReview && !isReviewStaleForHome(latestReview)) {
@@ -87,58 +89,84 @@ export default async function TodayPage() {
   }
 
   const greeting = user.displayName || user.name || "순례자";
+  const heroScripture =
+    homeReread[0] ??
+    (latest
+      ? {
+          ref: parseJsonArray(latest.scriptureRefs)[0] || "",
+          reason: latest.title || excerpt(latest.reflectionBody, 80),
+        }
+      : null);
 
   return (
     <AppShell wide bare>
-      <section className="mb-8 md:mb-12">
-        <div>
-          <p className="text-eyebrow">{formatDateKo(now)}</p>
-          <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
-            {greeting}님,
-            <span className="mt-1 block md:mt-0 md:ml-2">오늘도 이어봄</span>
-          </h1>
-          <p className="mt-3 max-w-xl text-body-md text-text-muted">
-            오늘 머문 말씀이, 내일의 나를 만납니다.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href="/entries/new"
-              className="cta-primary min-h-[48px] px-6 py-3"
-            >
-              묵상 기록하기
-            </Link>
-            <Link
-              href="/entries"
-              className="cta-secondary min-h-[48px] px-6 py-3"
-            >
-              기록 보기
-            </Link>
+      {/* 1. 지배적 장면 */}
+      <section className="mb-10 rounded-3xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
+        <p className="text-eyebrow">{formatDateKo(now)}</p>
+        <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
+          {greeting}님,
+          <span className="mt-1 block">오늘 붙들 말씀</span>
+        </h1>
+        {heroScripture && "ref" in heroScripture && heroScripture.ref ? (
+          <div className="mt-6 max-w-2xl">
+            <p className="font-journal text-xl leading-relaxed text-primary md:text-2xl">
+              {heroScripture.ref}
+            </p>
+            {"reason" in heroScripture && heroScripture.reason ? (
+              <p className="mt-3 text-body-md text-text-muted">
+                {heroScripture.reason}
+              </p>
+            ) : null}
           </div>
+        ) : (
+          <p className="mt-4 max-w-xl text-body-md text-text-muted">
+            오늘 머문 말씀이, 내일의 나를 만납니다. 한 줄이라도 남겨 보세요.
+          </p>
+        )}
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href="/entries/new"
+            className="cta-primary min-h-11 px-6 py-3"
+          >
+            묵상 기록하기
+          </Link>
+          <Link
+            href="/lookback"
+            className="cta-secondary min-h-11 px-6 py-3"
+          >
+            돌아보기
+          </Link>
         </div>
       </section>
 
-      {openActions.length > 0 ? (
-        <section className="mb-8 md:mb-10">
+      {/* 2. 보조 행동: 열린 결단 1개 */}
+      {primaryAction ? (
+        <section className="mb-10 md:mb-12">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <p className="text-eyebrow">살다</p>
-              <h2 className="mt-1 text-headline-sm text-primary">
-                열린 결단
-              </h2>
+              <h2 className="mt-1 text-headline-sm text-primary">열린 결단</h2>
             </div>
-            <p className="max-w-xs text-right text-label-sm text-text-muted">
-              평가가 아니라 기억입니다
-            </p>
+            {moreActions.length > 0 ? (
+              <Link
+                href="/entries"
+                className="text-label-sm text-text-muted hover:text-primary"
+              >
+                더 보기 ({openActions.length})
+              </Link>
+            ) : (
+              <p className="text-label-sm text-text-muted">평가가 아니라 기억입니다</p>
+            )}
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {openActions.map((item) => (
-              <OpenActionCard key={item.id} item={item} />
-            ))}
+          <div className="max-w-xl">
+            <OpenActionCard item={primaryAction} />
           </div>
         </section>
       ) : null}
+
+      {/* 3. 조용한 목록: 다시 읽을 말씀 */}
       {homeReread.length ? (
-        <section className="mb-8 md:mb-10">
+        <section className="mb-10 md:mb-12">
           <RereadScriptureList
             items={homeReread}
             variant="home"
@@ -153,123 +181,102 @@ export default async function TodayPage() {
                 ? `${latestReview.reportType} 회고 · ${formatDateShort(latestReview.periodEnd)} 기준`
                 : undefined
             }
-            reviewHref={fromReview && latestReview ? `/reviews/${latestReview.id}` : undefined}
+            reviewHref={
+              fromReview && latestReview ? `/reviews/${latestReview.id}` : undefined
+            }
           />
         </section>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {latest ? (
-          <Link href={`/entries/${latest.id}`}>
-            <SurfaceCard className="h-full border border-border/80 bg-secondary/40 transition hover:border-accent-gold/40">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <span className="chip-gold">최근 기록</span>
-                <span className="text-label-sm text-text-muted">
-                  {formatDateKo(latest.entryDate)}
-                </span>
-              </div>
-              <h2 className="text-headline-sm text-primary">
-                {latest.title || "제목 없음"}
-              </h2>
-              <p className="mt-2 line-clamp-3 text-body-md italic text-text-muted">
-                “{excerpt(latest.reflectionBody, 100)}”
-              </p>
-              <p className="mt-5 text-label-md text-primary">이어 적기 ›</p>
-            </SurfaceCard>
-          </Link>
-        ) : (
-          <SurfaceCard className="h-full">
-            <p className="text-headline-sm text-primary">아직 기록이 없습니다</p>
-            <p className="mt-2 text-body-md text-text-muted">
-              첫 묵상을 남기면 여기에 이어집니다.
-            </p>
-          </SurfaceCard>
-        )}
 
+      {/* 3b. 조용한 보조 카드: 최근 1건 + 과거 오늘 + 회고 미리보기 */}
+      <div className="mb-10 grid gap-4 md:grid-cols-2">
         {flags.pastTodayEnabled ? (
           pastToday ? (
             <Link href={`/entries/${pastToday.id}`}>
-              <SurfaceCard className="writing-margin h-full">
-                <p className="mb-3 text-label-md text-accent-terracotta">
+              <SurfaceCard className="writing-margin h-full transition hover:border-accent-gold/30">
+                <p className="mb-2 text-label-md text-accent-terracotta">
                   과거의 오늘 ·{" "}
                   {now.getFullYear() - pastToday.entryDate.getFullYear()}년 전
                 </p>
                 <h2 className="text-headline-sm text-primary">
                   {pastToday.title || "제목 없음"}
                 </h2>
-                <p className="mt-2 line-clamp-3 text-body-md text-text-main">
-                  {excerpt(pastToday.reflectionBody, 110)}
+                <p className="mt-2 line-clamp-2 text-body-md text-text-main">
+                  {excerpt(pastToday.reflectionBody, 100)}
                 </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {parseJsonArray(pastToday.tags)
-                    .slice(0, 3)
-                    .map((tag) => (
-                      <SoftBadge key={tag}>#{tag}</SoftBadge>
-                    ))}
-                </div>
               </SurfaceCard>
             </Link>
           ) : (
             <SurfaceCard className="h-full bg-surface-low/60">
               <p className="text-label-md text-text-muted">과거의 오늘</p>
               <p className="mt-2 text-body-md text-text-muted">
-                같은 날짜의 과거 기록이 쌓이면 여기에 부드럽게 다시 만납니다.
+                같은 날짜의 과거 기록이 쌓이면 여기에 다시 만납니다.
               </p>
             </SurfaceCard>
           )
         ) : null}
 
         {latestReview ? (
-          <Link
-            href={`/reviews/${latestReview.id}`}
-            className="sm:col-span-2 xl:col-span-1"
-          >
-            <section className="flex h-full min-h-[160px] flex-col justify-between overflow-hidden rounded-2xl bg-[linear-gradient(165deg,#2a3a2f,#152018)] p-6 text-white">
+          <Link href={`/reviews/${latestReview.id}`}>
+            <section className="flex h-full min-h-[140px] flex-col justify-between overflow-hidden rounded-2xl bg-[linear-gradient(165deg,#2a3a2f,#152018)] p-5 text-white">
               <span className="inline-flex w-fit rounded-full bg-white/15 px-3 py-1 text-label-sm">
                 AI 회고
               </span>
-              <p className="mt-3 font-journal text-xl leading-snug md:text-2xl">
+              <p className="mt-3 font-journal text-lg leading-snug md:text-xl">
                 “{latestReview.summary || "기록이 당신의 여정을 비춥니다."}”
               </p>
-              <p className="mt-4 text-label-md text-on-dark-soft">회고 보기 →</p>
+              <p className="mt-3 text-label-md text-on-dark-soft">회고 보기 →</p>
             </section>
           </Link>
         ) : null}
       </div>
 
-      {recent.length > 1 ? (
-        <section className="mt-10 md:mt-14">
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <h2 className="text-headline-sm text-primary">최근 기록</h2>
-            <Link
-              href="/entries"
-              className="text-label-md text-text-muted hover:text-primary"
-            >
-              전체 보기
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recent.slice(1).map((entry) => (
-              <Link key={entry.id} href={`/entries/${entry.id}`}>
-                <SurfaceCard className="h-full transition hover:border-accent-gold/30">
-                  <p className="text-label-sm text-text-muted">
-                    {formatDateKo(entry.entryDate)}
-                  </p>
-                  <h3 className="mt-1 text-headline-sm text-primary">
-                    {entry.title ||
-                      parseJsonArray(entry.scriptureRefs)[0] ||
-                      "제목 없음"}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-body-md text-text-muted">
-                    {excerpt(entry.reflectionBody, 90)}
-                  </p>
-                </SurfaceCard>
-              </Link>
+      {/* 3c. 최근 기록 — EntryRow */}
+      <section className="mb-10 md:mb-12">
+        <div className="mb-3 flex items-end justify-between gap-3">
+          <h2 className="text-headline-sm text-primary">최근 기록</h2>
+          <Link
+            href="/entries"
+            className="text-label-md text-text-muted hover:text-primary"
+          >
+            전체 보기
+          </Link>
+        </div>
+        {recent.length ? (
+          <div className="rounded-2xl border border-border/70 bg-white/80 px-4">
+            {recent.map((entry) => (
+              <EntryRow
+                key={entry.id}
+                href={`/entries/${entry.id}`}
+                date={formatDateKo(entry.entryDate)}
+                title={
+                  entry.title ||
+                  parseJsonArray(entry.scriptureRefs)[0] ||
+                  "제목 없음"
+                }
+                excerpt={excerpt(entry.reflectionBody, 80)}
+              />
             ))}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <SurfaceCard>
+            <p className="text-headline-sm text-primary">아직 기록이 없습니다</p>
+            <p className="mt-2 text-body-md text-text-muted">
+              첫 묵상을 남기면 여기에 이어집니다.
+            </p>
+            <div className="mt-4">
+              <Link href="/entries/new" className="cta-primary">
+                묵상 기록하기
+              </Link>
+            </div>
+          </SurfaceCard>
+        )}
+      </section>
 
-      <StoryMirrorHomeCard userId={user.id} storyMirrorEnabled={flags.storyMirrorEnabled ?? false} />
+      <StoryMirrorHomeCard
+        userId={user.id}
+        storyMirrorEnabled={flags.storyMirrorEnabled ?? false}
+      />
     </AppShell>
   );
 }

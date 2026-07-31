@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
-  --font-serif: var(--font-source-serif), "Source Serif 4", Georgia, serif;
+  --font-sans: var(--font-ui), "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --font-serif: var(--font-journal), "Noto Serif KR", "Apple SD Gothic Neo", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --max-w-reading: 45rem;
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -131,6 +132,29 @@
   a {
     color: inherit;
   }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  summary:focus-visible {
+    outline: 2px solid var(--leaf);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer utilities {
@@ -207,6 +231,12 @@
     border-radius: 1rem;
     box-shadow: 0 12px 40px -28px rgba(27, 28, 26, 0.18);
     color: var(--text-main);
+    transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  }
+
+  a:active .paper-card,
+  button:active .paper-card {
+    transform: scale(0.98);
   }
 
   .surface-card-dark {
@@ -260,14 +290,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 1rem;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.8);
-    color: var(--text-main);
+    border: 1px solid color-mix(in oklab, var(--accent-gold) 55%, var(--border));
+    background: color-mix(in oklab, var(--accent-gold) 12%, white);
+    color: var(--primary);
     padding: 0.875rem 1.25rem;
     font-size: 0.875rem;
     font-weight: 500;
     font-family: var(--font-sans);
-    transition: transform 200ms ease;
+    transition: transform 200ms ease, border-color 160ms ease;
   }
 
   .cta-secondary:active {

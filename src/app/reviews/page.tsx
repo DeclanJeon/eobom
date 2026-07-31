@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { LookbackTabs } from "@/components/lookback-tabs";
 import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { formatDateShort } from "@/lib/utils";
 import { reportTypeLabel } from "@/lib/review-display";
-export const metadata = { title: "회고" };
+export const metadata = { title: "돌아보기 · 회고" };
 
 export default async function ReviewsPage() {
   const user = await requireUser();
@@ -16,6 +17,8 @@ export default async function ReviewsPage() {
 
   return (
     <AppShell wide bare>
+      <LookbackTabs pathname="/reviews" />
+
       <section className="mb-8 max-w-2xl md:mb-10">
         <p className="text-eyebrow">AI 회고</p>
         <h1 className="mt-2 text-display-lg text-primary md:text-4xl">

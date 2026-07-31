@@ -54,7 +54,10 @@ export function StoryMirrorBridge({
     <section className="space-y-3">
       <h2 className="text-headline-sm text-primary">이야기 거울</h2>
       <p className="text-body-md text-text-muted">
-        지금의 기록을 이야기와 이미지로 다시 바라봅니다
+        지금의 기록을 이야기와 이미지로 다시 바라봅니다.{" "}
+        <Link href="/lookback" className="text-leaf hover:text-primary">
+          돌아보기 흐름
+        </Link>
       </p>
       <div className="grid gap-3 md:grid-cols-2">
         <SurfaceCard className="border-l-4 border-l-accent-gold/50">

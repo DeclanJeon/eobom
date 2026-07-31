@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { LookbackTabs } from "@/components/lookback-tabs";
 import { EmptyState, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
@@ -16,7 +17,7 @@ import {
 } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
 
-export const metadata = { title: "이야기 거울" };
+export const metadata = { title: "돌아보기 · 이야기" };
 
 export default async function StoryMirrorPage() {
   const user = await requireUser();
@@ -44,14 +45,7 @@ export default async function StoryMirrorPage() {
         </p>
       </section>
 
-      <div className="mb-6 flex gap-3">
-        <Link href="/story-mirror" className="text-label-md text-primary border-b-2 border-primary pb-1">
-          이야기
-        </Link>
-        <Link href="/story-mirror/visualize" className="text-label-md text-text-muted hover:text-primary pb-1">
-          시각화
-        </Link>
-      </div>
+      <LookbackTabs pathname="/story-mirror" />
 
       {run && run.matches.length > 0 ? (
         <div className="space-y-6">
@@ -162,16 +156,18 @@ export default async function StoryMirrorPage() {
           }
           description={
             hasReview
-              ? "회고 속 마음을 고전 속 이야기와 잇는 결과가 아직 없어요. 회고를 다시 만들면 이야기가 채워집니다."
+              ? "회고를 다시 만들면 이야기가 채워집니다. 또는 지금까지의 흐름을 이미지로 기억해 보세요."
               : "회고를 남기시면, 반복되는 주제와 감정을 고전 속 이야기와 연결해 드립니다."
           }
           action={
-            <Link
-              href="/reviews"
-              className="cta-primary"
-            >
-              {hasReview ? "회고 보기" : "회고 생성하기"}
-            </Link>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/reviews" className="cta-primary">
+                {hasReview ? "회고 보기" : "회고 생성하기"}
+              </Link>
+              <Link href="/story-mirror/visualize" className="cta-secondary">
+                이미지로 기억하기
+              </Link>
+            </div>
           }
         />
       )}

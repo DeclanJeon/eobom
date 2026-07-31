@@ -6,20 +6,38 @@ import {
   BookOpen,
   CircleUserRound,
   Home,
+  Plus,
   Sparkles,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const nav = [
+const desktopNav = [
   { href: "/today", label: "오늘", icon: Home },
   { href: "/entries", label: "기록", icon: BookOpen },
-  { href: "/reviews", label: "회고", icon: Sparkles },
+  { href: "/lookback", label: "돌아보기", icon: Sparkles },
   { href: "/together", label: "함께", icon: Users },
-  { href: "/me", label: "내 정보", icon: CircleUserRound },
-];
+] as const;
+
+const mobileNavLeft = [
+  { href: "/today", label: "오늘", icon: Home },
+  { href: "/entries", label: "기록", icon: BookOpen },
+] as const;
+
+const mobileNavRight = [
+  { href: "/lookback", label: "돌아보기", icon: Sparkles },
+  { href: "/together", label: "함께", icon: Users },
+] as const;
 
 function isActive(pathname: string, href: string) {
+  if (href === "/lookback") {
+    return (
+      pathname === "/lookback" ||
+      pathname.startsWith("/lookback/") ||
+      pathname.startsWith("/reviews") ||
+      pathname.startsWith("/story-mirror")
+    );
+  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -47,7 +65,7 @@ export function AppShell({
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-8">
             <Link href="/" className="flex shrink-0 items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              { }
               <img
                 src="/logo.svg"
                 alt=""
@@ -60,7 +78,7 @@ export function AppShell({
               </span>
             </Link>
             <nav className="flex items-center gap-1" aria-label="주요 메뉴">
-              {nav.map((item) => {
+              {desktopNav.map((item) => {
                 const active = isActive(pathname, item.href);
                 return (
                   <Link
@@ -72,6 +90,7 @@ export function AppShell({
                         ? "bg-primary/[0.06] text-primary shadow-[inset_0_-2px_0_0_var(--accent-gold)]"
                         : "text-text-muted hover:bg-surface-low hover:text-primary",
                     )}
+                    aria-current={active ? "page" : undefined}
                   >
                     {item.label}
                   </Link>
@@ -84,7 +103,7 @@ export function AppShell({
               href="/entries/new"
               className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
             >
-              기록하기
+              새 묵상
             </Link>
             <Link
               href="/me"
@@ -97,11 +116,11 @@ export function AppShell({
         </div>
       </header>
 
-      {/* Mobile top bar (brand only — primary nav is bottom) */}
+      {/* Mobile top bar */}
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
           <Link href="/" className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            { }
             <img
               src="/logo.svg"
               alt=""
@@ -114,10 +133,11 @@ export function AppShell({
             </span>
           </Link>
           <Link
-            href="/entries/new"
-            className="inline-flex h-9 items-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground"
+            href="/me"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-primary"
+            aria-label="내 정보"
           >
-            기록
+            <CircleUserRound className="h-5 w-5" strokeWidth={1.75} />
           </Link>
         </div>
       </header>
@@ -126,7 +146,6 @@ export function AppShell({
         className={cn(
           "mx-auto w-full px-4 sm:px-6 lg:px-8",
           wide ? "max-w-6xl" : "max-w-3xl",
-          // room for mobile bottom nav only
           "pb-28 md:pb-12",
         )}
       >
@@ -148,13 +167,13 @@ export function AppShell({
         </main>
       </div>
 
-      {/* Mobile bottom navigation only */}
+      {/* Mobile bottom: 오늘 | 기록 | ＋ | 돌아보기 | 함께 */}
       <nav
         className="fixed bottom-0 left-0 z-50 w-full border-t border-border/70 bg-surface/95 pb-safe shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)] backdrop-blur-md md:hidden"
         aria-label="모바일 메뉴"
       >
-        <div className="mx-auto flex max-w-lg items-stretch justify-around px-1 pt-1.5">
-          {nav.map((item) => {
+        <div className="mx-auto flex max-w-lg items-end justify-around px-1 pt-1.5">
+          {mobileNavLeft.map((item) => {
             const active = isActive(pathname, item.href);
             const Icon = item.icon;
             return (
@@ -162,20 +181,46 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-95",
+                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-95",
                   active ? "text-primary" : "text-text-muted",
                 )}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
                 <span className="text-[10px] font-medium leading-none">
                   {item.label}
                 </span>
-                <span
-                  className={cn(
-                    "mt-0.5 h-0.5 w-4 rounded-full transition",
-                    active ? "nav-active-mark" : "bg-transparent",
-                  )}
-                />
+              </Link>
+            );
+          })}
+
+          <Link
+            href="/entries/new"
+            className="-mt-5 flex min-h-14 min-w-14 flex-col items-center justify-center"
+            aria-label="새 묵상 쓰기"
+          >
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition active:scale-95">
+              <Plus className="h-7 w-7" strokeWidth={2.25} />
+            </span>
+          </Link>
+
+          {mobileNavRight.map((item) => {
+            const active = isActive(pathname, item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-95",
+                  active ? "text-primary" : "text-text-muted",
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
+                <span className="text-[10px] font-medium leading-none">
+                  {item.label}
+                </span>
               </Link>
             );
           })}

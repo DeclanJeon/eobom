@@ -1,22 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope, Source_Serif_4 } from "next/font/google";
+import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 import "@mdxeditor/editor/style.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
 import { JsonLd } from "@/components/json-ld";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const notoSans = Noto_Sans_KR({
+  variable: "--font-ui",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const sourceSerif = Source_Serif_4({
-  variable: "--font-source-serif",
+const notoSerif = Noto_Serif_KR({
+  variable: "--font-journal",
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "600", "700"],
   display: "swap",
 });
 
@@ -145,7 +145,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className="light" suppressHydrationWarning>
       <body
-        className={`${manrope.variable} ${sourceSerif.variable} min-h-dvh bg-background font-ui text-text-main antialiased`}
+        className={`${notoSans.variable} ${notoSerif.variable} min-h-dvh bg-background font-ui text-text-main antialiased`}
       >
         <JsonLd />
         <Providers>
