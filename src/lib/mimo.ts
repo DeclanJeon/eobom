@@ -176,8 +176,22 @@ function fallbackReview(entries: EntryForReview[]): StructuredReview {
         reason: "해당 기간 기록에 등장한 본문입니다. 문맥과 함께 다시 읽어볼 수 있습니다.",
       })),
     storyConnections: [
-      { story: "탕자 (누가복음 15)", source: "성경", connection: "돌아오고 다시 시작하는 이야기. 실패 후 다시 서는 것에 대한 성찰.", differentPerspective: "탕자는 아버지의 사랑을 의심했으나, 실제로는 항상 받아들여지고 있었다." },
-      { story: "하갈 (창세기 16)", source: "성경", connection: "버림받았다고 느끼는 순간, 하나님께서 발견하시는 이야기.", differentPerspective: "하갈은 자신을 보는 눈이 달라졌다: '당신은 나를 보시는 하나님이시로다'." },
+      {
+        story: "탕자 (누가복음 15)",
+        source: "성경",
+        connection:
+          "겉으로는 아버지를 떠나 제 뜻대로 살던 아들의 이야기처럼 보입니다. 그 안에는 받아들여질 곳을 잃을까 두려워하면서도 스스로 서고 싶은 마음이 있었습니다. 당신의 기록에서 반복되는 '다시 시작하고 싶은 마음'과 겹칩니다. 돌아온 뒤에야 그는 집이 조건이 아니라 자리였음을 알게 됩니다.",
+        differentPerspective:
+          "실패 후의 귀환만이 아니라, 떠나기 전부터 이미 그리워하던 자리를 향한 이야기입니다.",
+      },
+      {
+        story: "하갈 (창세기 16)",
+        source: "성경",
+        connection:
+          "겉으로는 광야에 버려진 여인의 장면으로 읽힙니다. 그 안에는 '나는 보이지 않는다'는 고립이 있었습니다. 당신이 남긴 기록의 외로움·소외감과 맞닿습니다. 그러나 그 자리에서 하갈은 자신을 보시는 눈을 발견하며 이름이 다시 붙습니다.",
+        differentPerspective:
+          "버림의 장면이 아니라, 보이지 않던 사람이 비로소 발견되는 장면입니다.",
+      },
     ],
     scriptureReadings: [
       ...new Set(entries.flatMap((e) => e.scriptureRefs)),
@@ -239,7 +253,7 @@ export async function generateReviewWithMimo(
 1. themes: 기록에서 반복되는 주제 2~3개. 각각 key, title, body, confidence, evidence 포함.
 2. emotions: 기록에서 나타나는 감정 2~3개. key, title, body, confidence, evidence 포함.
 3. questions: 기록에서 드러난 질문 1~2개. key, title, body, evidence 포함.
-4. storyConnections: 사용자의 주제와 겹치는 고전 인물·비유·교훈 2~3개. story(제목), source(출처), connection(연결 이유), differentPerspective(다른 관점) 포함. 성경 인물(다윗, 루스, 엘리야, 욥 등), 한국 고전(춘향, 흥부 등), 세계 고전(오디세우스, 장 발장 등)을 활용.
+4. storyConnections: 사용자의 주제와 겹치는 고전 인물·비유·교훈 2~3개. story(제목), source(출처), connection(2~4문장 입체 서사: 겉으로 보이는 모습 → 그 안에 있던 마음 → 사용자 기록과 겹치는 지점 → 변화의 씨앗), differentPerspective(한 문장 응축. 예: '강함만 본 것이 아니라 그 안에서 혼자 버티던 사람을 본 것이다') 포함. 성경 인물(다윗, 루스, 엘리야, 욥, 베드로 등), 한국 고전, 세계 고전을 활용. 사용자가 자신의 기록이 더 입체적으로 느껴지도록, 비슷한 열망·외로움·자존심·회귀를 살았던 인물이 이미 존재했음을 보여 주세요.
 5. scriptureReadings: 주제와 연결된 성경 본문 2~3개. ref(성구), reason(읽는 이유), focus(주목할 점) 포함.
 6. actionFlow: 이전 기록에서 나타난 결단과 그 흐름.
 7. changesOrUnknown: 달라진 점과 아직 알 수 없는 점.

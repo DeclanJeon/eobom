@@ -10,6 +10,7 @@ import type { RetrievedChunk } from "../src/lib/story-mirror/rag-search";
 import {
   streamMiMoGenerate,
   parseAndValidate,
+  buildSystemPrompt,
 } from "../src/lib/story-mirror/rag-generation";
 
 const TEST_CORPUS = "test-rag-v1";
@@ -219,5 +220,17 @@ describe("rag-generation: MiMo 스트리밍", () => {
 
   it("parseAndValidate는 잘못된 JSON에서 에러", () => {
     expect(() => parseAndValidate("not json", retrieved)).toThrow();
+  });
+});
+
+describe("rag-generation: 입체 서사 프롬프트", () => {
+  it("시스템 프롬프트에 겉-안-겹침-응축 구조를 포함한다", () => {
+    const prompt = buildSystemPrompt("ko");
+    expect(prompt).toContain("겉으로 보이는");
+    expect(prompt).toContain("속마음");
+    expect(prompt).toContain("겹치는");
+    expect(prompt).toContain("differentPerspective");
+    expect(prompt).toContain("한 문장");
+    expect(prompt).toContain("점수·순위 금지");
   });
 });

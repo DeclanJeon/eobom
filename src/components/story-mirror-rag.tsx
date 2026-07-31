@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { SurfaceCard, SoftBadge } from "@/components/ui-blocks";
+import { StoryNarrativeCard } from "@/components/story-narrative-card";
 import type { StoryConnection } from "@/lib/mimo";
 
 type Candidate = {
@@ -306,20 +307,13 @@ export function StoryMirrorRag({
           <section className="space-y-4">
             <p className="text-label-md text-text-muted">회고에서 닿은 이야기</p>
             {storyConnections.map((sc, i) => (
-              <SurfaceCard key={i} className="space-y-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="text-headline-sm text-primary">{sc.story}</h3>
-                  {sc.source ? (
-                    <span className="shrink-0 text-label-xs text-text-muted">{sc.source}</span>
-                  ) : null}
-                </div>
-                <p className="text-body-md text-text-muted">{sc.connection}</p>
-                {sc.differentPerspective ? (
-                  <p className="rounded-xl bg-chalk p-3 text-body-sm text-text-muted">
-                    다른 시선 · {sc.differentPerspective}
-                  </p>
-                ) : null}
-              </SurfaceCard>
+              <StoryNarrativeCard
+                key={i}
+                source={sc.source}
+                title={sc.story}
+                connection={sc.connection}
+                differentPerspective={sc.differentPerspective}
+              />
             ))}
             <div className="flex justify-center">
               <button
@@ -453,25 +447,17 @@ export function StoryMirrorRag({
             </SurfaceCard>
           )}
           {connections.map((conn, i) => (
-            <SurfaceCard key={`${conn.chunkId}-${i}`} className="space-y-2">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-headline-sm text-primary">
-                  {conn.title ?? "이야기"}
-                </h3>
-                {conn.workTitle && (
-                  <span className="shrink-0 text-label-xs text-text-muted">
-                    {conn.workTitle}
-                    {conn.locator ? ` · ${conn.locator}` : ""}
-                  </span>
-                )}
-              </div>
-              <p className="text-body-md text-text-muted">{conn.connection}</p>
-              {conn.differentPerspective && (
-                <p className="rounded-xl bg-chalk p-3 text-body-sm text-text-muted">
-                  다른 시선 · {conn.differentPerspective}
-                </p>
-              )}
-            </SurfaceCard>
+            <StoryNarrativeCard
+              key={`${conn.chunkId}-${i}`}
+              source={
+                conn.workTitle
+                  ? `${conn.workTitle}${conn.locator ? ` · ${conn.locator}` : ""}`
+                  : null
+              }
+              title={conn.title ?? "이야기"}
+              connection={conn.connection}
+              differentPerspective={conn.differentPerspective}
+            />
           ))}
           <div className="flex justify-center">
             <button type="button" onClick={reset} className="cta-secondary">

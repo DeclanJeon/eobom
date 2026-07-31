@@ -90,6 +90,17 @@ export default async function StoryMirrorDetailPage({
           {card.arc && (
             <p className="mt-2 text-label-sm text-text-muted">{card.arc}</p>
           )}
+          <div className="mt-4 rounded-2xl border border-border/70 bg-surface-shared/50 p-4">
+            <p className="text-label-xs font-medium text-accent-gold-ink">
+              이 인물을 이렇게 읽어 보세요
+            </p>
+            <ul className="mt-2 space-y-1.5 text-body-sm text-text-muted">
+              <li>· 겉으로 보이는 모습은 무엇인가요?</li>
+              <li>· 그 안에 있던 외로움·열망·고집은 무엇일까요?</li>
+              <li>· 나의 기록 중 어디와 겹치나요?</li>
+              <li>· 시간이 지나며 이 인물에게 생긴 변화의 씨앗은?</li>
+            </ul>
+          </div>
         </section>
 
         {/* Themes & Emotions */}
@@ -205,16 +216,26 @@ export default async function StoryMirrorDetailPage({
         </p>
 
         <SurfaceCard className="border-l-4 border-l-clay">
-          <h2 className="text-headline-sm text-primary">나의 회고에서 찾기</h2>
+          <h2 className="text-headline-sm text-primary">나의 회고와 겹쳐 보기</h2>
           <p className="mt-2 text-body-md text-text-muted">
-            이 이야기와 겹치는 주제가 내 묵상 기록에서 어떻게 나타나는지 확인할 수 있습니다.
+            이 인물의 겉모습과 속마음이, 당신의 묵상 기록에서 어떻게 반복되는지
+            확인해 보세요. 비슷한 열망을 살았던 사람이 이미 있었다는 사실이,
+            자신의 서사를 더 입체적으로 만들어 줍니다.
           </p>
-          <Link
-            href="/reviews/new"
-            className="mt-3 inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
-          >
-            회고 만들기 →
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link
+              href="/reviews"
+              className="inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
+            >
+              회고 보기 →
+            </Link>
+            <Link
+              href="/story-mirror/visualize"
+              className="inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
+            >
+              이미지로 기억하기 →
+            </Link>
+          </div>
         </SurfaceCard>
 
         {/* Feedback */}
