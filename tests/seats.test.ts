@@ -6,15 +6,22 @@ import {
   allocateWebUserSlug,
   claimSeat,
   ClaimError,
+  DEVICE_COOKIE,
+  DEVICE_LIMIT_PER_USER,
   formatNumberedSlug,
+  generateDeviceToken,
+  getDeviceTokenHash,
+  hashDeviceToken,
   isKeyringSlug,
+  isOwnerDevice,
   isSeatSlug,
   isWebUserSlug,
   KEYRING_MAX,
   provisionSeats,
+  registerDevice,
 } from "../src/lib/seats";
 
-/** Resolve Prisma `file:` URLs (absolute or cwd-relative). */
+/** Resolve Prisma `file:` URLs. Prisma resolves relative paths against the schema dir (prisma/). */
 export function resolveSqlitePath(url: string): string | null {
   if (!url.startsWith("file:")) return null;
   let filePath = url.slice("file:".length);
@@ -23,7 +30,7 @@ export function resolveSqlitePath(url: string): string | null {
   if (filePath.startsWith("/") && !filePath.startsWith("//")) {
     return filePath;
   }
-  return path.resolve(process.cwd(), filePath.replace(/^\.\//, ""));
+  return path.resolve(process.cwd(), "prisma", filePath.replace(/^\.\//, ""));
 }
 
 function dbAvailable() {
@@ -184,5 +191,130 @@ dbDescribe("provision and claim", () => {
       where: { slug: { in: ["e97", "e98"] } },
     });
     await db.user.deleteMany({ where: { email: "seat-c@test.local" } });
+  });
+});
+
+describe("device token", () => {
+  test("generateDeviceToken returns 32-byte base64url + sha256 hash", () => {
+    const { token, tokenHash } = generateDeviceToken();
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(tokenHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(hashDeviceToken(token)).toBe(tokenHash);
+    // 같은 토큰은 같은 해시, 서로 다른 토큰은 다른 해시
+    const other = generateDeviceToken();
+    expect(other.token).not.toBe(token);
+    expect(other.tokenHash).not.toBe(tokenHash);
+  });
+
+  test("getDeviceTokenHash extracts only the device cookie from a Cookie header", () => {
+    const { token } = generateDeviceToken();
+    const header = `other=a; ${DEVICE_COOKIE}=${token}; next-auth=b`;
+    expect(getDeviceTokenHash(header)).toBe(hashDeviceToken(token));
+    expect(getDeviceTokenHash("other=a; next-auth=b")).toBeNull();
+    expect(getDeviceTokenHash(null)).toBeNull();
+    expect(getDeviceTokenHash(undefined)).toBeNull();
+  });
+});
+
+dbDescribe("device registration", () => {
+  test("isOwnerDevice: unregistered / wrong user / revoked all rejected", async () => {
+    await db.userDevice.deleteMany({
+      where: { userId: { in: ["dev-user-a", "dev-user-b"] } },
+    });
+    const u = await db.user.create({
+      data: { email: "dev-a@test.local", id: "dev-user-a", personalSlug: "udevaaaaa" },
+    });
+    const other = await db.user.create({
+      data: { email: "dev-b@test.local", id: "dev-user-b", personalSlug: "udevbbbbb" },
+    });
+    const { token, tokenHash } = generateDeviceToken();
+
+    // 미등록
+    expect(await isOwnerDevice(u.id, tokenHash)).toBe(false);
+    expect(await isOwnerDevice(u.id, null)).toBe(false);
+
+    await registerDevice(u.id, token, "test-device");
+    expect(await isOwnerDevice(u.id, tokenHash)).toBe(true);
+    // 다른 사용자의 기기로는 인식 안 됨
+    expect(await isOwnerDevice(other.id, tokenHash)).toBe(false);
+
+    // revoke 후에는 인식 안 됨
+    await db.userDevice.updateMany({
+      where: { tokenHash },
+      data: { revokedAt: new Date() },
+    });
+    expect(await isOwnerDevice(u.id, tokenHash)).toBe(false);
+
+    await db.userDevice.deleteMany({
+      where: { userId: { in: ["dev-user-a", "dev-user-b"] } },
+    });
+    await db.user.deleteMany({
+      where: { email: { in: ["dev-a@test.local", "dev-b@test.local"] } },
+    });
+  });
+
+  test("registerDevice caps at DEVICE_LIMIT_PER_USER and revokes the oldest", async () => {
+    await db.userDevice.deleteMany({ where: { userId: "dev-user-cap" } });
+    await db.user.create({
+      data: { email: "dev-cap@test.local", id: "dev-user-cap", personalSlug: "udevccccc" },
+    });
+
+    const tokens = Array.from({ length: DEVICE_LIMIT_PER_USER + 1 }, () =>
+      generateDeviceToken(),
+    );
+    for (const { token } of tokens) {
+      await registerDevice("dev-user-cap", token, "cap-device");
+    }
+
+    const devices = await db.userDevice.findMany({
+      where: { userId: "dev-user-cap", revokedAt: null },
+      orderBy: { createdAt: "asc" },
+    });
+    expect(devices.length).toBe(DEVICE_LIMIT_PER_USER);
+    // 가장 오래된 첫 기기는 revoke됨
+    expect(await isOwnerDevice("dev-user-cap", tokens[0].tokenHash)).toBe(false);
+    // 마지막 등록 기기는 유효
+    expect(await isOwnerDevice("dev-user-cap", tokens.at(-1)!.tokenHash)).toBe(true);
+
+    await db.userDevice.deleteMany({ where: { userId: "dev-user-cap" } });
+    await db.user.deleteMany({ where: { email: "dev-cap@test.local" } });
+  });
+
+  test("serializes concurrent registrations at the device cap", async () => {
+    await db.userDevice.deleteMany({ where: { userId: "dev-user-race" } });
+    await db.user.deleteMany({ where: { id: "dev-user-race" } });
+    await db.user.create({
+      data: {
+        email: "dev-race@test.local",
+        id: "dev-user-race",
+        personalSlug: "udevracee",
+      },
+    });
+
+    const seeded = Array.from({ length: DEVICE_LIMIT_PER_USER - 1 }, () =>
+      generateDeviceToken(),
+    );
+    for (const { token } of seeded) {
+      await registerDevice("dev-user-race", token, "race-seed");
+    }
+
+    const concurrent = [generateDeviceToken(), generateDeviceToken()];
+    const results = await Promise.allSettled(
+      concurrent.map(({ token }) =>
+        registerDevice("dev-user-race", token, "race-concurrent"),
+      ),
+    );
+    expect(results.every((result) => result.status === "fulfilled")).toBe(true);
+
+    const active = await db.userDevice.count({
+      where: { userId: "dev-user-race", revokedAt: null },
+    });
+    expect(active).toBe(DEVICE_LIMIT_PER_USER);
+    for (const { tokenHash } of concurrent) {
+      expect(await isOwnerDevice("dev-user-race", tokenHash)).toBe(true);
+    }
+
+    await db.userDevice.deleteMany({ where: { userId: "dev-user-race" } });
+    await db.user.deleteMany({ where: { id: "dev-user-race" } });
   });
 });

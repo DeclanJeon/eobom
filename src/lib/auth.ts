@@ -129,6 +129,9 @@ export const authOptions: NextAuthOptions = {
       let viaKeyring = false;
 
       // Keyring QR only: e01–e10000 when still free.
+      // claimSeat를 먼저 수행 — 성공 시에만 personalSlug를 확정한다.
+      // (순서를 뒤집으면 race 패배 시 타인 키링이 personalSlug로 남아
+      //  영구 claim lockout + 불변식 위반이 발생한다.)
       if (claimSlug && isKeyringSlug(claimSlug)) {
         const seat = await getSeatBySlug(claimSlug);
         if (seat && seat.status === "unclaimed") {
@@ -136,8 +139,16 @@ export const authOptions: NextAuthOptions = {
             where: { personalSlug: claimSlug, NOT: { id: user.id } },
           });
           if (!taken) {
-            personalSlug = claimSlug;
-            viaKeyring = true;
+            try {
+              await claimSeat(user.id, user.email, claimSlug);
+              personalSlug = claimSlug;
+              viaKeyring = true;
+            } catch (e) {
+              if (!(e instanceof ClaimError)) {
+                console.error("signup keyring claim", e);
+              }
+              // already_claimed 등: 키링 확정 실패 → 아래에서 웹 주소로 폴백
+            }
           }
         }
       }
@@ -156,14 +167,6 @@ export const authOptions: NextAuthOptions = {
           seatClaimedAt: viaKeyring ? new Date() : null,
         },
       });
-
-      if (viaKeyring && claimSlug) {
-        try {
-          await claimSeat(user.id, user.email, claimSlug);
-        } catch (e) {
-          if (!(e instanceof ClaimError)) console.error("signup keyring claim", e);
-        }
-      }
     },
     async signIn({ user }) {
       if (!user?.id || !user.email) return;

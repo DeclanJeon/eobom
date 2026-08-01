@@ -4,7 +4,6 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { LookbackTabs } from "@/components/lookback-tabs";
 import { EmptyState } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
@@ -59,7 +58,16 @@ export default async function VisualizePage() {
 
   return (
     <AppShell wide bare>
-      <LookbackTabs pathname="/story-mirror/visualize" />
+      <nav className="mb-6" aria-label="돌아보기 이동">
+        <Link
+          href="/lookback"
+          className="text-label-sm text-leaf transition hover:text-primary"
+        >
+          ← 돌아보기
+        </Link>
+        <span className="mx-2 text-label-sm text-text-muted">·</span>
+        <span className="text-label-sm text-text-muted">시각화</span>
+      </nav>
 
       <section className="mb-8 max-w-2xl">
         <h1 className="text-display-lg text-primary">나의 기록을 시각적으로</h1>

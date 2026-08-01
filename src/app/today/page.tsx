@@ -248,7 +248,7 @@ export default async function TodayPage() {
 
           {latestReview ? (
             <Link
-              href={`/reviews/${latestReview.id}`}
+              href={`/lookback/${latestReview.id}`}
               className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 bg-surface-low/70 px-4 py-3 transition hover:border-accent-gold/30"
             >
               <div className="min-w-0">

@@ -139,7 +139,7 @@ export async function POST(request: Request) {
 
     const card = cards.find((c) => c.id === m.cardId);
 
-    await db.storyMirrorMatch.create({
+    const match = await db.storyMirrorMatch.create({
       data: {
         runId: run.id,
         cardId: m.cardId,
@@ -153,26 +153,21 @@ export async function POST(request: Request) {
       },
     });
 
-    // evidence 저장 (최근 기록에서 추출)
+    // evidence 저장 (최근 기록에서 추출) — create 반환 id를 재사용해 추가 조회 제거
     for (const entry of entries.slice(0, 5)) {
       const entryThemes = parseJsonArray(entry.tags);
       const hasOverlap = m.matchedThemes.some((t) =>
         entryThemes.some((et) => et.toLowerCase() === t.toLowerCase()),
       );
       if (hasOverlap) {
-        const match = await db.storyMirrorMatch.findFirst({
-          where: { runId: run.id, cardId: m.cardId },
+        await db.storyMirrorEvidence.create({
+          data: {
+            matchId: match.id,
+            entryId: entry.id,
+            excerpt: entry.reflectionBody.slice(0, 200),
+            relevance: "supporting",
+          },
         });
-        if (match) {
-          await db.storyMirrorEvidence.create({
-            data: {
-              matchId: match.id,
-              entryId: entry.id,
-              excerpt: entry.reflectionBody.slice(0, 200),
-              relevance: "supporting",
-            },
-          });
-        }
       }
     }
   }

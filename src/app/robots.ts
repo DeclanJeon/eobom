@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
           "/today",
           "/entries",
           "/reviews",
+          "/lookback",
           "/together",
           "/me",
         ],

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getOptionalUser } from "@/lib/session";
 import { LoginButton } from "@/components/login-button";
+import { safeCallbackUrl } from "@/lib/utils";
 
 export const metadata = { title: "로그인" };
 
@@ -12,7 +13,8 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const user = await getOptionalUser();
-  if (user) redirect(params.callbackUrl || "/today");
+  const callbackUrl = safeCallbackUrl(params.callbackUrl);
+  if (user) redirect(callbackUrl);
 
   return (
     <div className="relative flex min-h-dvh items-center justify-center px-5">
@@ -37,11 +39,10 @@ export default async function LoginPage({
 
         <div className="mt-8">
           {(() => {
-          const cb = params.callbackUrl || "/today";
-          const m = cb.match(/^\/j\/([a-z0-9-]+)/i);
+          const m = callbackUrl.match(/^\/j\/([a-z0-9-]+)/i);
           return (
             <LoginButton
-              callbackUrl={cb}
+              callbackUrl={callbackUrl}
               claimSlug={m?.[1]?.toLowerCase()}
             />
           );

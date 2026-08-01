@@ -1,16 +1,22 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { LoginButton } from "@/components/login-button";
+import { KeyringClaimPrompt } from "@/components/keyring-claim-prompt";
+import { OwnerLoginPrompt } from "@/components/owner-login-prompt";
 import { db } from "@/lib/db";
 import { getOptionalUser } from "@/lib/session";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import {
   claimErrorMessage,
+  getDeviceTokenHash,
   getSeatBySlug,
+  isOwnerDevice,
   isSeatSlug,
   normalizeSeatSlug,
   type ClaimErrorCode,
 } from "@/lib/seats";
+import { decideKeyringAccess } from "@/lib/keyring-access";
 
 export async function generateMetadata({
   params,
@@ -19,16 +25,9 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const seat = await getSeatBySlug(slug);
-  if (seat?.status === "claimed" && seat.claimedUser) {
-    const name =
-      seat.claimedUser.displayName || seat.claimedUser.name || "순례자";
-    return {
-      title: `${name}의 묵상기록지`,
-      description: "이어봄 개인 묵상 기록 공간",
-    };
-  }
+  // claimed 상태여도 소유자 이름을 노출하지 않는다 (개인정보 보호).
   return {
-    title: "나의 묵상기록지",
+    title: "개인 묵상기록지",
     description: "이어봄 키링 개인 묵상 기록 공간",
   };
 }
@@ -44,6 +43,8 @@ export default async function PersonalJournalPage({
   const slug = normalizeSeatSlug(raw);
   const sp = await searchParams;
   const viewer = await getOptionalUser();
+  const jar = await cookies();
+  const deviceHash = getDeviceTokenHash(jar.toString());
 
   // Prefer seat table; fall back to user.personalSlug for non-keyring slugs
   const seat = await getSeatBySlug(slug);
@@ -54,45 +55,57 @@ export default async function PersonalJournalPage({
         })
       : null;
 
-  if (!seat && !legacyOwner) {
-    notFound();
-  }
+  const access = await decideKeyringAccess({
+    seat,
+    legacyOwner,
+    viewer,
+    deviceHash,
+  });
 
-  if (seat?.status === "revoked") {
-    return (
-      <Shell>
-        <h1 className="text-display-lg text-primary">사용할 수 없는 키링</h1>
-        <p className="mt-3 text-body-md text-text-muted">
-          {claimErrorMessage("revoked")}
-        </p>
-        <Link href="/contact" className="cta-secondary mt-8 inline-flex">
-          문의
-        </Link>
-      </Shell>
-    );
-  }
-
-  // Logged-in visitor with seat: owner home vs first claim vs other
-  if (viewer && seat) {
-    if (seat.claimedUserId === viewer.id) {
-      const display =
-        viewer.displayName ||
-        viewer.name ||
-        seat.claimedUser?.displayName ||
-        seat.claimedUser?.name ||
-        "나";
+  switch (access.kind) {
+    case "not_found": {
+      notFound();
+      break;
+    }
+    case "revoked": {
       return (
-        <OwnerView slug={slug} userId={viewer.id} display={display} />
+        <Shell>
+          <h1 className="text-display-lg text-primary">사용할 수 없는 키링</h1>
+          <p className="mt-3 text-body-md text-text-muted">
+            {claimErrorMessage("revoked")}
+          </p>
+          <Link href="/contact" className="cta-secondary mt-8 inline-flex">
+            문의
+          </Link>
+        </Shell>
       );
     }
-
-    if (seat.status === "unclaimed") {
-      // Cookie writes are only allowed in Route Handlers / Server Actions.
-      redirect(`/api/seats/claim?slug=${encodeURIComponent(slug)}`);
+    case "owner_home": {
+      // 기기 미등록이면 이 브라우저를 등록한다 (쿠키는 Route Handler에서만 쓸 수 있음).
+      const ownerDevice = await isOwnerDevice(viewer!.id, deviceHash);
+      if (!ownerDevice) {
+        redirect(`/api/seats/device?slug=${encodeURIComponent(slug)}`);
+      }
+      const display =
+        viewer!.displayName ||
+        viewer!.name ||
+        seat?.claimedUser?.displayName ||
+        seat?.claimedUser?.name ||
+        "나";
+      return <OwnerView slug={slug} userId={viewer!.id} display={display} />;
     }
-
-    // claimed by someone else
-    if (seat.claimedUserId && seat.claimedUserId !== viewer.id) {
+    case "claim_prompt": {
+      return (
+        <Shell>
+          <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
+          <KeyringClaimPrompt slug={slug} />
+          <p className="mt-6 text-label-sm text-text-muted">
+            연결 후 이 브라우저는 소유자 기기로 등록됩니다.
+          </p>
+        </Shell>
+      );
+    }
+    case "blocked_other": {
       return (
         <Shell>
           <h1 className="text-display-lg text-primary">
@@ -107,83 +120,79 @@ export default async function PersonalJournalPage({
         </Shell>
       );
     }
-  }
-
-  // Owner via legacy user slug
-  if (viewer && legacyOwner && viewer.id === legacyOwner.id) {
-    return <OwnerView slug={slug} userId={viewer.id} display={viewer.displayName || viewer.name || "나"} />;
-  }
-
-  if (viewer && legacyOwner && viewer.id !== legacyOwner.id) {
-    return (
-      <Shell>
-        <h1 className="text-display-lg text-primary">다른 사람의 입구입니다</h1>
-        <Link href="/today" className="cta-primary mt-8 inline-flex">
-          내 홈으로
-        </Link>
-      </Shell>
-    );
-  }
-
-  // Guest + claimed seat (or legacy owner exists)
-  const isClaimed =
-    (seat && seat.status === "claimed") || Boolean(legacyOwner);
-
-  if (!viewer && isClaimed) {
-    return (
-      <Shell>
-        <p className="text-label-sm text-text-muted">키링 {slug}</p>
-        <h1 className="mt-2 text-display-lg text-primary">
-          연결된
-          <br />
-          묵상기록지
-        </h1>
-        <p className="mt-3 text-body-md text-text-muted">
-          Google로 이어서 로그인하면 내 기록으로 들어갑니다.
-        </p>
-        {sp.claim === "error" ? (
-          <p className="mt-4 text-label-md text-destructive">
-            연결에 실패했습니다. 처음 연결한 Google 계정으로 로그인해 주세요.
-          </p>
-        ) : null}
-        <div className="mt-10">
-          <LoginButton
-            callbackUrl={`/j/${slug}`}
-            claimSlug={isSeatSlug(slug) ? slug : undefined}
-            label="Google로 이어서"
-          />
-        </div>
-      </Shell>
-    );
-  }
-
-  // Guest + unclaimed seat — primary QR first-run
-  return (
-    <Shell>
-      <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
-      <h1 className="mt-2 text-display-lg text-primary">
-        나의
-        <br />
-        묵상기록지
-      </h1>
-      <p className="mt-3 text-body-md text-text-muted">
-        이 키링은 당신만의 입구입니다.
-        <br />
-        Google로 연결하면 이 주소가 당신 기록이 됩니다.
-      </p>
-      {renderClaimQueryError(sp.claim)}
-      <div className="mt-10">
-        <LoginButton
-          callbackUrl={`/j/${slug}`}
-          claimSlug={slug}
-          label="Google로 시작하기"
+    case "owner_legacy": {
+      return (
+        <OwnerView
+          slug={slug}
+          userId={viewer!.id}
+          display={viewer!.displayName || viewer!.name || "나"}
         />
-      </div>
-      <p className="mt-6 text-label-sm text-text-muted">
-        연결 후 같은 기기에서는 자동으로 로그인 상태가 유지됩니다.
-      </p>
-    </Shell>
-  );
+      );
+    }
+    case "blocked_legacy_other": {
+      return (
+        <Shell>
+          <h1 className="text-display-lg text-primary">다른 사람의 입구입니다</h1>
+          <Link href="/today" className="cta-primary mt-8 inline-flex">
+            내 홈으로
+          </Link>
+        </Shell>
+      );
+    }
+    case "owner_login_prompt": {
+      return (
+        <Shell>
+          <OwnerLoginPrompt slug={slug} />
+        </Shell>
+      );
+    }
+    case "private_page": {
+      return (
+        <Shell>
+          <p className="text-label-sm text-text-muted">키링 {slug}</p>
+          <h1 className="mt-2 text-display-lg text-primary">
+            이 주소는
+            <br />
+            개인 기록 공간입니다
+          </h1>
+          <p className="mt-3 text-body-md text-text-muted">
+            이 키링은 등록된 사용자만 접근할 수 있습니다.
+          </p>
+          <Link href="/contact" className="cta-secondary mt-8 inline-flex">
+            문의
+          </Link>
+        </Shell>
+      );
+    }
+    case "first_register": {
+      return (
+        <Shell>
+          <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
+          <h1 className="mt-2 text-display-lg text-primary">
+            나의
+            <br />
+            묵상기록지
+          </h1>
+          <p className="mt-3 text-body-md text-text-muted">
+            이 키링은 당신만의 입구입니다.
+            <br />
+            Google로 연결하면 이 주소가 당신 기록이 됩니다.
+          </p>
+          {renderClaimQueryError(sp.claim)}
+          <div className="mt-10">
+            <LoginButton
+              callbackUrl={`/j/${slug}`}
+              claimSlug={isSeatSlug(slug) ? slug : undefined}
+              label="Google로 시작하기"
+            />
+          </div>
+          <p className="mt-6 text-label-sm text-text-muted">
+            연결 후 이 브라우저는 소유자 기기로 등록되어 자동으로 인식됩니다.
+          </p>
+        </Shell>
+      );
+    }
+  }
 }
 
 function renderClaimQueryError(code?: string) {

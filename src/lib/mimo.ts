@@ -317,6 +317,7 @@ disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
           },
         ],
       }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!res.ok) {

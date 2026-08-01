@@ -22,6 +22,8 @@ export type UserProfile = {
 export type EntryForProfile = {
   id: string;
   entryDate: string;
+  /** 기록 수정 감지용 — fingerprint에 반영된다 */
+  updatedAt: string;
   themes: string[];
   emotions: string[];
   scriptureRefs: string[];
@@ -86,6 +88,7 @@ export function buildUserProfile(
 export function entryToProfile(entry: {
   id: string;
   entryDate: Date | string;
+  updatedAt: Date | string;
   tags: string;
   emotions: string;
   scriptureRefs: string;
@@ -96,6 +99,10 @@ export function entryToProfile(entry: {
       typeof entry.entryDate === "string"
         ? entry.entryDate
         : entry.entryDate.toISOString(),
+    updatedAt:
+      typeof entry.updatedAt === "string"
+        ? entry.updatedAt
+        : entry.updatedAt.toISOString(),
     themes: parseAndFilterThemes(entry.tags),
     emotions: parseAndFilterEmotions(entry.emotions),
     scriptureRefs: parseJsonArray(entry.scriptureRefs),

@@ -7,7 +7,6 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { LookbackTabs } from "@/components/lookback-tabs";
 import { EmptyState } from "@/components/ui-blocks";
 import { StoryNarrativeCard } from "@/components/story-narrative-card";
 import { requireUser } from "@/lib/session";
@@ -46,7 +45,16 @@ export default async function StoryMirrorPage() {
         </p>
       </section>
 
-      <LookbackTabs pathname="/story-mirror" />
+      <nav className="mb-6" aria-label="돌아보기 이동">
+        <Link
+          href="/lookback"
+          className="text-label-sm text-leaf transition hover:text-primary"
+        >
+          ← 돌아보기
+        </Link>
+        <span className="mx-2 text-label-sm text-text-muted">·</span>
+        <span className="text-label-sm text-text-muted">이야기</span>
+      </nav>
 
       {stories.length > 0 ? (
         <div className="space-y-4">
@@ -86,7 +94,7 @@ export default async function StoryMirrorPage() {
           }
           action={
             <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/reviews" className="cta-primary">
+              <Link href="/lookback" className="cta-primary">
                 {hasReview ? "회고 보기" : "회고 생성하기"}
               </Link>
               <Link href="/story-mirror/visualize" className="cta-secondary">

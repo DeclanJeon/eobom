@@ -237,6 +237,7 @@ export async function generateTopicTagsWithMimo(input: {
           },
         ],
       }),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (!res.ok) {

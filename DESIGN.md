@@ -11,6 +11,7 @@
   - `src/components/review/*`
   - `src/lib/mimo.ts` (`StructuredReview`)
   - `src/app/globals.css`
+- Technical source of truth for record-grounded review/story connections: `docs/design/record-grounded-review-story-v1.md`.
 
 ## Brand
 - Personality: quiet, warm, editorial, trustworthy, unhurried.

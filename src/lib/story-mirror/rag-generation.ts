@@ -138,6 +138,7 @@ export async function streamMiMoGenerate(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!resp.ok || !resp.body) {
     throw new Error(`MiMo 호출 실패: ${resp.status} ${resp.statusText}`);

@@ -12,6 +12,11 @@ import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import {
   generateImage,
   buildVisualizationPrompt,
   VISUALIZATION_OUTPUT_DIR,
@@ -40,6 +45,17 @@ export async function POST(request: Request) {
   }
   const kind = body.kind ?? "summary";
   const force = Boolean(body.force);
+
+  const limited = checkRateLimit(
+    `visualize:generate:${auth.user.id}`,
+    RATE_LIMITS.visualizationGenerate,
+  );
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
 
   if (!KINDS.includes(kind as (typeof KINDS)[number])) {
     return NextResponse.json({ error: "Invalid kind" }, { status: 400 });

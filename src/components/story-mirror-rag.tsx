@@ -289,7 +289,7 @@ export function StoryMirrorRag({
           회고를 남기시면, 그 속 마음을 고전 속 이야기와 잇는 연결을 만들어 드립니다.
         </p>
         <div className="mt-4 flex justify-center">
-          <a href="/reviews" className="cta-primary">회고 생성하기</a>
+          <a href="/lookback" className="cta-primary">회고 생성하기</a>
         </div>
       </SurfaceCard>
     );

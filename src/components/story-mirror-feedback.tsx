@@ -1,7 +1,7 @@
 /**
  * Story Mirror — Feedback Component
  *
- * 카드 상세 페이지에서 사용자 피드백을 수집한다.
+ * 매칭 결과(matchId)에 대한 피드백을 수집한다.
  */
 
 "use client";
@@ -15,32 +15,31 @@ const FEEDBACK_TYPES = [
   { type: "sensitive", label: "민감함", icon: "⚠️" },
 ] as const;
 
-export function StoryMirrorFeedback({ cardId }: { cardId: string }) {
+export function StoryMirrorFeedback({ matchId }: { matchId: string }) {
   const [sent, setSent] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function sendFeedback(type: string) {
     setLoading(true);
+    setError(false);
     try {
-      // 매칭 ID를 찾아서 피드백 전송 (카드 ID로 검색)
-      const res = await fetch(`/api/story-mirror/cards/${cardId}`, {
-        method: "GET",
-      });
-      await res.json();
-
-      // 피드백 API는 matchId가 필요하지만, 카드 상세에서는 matchId를 모름
-      // 대신 카드 ID + feedback type으로 별도 엔드포인트 호출
-      const fbRes = await fetch(`/api/story-mirror/cards/${cardId}/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
-      });
+      const fbRes = await fetch(
+        `/api/story-mirror/matches/${matchId}/feedback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type }),
+        },
+      );
 
       if (fbRes.ok) {
         setSent(type);
+      } else {
+        setError(true);
       }
     } catch {
-      // 실패 시 무시
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -62,6 +61,11 @@ export function StoryMirrorFeedback({ cardId }: { cardId: string }) {
       <p className="mb-3 text-label-sm text-text-muted">
         이 이야기가 유용했나요?
       </p>
+      {error && (
+        <p className="mb-2 text-label-xs text-destructive">
+          피드백 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {FEEDBACK_TYPES.map((fb) => (
           <button

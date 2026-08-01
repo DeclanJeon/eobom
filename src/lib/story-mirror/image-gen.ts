@@ -5,7 +5,7 @@
  * 생성된 결과를 n8n이 사용하는 동일 Google Drive(gdrive 원격)에 백업한다.
  */
 
-import { execFileSync, execSync, spawn } from "child_process";
+import { execFileSync, spawn } from "child_process";
 import { copyFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 const CODEX_IMAGEN = "/home/declan/bin/codex-imagen";
@@ -67,14 +67,25 @@ export function generateImage(
 
   try {
     // 로컬 개발 환경에서는 기존 원격 생성기를 사용한다.
-    execSync(`ssh ponslink "mkdir -p ${VISUALIZATION_OUTPUT_DIR}"`, {
+    // execFileSync 배열 인자 — 셸 문자열 해석이 없어 인자 주입이 불가능하다.
+    execFileSync("ssh", ["ponslink", `mkdir -p ${VISUALIZATION_OUTPUT_DIR}`], {
       timeout: 10000,
       encoding: "utf-8",
     });
 
-    const escapedPrompt = prompt.replace(/'/g, "'\\''");
-    execSync(
-      `ssh ponslink "${CODEX_IMAGEN} '${escapedPrompt}' -o ${remotePath} --timeout ${TIMEOUT}"`,
+    // prompt는 base64로 전달 — 원격 셸에서 해석될 수 있는 문자가 없도록 한다.
+    // remotePath는 상수 디렉터리 + filename이며, filename은 호출부에서
+    // kind(화이트리스트)+hex fingerprint로 제한되지만 방어 계층으로 인용한다.
+    if (!/^[a-z0-9-]+\.png$/.test(filename)) {
+      return { success: false, error: "invalid filename" };
+    }
+    const promptB64 = Buffer.from(prompt, "utf-8").toString("base64");
+    execFileSync(
+      "ssh",
+      [
+        "ponslink",
+        `${CODEX_IMAGEN} "$(printf '%s' '${promptB64}' | base64 -d)" -o '${remotePath}' --timeout ${TIMEOUT}`,
+      ],
       {
         timeout: (TIMEOUT + 30) * 1000,
         encoding: "utf-8",
@@ -82,7 +93,7 @@ export function generateImage(
       },
     );
 
-    execSync(`scp ponslink:${remotePath} ${localPath}`, {
+    execFileSync("scp", ["ponslink:" + remotePath, localPath], {
       timeout: 30000,
       encoding: "utf-8",
     });

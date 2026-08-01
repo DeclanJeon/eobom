@@ -1,5 +1,12 @@
+import { createHash, randomBytes } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { db } from "@/lib/db";
+
+/** Keyring device-registration cookie name (httpOnly). */
+export const DEVICE_COOKIE = "eobom_device_token";
+export const DEVICE_COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1년
+/** 활성 기기당 상한 — 초과 시 가장 오래된 기기를 revoke한다. */
+export const DEVICE_LIMIT_PER_USER = 5;
 
 export type SeatStatus = "unclaimed" | "claimed" | "revoked";
 
@@ -28,7 +35,18 @@ const WEB_SLUG_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const webNano = customAlphabet(WEB_SLUG_ALPHABET, 8);
 
 export function normalizeSeatSlug(slug: string): string {
-  return slug.trim().toLowerCase();
+  const s = slug.trim().toLowerCase();
+  // 번호형 키링 slug는 정규형으로 통일 (e1·e00001 → e01) —
+  // 별칭 행 생성(팬텀 인벤토리)과 별칭 claim을 차단한다.
+  // parseNumberedSlug를 부르지 않는다(상호 재귀 방지).
+  const m = s.match(/^e(\d+)$/);
+  if (m) {
+    const n = Number(m[1]);
+    if (Number.isInteger(n) && n >= KEYRING_MIN && n <= KEYRING_MAX) {
+      return formatNumberedSlug(n);
+    }
+  }
+  return s;
 }
 
 /** Format keyring number: 1 → e01, 14 → e14, 100 → e100, 10000 → e10000 */
@@ -253,8 +271,8 @@ export async function claimSeat(
     });
     if (slugOwner) throw new ClaimError("already_claimed");
 
-    const updated = await tx.journalSeat.update({
-      where: { id: seat.id },
+    const updated = await tx.journalSeat.updateMany({
+      where: { id: seat.id, status: "unclaimed" },
       data: {
         status: "claimed",
         claimedUserId: userId,
@@ -262,6 +280,10 @@ export async function claimSeat(
         claimedAt: new Date(),
       },
     });
+    if (updated.count === 0) {
+      // compare-and-set 실패: 다른 트랜잭션이 먼저 claim했다.
+      throw new ClaimError("already_claimed");
+    }
 
     await tx.user.update({
       where: { id: userId },
@@ -271,7 +293,9 @@ export async function claimSeat(
       },
     });
 
-    return updated;
+    const claimed = await tx.journalSeat.findUnique({ where: { id: seat.id } });
+    if (!claimed) throw new ClaimError("invalid");
+    return claimed;
   });
 }
 
@@ -302,4 +326,96 @@ export function claimErrorMessage(code: ClaimErrorCode): string {
     default:
       return "유효하지 않은 키링 주소입니다.";
   }
+}
+
+// ─── Keyring device registration ──────────────────────────────────────────────
+
+/** 32바이트 랜덤 토큰 + SHA-256 해시. DB에는 해시만 저장한다. */
+export function generateDeviceToken(): { token: string; tokenHash: string } {
+  const token = randomBytes(32).toString("base64url");
+  return { token, tokenHash: hashDeviceToken(token) };
+}
+
+export function hashDeviceToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+/** Cookie 헤더에서 기기 토큰 해시를 추출한다 (토큰 평문은 절대 저장/로그하지 않음). */
+export function getDeviceTokenHash(cookieHeader: string | null | undefined): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${DEVICE_COOKIE}=`));
+  if (!match) return null;
+  const token = match.slice(DEVICE_COOKIE.length + 1);
+  if (!token) return null;
+  return hashDeviceToken(token);
+}
+
+/** 해당 사용자의 활성(revoke되지 않은) 기기로 등록된 토큰 해시인지 판별한다. */
+export async function isOwnerDevice(
+  userId: string,
+  tokenHash: string | null | undefined,
+): Promise<boolean> {
+  if (!tokenHash) return false;
+  const device = await db.userDevice.findUnique({
+    where: { tokenHash },
+    select: { id: true, userId: true, revokedAt: true },
+  });
+  if (!device || device.userId !== userId || device.revokedAt != null) {
+    return false;
+  }
+  // 확인된 기기는 lastSeenAt 갱신 (실패해도 접근 판정에는 영향 없음)
+  await db.userDevice
+    .updateMany({
+      where: { id: device.id },
+      data: { lastSeenAt: new Date() },
+    })
+    .catch(() => {});
+  return true;
+}
+
+/** 기기 토큰을 사용자에게 등록한다. 활성 기기가 상한(5)을 넘으면 가장 오래된 것을 revoke한다. */
+export async function registerDevice(
+  userId: string,
+  token: string,
+  label?: string,
+) {
+  const tokenHash = hashDeviceToken(token);
+
+  return db.$transaction(async (tx) => {
+    // SQLite deferred transactions can otherwise let concurrent registrations
+    // observe the same activeCount. A no-op UPDATE acquires the per-user row
+    // write lock before the count/read-and-evict sequence.
+    await tx.$executeRaw`UPDATE "User" SET "updatedAt" = "updatedAt" WHERE "id" = ${userId}`;
+    const existing = await tx.userDevice.findUnique({ where: { tokenHash } });
+    if (existing) {
+      return tx.userDevice.update({
+        where: { id: existing.id },
+        data: { revokedAt: null, label: label ?? existing.label, lastSeenAt: new Date() },
+      });
+    }
+
+    const activeCount = await tx.userDevice.count({
+      where: { userId, revokedAt: null },
+    });
+    if (activeCount >= DEVICE_LIMIT_PER_USER) {
+      const oldest = await tx.userDevice.findFirst({
+        where: { userId, revokedAt: null },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      });
+      if (oldest) {
+        await tx.userDevice.update({
+          where: { id: oldest.id },
+          data: { revokedAt: new Date() },
+        });
+      }
+    }
+
+    return tx.userDevice.create({
+      data: { userId, tokenHash, label, lastSeenAt: new Date() },
+    });
+  });
 }

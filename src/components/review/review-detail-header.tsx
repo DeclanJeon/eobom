@@ -13,8 +13,8 @@ export function ReviewDetailHeader({
 }) {
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-1 text-label-sm text-text-muted">
-      <Link href="/reviews" className="text-leaf transition hover:text-primary">
-        ← 회고
+      <Link href="/lookback" className="text-leaf transition hover:text-primary">
+        ← 돌아보기
       </Link>
       <span aria-hidden>·</span>
       <span>{reportTypeLabel(reportType)}</span>

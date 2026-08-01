@@ -9,7 +9,8 @@ import type { EntryForProfile } from "./user-profile";
 
 /**
  * 사용자 입력의 fingerprint를 생성한다.
- * entry ID + 수정시각 + 선택 범위의 해시.
+ * entry ID + entryDate + updatedAt + 선택 범위의 해시.
+ * updatedAt 포함으로 기록 수정 시 캐시가 무효화되어 stale을 감지한다.
  */
 export function computeInputFingerprint(
   entries: EntryForProfile[],
@@ -17,7 +18,7 @@ export function computeInputFingerprint(
   matcherVersion: string,
 ): string {
   const payload = entries
-    .map((e) => `${e.id}:${e.entryDate}`)
+    .map((e) => `${e.id}:${e.entryDate}:${e.updatedAt}`)
     .sort()
     .join("|");
 

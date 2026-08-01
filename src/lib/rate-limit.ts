@@ -63,4 +63,6 @@ export const RATE_LIMITS = {
   togetherTags: { limit: 30, windowMs: HOUR_MS },
   uploads: { limit: 40, windowMs: HOUR_MS },
   contact: { limit: 10, windowMs: HOUR_MS },
+  visualizationGenerate: { limit: 10, windowMs: HOUR_MS },
+  ragStream: { limit: 30, windowMs: HOUR_MS },
 } as const;

@@ -137,6 +137,14 @@ export async function searchChunks(
  * 테스트/신규 DB에서 FTS5 virtual table + 트리거를 보장한다.
  */
 export async function ensureRagFts5(): Promise<void> {
+  // 이미 FTS5 테이블이 있으면 스킵 — 매 호출 DROP/recreate는 병렬 테스트에서
+  // 서로의 테이블을 지워 P2021을 유발하고, 프로덕션에서도 불필요한 비용이다.
+  // 스키마 변경 시 fts5-setup.sql을 갱신하고 배포 스크립트에서 한 번만 실행한다.
+  const existing = await db.$queryRaw<Array<{ name: string }>>`
+    SELECT name FROM sqlite_master WHERE type='table' AND name='StoryChunkFts'
+  `;
+  if (existing.length > 0) return;
+
   const fs = await import("node:fs");
   const path = await import("node:path");
   const { spawnSync } = await import("node:child_process");

@@ -23,7 +23,7 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
       setError(data.error || "회고 생성에 실패했습니다.");
       return;
     }
-    router.push(`/reviews/${data.report.id}`);
+    router.push(`/lookback/${data.report.id}`);
     router.refresh();
   }
 

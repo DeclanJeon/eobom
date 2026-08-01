@@ -55,3 +55,16 @@ export function appUrl(path = ""): string {
   if (!path) return base.replace(/\/$/, "");
   return `${base.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/**
+ * 로그인 후 돌아갈 내부 경로를 검증한다.
+ * 외부 URL(https://evil.com)이나 프로토콜 상대 URL(//evil.com)은 거부하고
+ * 내부 경로로 시작하는 값만 허용한다. 그 외에는 기본 경로로 폴백한다.
+ */
+export function safeCallbackUrl(raw: string | undefined | null, fallback = "/today"): string {
+  if (!raw) return fallback;
+  if (raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")) {
+    return raw;
+  }
+  return fallback;
+}

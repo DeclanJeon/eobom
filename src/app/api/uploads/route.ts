@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/session";
+import { requireApiUser } from "@/lib/session";
 import {
   checkRateLimit,
   RATE_LIMITS,
@@ -22,7 +22,9 @@ function uploadRoot() {
 }
 
 export async function POST(request: Request) {
-  const user = await requireUser();
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
 
   const limited = checkRateLimit(`uploads:${user.id}`, RATE_LIMITS.uploads);
   if (!limited.ok) {

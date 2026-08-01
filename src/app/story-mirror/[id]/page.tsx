@@ -21,6 +21,8 @@ import {
 import { parseJsonArray } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { StoryMirrorFeedback } from "@/components/story-mirror-feedback";
+import { db } from "@/lib/db";
+import { getOptionalUser } from "@/lib/session";
 
 export async function generateMetadata({
   params,
@@ -50,7 +52,16 @@ export default async function StoryMirrorDetailPage({
 
   const card = await getCardDetail(id);
   if (card && card.reviewStatus === "published") {
-    return <CardDetailView card={card} ctx={ctx} />;
+    const user = await getOptionalUser();
+    let matchId: string | null = null;
+    if (user?.id) {
+      const match = await db.storyMirrorMatch.findFirst({
+        where: { cardId: card.id, state: "active", run: { userId: user.id } },
+        orderBy: { createdAt: "desc" },
+      });
+      matchId = match?.id ?? null;
+    }
+    return <CardDetailView card={card} ctx={ctx} matchId={matchId} />;
   }
 
   const chunkView = await getChunkDetail(id);
@@ -61,9 +72,11 @@ export default async function StoryMirrorDetailPage({
 function CardDetailView({
   card,
   ctx,
+  matchId,
 }: {
   card: StoryCardDetail;
   ctx: StoryDetailContext;
+  matchId: string | null;
 }) {
   const themes = parseJsonArray(card.themes);
   const emotions = parseJsonArray(card.emotions);
@@ -187,7 +200,7 @@ function CardDetailView({
         </p>
 
         <ReflectionPrompt />
-        <StoryMirrorFeedback cardId={card.id} />
+        {matchId ? <StoryMirrorFeedback matchId={matchId} /> : null}
       </article>
     </AppShell>
   );
@@ -413,7 +426,7 @@ function ReflectionPrompt() {
       </p>
       <div className="mt-3 flex flex-wrap gap-3">
         <Link
-          href="/reviews"
+          href="/lookback"
           className="inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
         >
           회고 보기 →

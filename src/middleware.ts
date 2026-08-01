@@ -11,7 +11,6 @@ import { getToken } from "next-auth/jwt";
 const PROTECTED_PAGE_PREFIXES = [
   "/today",
   "/entries",
-  "/reviews",
   "/together",
   "/me",
 ];

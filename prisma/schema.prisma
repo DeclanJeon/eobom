@@ -39,6 +39,7 @@ model User {
   consentRecords      ConsentRecord[]
   contactInquiries    ContactInquiry[]
   claimedSeat         JournalSeat?
+  devices             UserDevice[]
   storyMirrorRuns     StoryMirrorRun[]
   storyRagRuns       StoryRagRun[]
   storyMirrorFeedback StoryMirrorFeedback[]
@@ -294,6 +295,26 @@ model JournalSeat {
   claimedUser User? @relation(fields: [claimedUserId], references: [id], onDelete: SetNull)
 
   @@index([status])
+}
+
+// ─── Keyring device registration ──────────────────────────────────────────────
+
+/**
+ * 소유자 기기 등록 — 키링 URL 진입 시 "본인 기기인지"를 판별한다.
+ * DB에는 SHA-256 해시만 저장하고 토큰 평문은 httpOnly 쿠키에만 존재한다.
+ */
+model UserDevice {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  label      String?
+  lastSeenAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Story Mirror ─────────────────────────────────────────────────────────────

@@ -4,8 +4,8 @@ import type { EntryForProfile } from "../src/lib/story-mirror/user-profile";
 
 describe("cache", () => {
   const entries: EntryForProfile[] = [
-    { id: "e1", entryDate: "2026-07-20", themes: ["인내"], emotions: ["슬픔"], scriptureRefs: [] },
-    { id: "e2", entryDate: "2026-07-22", themes: ["회개"], emotions: ["감사"], scriptureRefs: [] },
+    { id: "e1", entryDate: "2026-07-20", updatedAt: "2026-07-21T10:00:00Z", themes: ["인내"], emotions: ["슬픔"], scriptureRefs: [] },
+    { id: "e2", entryDate: "2026-07-22", updatedAt: "2026-07-23T10:00:00Z", themes: ["회개"], emotions: ["감사"], scriptureRefs: [] },
   ];
 
   it("generates consistent fingerprint", () => {
@@ -18,10 +18,23 @@ describe("cache", () => {
   it("different entries produce different fingerprint", () => {
     const fp1 = computeInputFingerprint(entries, "v1.0", "phase-a-v1");
     const fp2 = computeInputFingerprint(
-      [{ id: "e3", entryDate: "2026-07-25", themes: ["변화"], emotions: ["희망"], scriptureRefs: [] }],
+      [{ id: "e3", entryDate: "2026-07-25", updatedAt: "2026-07-26T10:00:00Z", themes: ["변화"], emotions: ["희망"], scriptureRefs: [] }],
       "v1.0", "phase-a-v1",
     );
     expect(fp1).not.toBe(fp2);
+  });
+
+  it("same entry edited later produces different fingerprint (stale 감지)", () => {
+    const fp1 = computeInputFingerprint(entries, "v1.0", "phase-a-v1");
+    const edited = computeInputFingerprint(
+      [
+        { ...entries[0], updatedAt: "2026-07-30T09:00:00Z" },
+        entries[1],
+      ],
+      "v1.0",
+      "phase-a-v1",
+    );
+    expect(edited).not.toBe(fp1);
   });
 
   it("different corpus version produces different fingerprint", () => {

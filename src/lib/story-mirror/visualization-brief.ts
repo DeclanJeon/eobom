@@ -228,6 +228,7 @@ async function generateBriefWithMimo(input: {
           },
         ],
       }),
+      signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) {
       console.error("[visualization-brief] MiMo error", res.status, await res.text());

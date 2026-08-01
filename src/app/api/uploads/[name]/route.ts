@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/session";
+import { requireApiUser } from "@/lib/session";
 
 const NAME_RE = /^[0-9a-f-]{36}\.(jpg|png|webp|gif)$/;
 const CONTENT_TYPES: Record<string, string> = {
@@ -19,7 +19,9 @@ export async function GET(
   _request: Request,
   context: { params: Promise<{ name: string }> },
 ) {
-  const user = await requireUser();
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const user = auth.user;
   const { name } = await context.params;
   if (!NAME_RE.test(name)) {
     return NextResponse.json({ error: "invalid image" }, { status: 400 });

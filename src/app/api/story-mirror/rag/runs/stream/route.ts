@@ -10,6 +10,11 @@ import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
+import {
   searchChunks,
   RAG_CORPUS_VERSION,
   RETRIEVER_VERSION,
@@ -40,6 +45,18 @@ export async function POST(request: Request) {
   if (!auth.user) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   }
+
+  const limited = checkRateLimit(
+    `rag:stream:${auth.user.id}`,
+    RATE_LIMITS.ragStream,
+  );
+  if (!limited.ok) {
+    return new Response(JSON.stringify(rateLimitedBody(limited.retryAfterSec)), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
+  }
+
   let parsed: z.infer<typeof bodySchema>;
   try {
     const json = await request.json();
