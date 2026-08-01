@@ -7,7 +7,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { EmptyState, PageIntro, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { formatDateShort } from "@/lib/utils";
@@ -35,24 +35,23 @@ export default async function LookbackPage() {
   return (
     <AppShell wide bare>
       <section className="mb-8 max-w-2xl md:mb-10">
-        <p className="text-eyebrow text-accent-gold-ink">돌아보기</p>
-        <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
-          기록이 남긴 흐름을 다시 봅니다
-        </h1>
-        <p className="mt-3 text-body-md text-text-muted">
-          회고로 주제를 발견하고, 이야기와 이미지로 기억합니다.
-        </p>
+        <PageIntro
+          className="mb-0"
+          eyebrow="돌아보기"
+          title="기록이 남긴 흐름을 다시 봅니다"
+          description="회고로 주제를 발견하고, 이야기와 이미지로 기억합니다."
+        />
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href="/reviews/new"
-            className="cta-primary min-h-[48px] px-6 py-3"
+            className="cta-primary min-h-[44px] px-6 py-3"
           >
             회고 생성하기
           </Link>
           {!user.aiProcessingConsent ? (
             <Link
               href="/me/settings"
-              className="cta-secondary min-h-[48px] px-6 py-3"
+              className="cta-secondary min-h-[44px] px-6 py-3"
             >
               AI 동의 설정
             </Link>
@@ -68,7 +67,7 @@ export default async function LookbackPage() {
       ) : (
         <>
           <section className="mb-8">
-            <h2 className="text-label-md text-text-muted">지금의 회고</h2>
+            <h2 className="text-headline-sm text-primary">지금의 회고</h2>
             <Link
               href={`/lookback/${latest!.id}`}
               className="mt-3 block"
@@ -107,7 +106,7 @@ export default async function LookbackPage() {
 
           {past.length > 0 ? (
             <section>
-              <h2 className="text-label-md text-text-muted">지난 회고</h2>
+            <h2 className="text-headline-sm text-primary">지난 회고</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {past.map((report) => (
                   <Link key={report.id} href={`/lookback/${report.id}`}>

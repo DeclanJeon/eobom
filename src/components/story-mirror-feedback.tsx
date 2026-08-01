@@ -69,9 +69,11 @@ export function StoryMirrorFeedback({ matchId }: { matchId: string }) {
       <div className="flex flex-wrap gap-2">
         {FEEDBACK_TYPES.map((fb) => (
           <button
+            type="button"
             key={fb.type}
             onClick={() => sendFeedback(fb.type)}
             disabled={loading}
+            aria-pressed={sent === fb.type}
             className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-label-sm transition hover:border-accent-gold/30 hover:bg-chalk disabled:opacity-50"
           >
             <span>{fb.icon}</span>

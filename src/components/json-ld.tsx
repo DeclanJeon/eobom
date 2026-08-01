@@ -105,7 +105,6 @@ export function JsonLd() {
     <>
       {payloads.map((data, i) => (
         <script
-          // eslint-disable-next-line react/no-danger
           key={i}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}

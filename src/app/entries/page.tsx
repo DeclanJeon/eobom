@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { EmptyState, PageIntro, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { listEntries } from "@/lib/entries";
 import { excerpt, formatDateKo } from "@/lib/utils";
@@ -17,18 +17,16 @@ export default async function EntriesPage({
   const entries = await listEntries(user.id, { q, limit: 100 });
 
   return (
-    <AppShell
-      title="기록"
-      wide
-      action={
+    <AppShell wide bare>
+      <div className="mb-6 flex items-end justify-between gap-4 border-b border-border/70 py-5 md:mb-8 md:py-8">
+        <PageIntro className="mb-0" title="기록" />
         <Link
           href="/entries/new"
           className="cta-primary hidden h-10 px-4 py-2 text-sm md:inline-flex"
         >
           새 기록
         </Link>
-      }
-    >
+      </div>
       <form className="mb-6 max-w-xl">
         <label className="sr-only" htmlFor="entry-search">
           기록 검색
@@ -38,7 +36,7 @@ export default async function EntriesPage({
           name="q"
           defaultValue={q || ""}
           placeholder="성구, 제목, 내용 검색"
-          className="w-full rounded-xl border border-[#E0DDD7] bg-white px-4 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="w-full rounded-xl border border-border-subtle bg-white px-4 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </form>
 

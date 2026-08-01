@@ -44,6 +44,7 @@ model User {
   storyRagRuns       StoryRagRun[]
   storyMirrorFeedback StoryMirrorFeedback[]
   visualizations      UserVisualization[]
+  storyVisuals        StoryVisual[]
   storyMirrorEnabled              Boolean  @default(false)
   storyMirrorExternalConsent      Boolean  @default(false)
   storyMirrorLastConsentVersion   String?
@@ -525,6 +526,52 @@ model UserVisualization {
   @@index([userId])
   @@index([status])
 }
+
+// ─── Story Visual (이야기 카드 시각화) ─────────────────────────────────────────
+// 이야기 카드의 감정 구조를 상징적 이미지로 시각화
+
+model StoryVisual {
+  id                 String    @id @default(cuid())
+  userId             String
+  storyId            String    // StoryCard.id 또는 RAG chunk ID
+  storyTitle         String    // 표시용
+  source             String    // 출처
+  connection         String    // 연결 설명 (텍스트)
+  contextFingerprint String?    // story/source/connection/perspective fingerprint
+
+  // 시각 브리프 (텍스트 모델 생성)
+  subject            String
+  setting            String
+  visibleAction      String
+  innerTension       String
+  visualMetaphor     String
+  turningPoint       String?
+  composition        String
+  palette            String    // JSON array
+  mood               String
+  avoid              String    // JSON array
+  altText            String
+
+  // 이미지 메타데이터
+  imagePrompt        String?   // Codex Imagen 프롬프트
+  imageUrl           String?   // 생성된 이미지 경로
+  status             String    @default("pending") // pending | generating | complete | failed
+  errorMsg           String?
+  // promptVersion removed - using userId+storyId as unique key
+
+  // 관계
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 타임스탬프
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  completedAt        DateTime?
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([status])
+}
+
 
 // ─── Story Mirror RAG (v4.2: card-independent, FTS5, MiMo-only) ───────────────
 // 카드 비종속 청크 기반 RAG. 임베딩/외부 벡터 DB를 쓰지 않고 SQLite FTS5로 검색한다.

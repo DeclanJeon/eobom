@@ -6,19 +6,50 @@ export function PageIntro({
   eyebrow,
   title,
   description,
+  className,
+  titleClassName,
 }: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
+  className?: string;
+  titleClassName?: string;
 }) {
   return (
-    <div className="mb-6 space-y-2">
+    <div className={cn("space-y-2", className)}>
       {eyebrow ? <p className="text-label-sm text-accent-terracotta">{eyebrow}</p> : null}
-      <h1 className="text-display-lg text-primary">{title}</h1>
+      <h1 className={cn("text-display-lg text-primary", titleClassName)}>{title}</h1>
       {description ? (
         <p className="max-w-prose text-body-md text-text-muted">{description}</p>
       ) : null}
     </div>
+  );
+}
+export function Breadcrumb({
+  href,
+  label,
+  current,
+  ariaLabel = "페이지 이동",
+  className,
+}: {
+  href: string;
+  label: string;
+  current?: ReactNode;
+  ariaLabel?: string;
+  className?: string;
+}) {
+  return (
+    <nav className={cn("flex flex-wrap items-center gap-x-2 text-label-sm", className)} aria-label={ariaLabel}>
+      <Link href={href} className="text-leaf transition hover:text-primary">
+        ← {label}
+      </Link>
+      {current ? (
+        <>
+          <span aria-hidden="true">·</span>
+          <span className="text-text-muted">{current}</span>
+        </>
+      ) : null}
+    </nav>
   );
 }
 
@@ -26,16 +57,20 @@ export function SurfaceCard({
   children,
   className,
   tone = "light",
+  variant = "default",
 }: {
   children: ReactNode;
   className?: string;
   tone?: "light" | "dark";
+  variant?: "default" | "flat" | "outlined";
 }) {
   return (
     <div
       className={cn(
         "paper-card p-5",
         tone === "dark" && "surface-card-dark",
+        variant === "flat" && "border-transparent bg-transparent shadow-none",
+        variant === "outlined" && "bg-transparent shadow-none",
         className,
       )}
     >
@@ -48,13 +83,20 @@ export function EmptyState({
   title,
   description,
   action,
+  icon,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
+  icon?: ReactNode;
 }) {
   return (
     <SurfaceCard className="text-center">
+      {icon ? (
+        <div className="mb-3 flex justify-center" aria-hidden="true">
+          {icon}
+        </div>
+      ) : null}
       <p className="text-headline-sm text-primary">{title}</p>
       {description ? (
         <p className="mt-2 text-body-md text-text-muted">{description}</p>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState } from "@/components/ui-blocks";
+import { EmptyState, PageIntro } from "@/components/ui-blocks";
 import { TogetherComposer } from "@/components/together-composer";
 import { TogetherFeedCard } from "@/components/together-feed-card";
 import { requireUser } from "@/lib/session";
@@ -14,11 +14,11 @@ export const metadata = { title: "함께" };
 export default async function TogetherPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; tag?: string }>;
+  searchParams: Promise<{ from?: string; tag?: string; compose?: string }>;
 }) {
   const user = await requireUser();
   const flags = await getUserPreferenceFlags(user.id);
-  const { from, tag } = await searchParams;
+  const { from, tag, compose } = await searchParams;
 
   const source = from
     ? await db.reflectionEntry.findFirst({
@@ -58,12 +58,12 @@ export default async function TogetherPage({
   return (
     <AppShell wide bare>
       <section className="mb-6 max-w-2xl md:mb-8">
-        <p className="text-eyebrow">익명 나눔</p>
-        <h1 className="mt-2 text-display-lg text-primary md:text-4xl">함께</h1>
-        <p className="mt-3 text-body-md text-text-muted">
-          나눌 한 문장으로, 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지
-          않습니다.
-        </p>
+        <PageIntro
+          className="mb-0"
+          eyebrow="익명 나눔"
+          title="함께"
+          description="나눌 한 문장으로, 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지 않습니다."
+        />
       </section>
 
       <div className="mx-auto max-w-2xl">
@@ -71,7 +71,7 @@ export default async function TogetherPage({
           sourceEntryId={source?.id}
           initialBody={sourceBody}
           initialBindings={sourceBindings}
-          autoOpen={Boolean(source)}
+          autoOpen={Boolean(source) || compose === "1"}
           communityEnabled={flags.communityEnabled}
         />
 
@@ -96,6 +96,11 @@ export default async function TogetherPage({
               tag
                 ? "다른 주제를 보거나, 첫 문장을 남겨 보세요."
                 : "마음에 남은 한 문장으로 조용히 시작해 보세요."
+            }
+            action={
+              <Link href="/together?compose=1#together-composer" className="cta-primary">
+                첫 번째 묵상 나누기
+              </Link>
             }
           />
         ) : (
@@ -143,7 +148,7 @@ function TagChip({
       className={
         active
           ? "shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-label-sm text-primary-foreground"
-          : "shrink-0 rounded-full border border-[#E0DDD7] bg-white px-3.5 py-1.5 text-label-sm text-text-muted transition hover:border-accent-gold/40 hover:text-primary"
+          : "shrink-0 rounded-full border border-border-subtle bg-white px-3.5 py-1.5 text-label-sm text-text-muted transition hover:border-accent-gold/40 hover:text-primary"
       }
     >
       {label}

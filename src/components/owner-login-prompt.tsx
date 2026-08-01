@@ -16,7 +16,7 @@ export function OwnerLoginPrompt({ slug }: { slug: string }) {
       <h1 className="mt-2 text-display-lg text-primary">
         내 기록으로
         <br />
-        돌아가기
+        로그인하기
       </h1>
       <p className="mt-3 text-body-md text-text-muted">
         이 브라우저는 이 키링의 소유자 기기로 등록되어 있습니다. 로그인하면

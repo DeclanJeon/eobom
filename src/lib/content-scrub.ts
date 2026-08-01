@@ -19,11 +19,26 @@ export const FORBIDDEN_SCRIPTURE_EXTRA_PATTERNS: RegExp[] = [
   /이\s*말씀이\s*답/i,
   /이\s*구절을\s*붙/i,
 ];
+/** Wisdom middleware: 동양 철학 용어 차단 (사용자에게 노출 금지) */
+export const FORBIDDEN_WISDOM_PATTERNS: RegExp[] = [
+  /주역/i,
+  /괘[사상]?/,
+  /효사/,
+  /음양/,
+  /군자/,
+  /소인/,
+  /[乾坤震巽坎離艮兌]/,
+  /태극/,
+  /육십사괘|64괘/,
+  /점[괘술]/,
+  /길흉/,
+];
 
 const REPLACEMENT = "기록에서 관찰되는 흐름";
 
 export type ScrubMirrorOptions = {
   includeScriptureExtras?: boolean;
+  includeWisdomPatterns?: boolean;
   collapseWhitespace?: boolean;
 };
 
@@ -37,6 +52,11 @@ export function scrubMirrorText(
   }
   if (opts?.includeScriptureExtras) {
     for (const pattern of FORBIDDEN_SCRIPTURE_EXTRA_PATTERNS) {
+      out = out.replace(pattern, REPLACEMENT);
+    }
+  }
+  if (opts?.includeWisdomPatterns !== false) {
+    for (const pattern of FORBIDDEN_WISDOM_PATTERNS) {
       out = out.replace(pattern, REPLACEMENT);
     }
   }

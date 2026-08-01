@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
-import { EntryRow, SurfaceCard } from "@/components/ui-blocks";
+import { EntryRow, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { listOpenActionSteps } from "@/lib/actions";
 import { getPassageByInput, getPassageBySlug } from "@/lib/bible";
 import { requireUser } from "@/lib/session";
@@ -124,17 +124,23 @@ export default async function TodayPage() {
     <AppShell wide bare>
       {/* 1. 지배적 장면 — 성구 1개 + CTA 1개 */}
       <section className="mb-10 rounded-3xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
-        <p className="text-eyebrow">{formatDateKo(now)}</p>
-        <h1 className="mt-2 text-display-lg text-primary md:text-4xl lg:text-[2.75rem]">
-          {greeting}님,
-          <span className="mt-1 block">
-            {heroRef
-              ? "오늘 붙들 말씀"
-              : hasEntries
-                ? "오늘 한 줄을 남겨 보세요"
-                : "첫 묵상을 남겨 보세요"}
-          </span>
-        </h1>
+        <PageIntro
+          className="mb-0"
+          eyebrow={formatDateKo(now)}
+          title={
+            <>
+              {greeting}님,
+              <span className="mt-1 block">
+                {heroRef
+                  ? "오늘 붙들 말씀"
+                  : hasEntries
+                    ? "오늘 한 줄을 남겨 보세요"
+                    : "첫 묵상을 남겨 보세요"}
+              </span>
+            </>
+          }
+          titleClassName="md:text-4xl lg:text-[2.75rem]"
+        />
 
         {heroRef ? (
           <div className="mt-6 max-w-2xl">

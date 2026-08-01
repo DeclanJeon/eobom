@@ -44,12 +44,14 @@ function isActive(pathname: string, href: string) {
 export function AppShell({
   children,
   title,
+  titleClassName,
   action,
   bare = false,
   wide = false,
 }: {
   children: React.ReactNode;
   title?: string;
+  titleClassName?: string;
   action?: React.ReactNode;
   bare?: boolean;
   /** wider reading column for desktop (default false = content max-w-3xl) */
@@ -85,9 +87,9 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "rounded-lg px-3.5 py-2 text-sm font-medium transition duration-200",
+                      "rounded-lg border-b-2 border-transparent px-3.5 py-2 text-sm font-medium transition duration-200",
                       active
-                        ? "bg-primary/[0.06] text-primary shadow-[inset_0_-2px_0_0_var(--accent-gold)]"
+                        ? "border-accent-gold bg-primary/[0.06] text-primary"
                         : "text-text-muted hover:bg-surface-low hover:text-primary",
                     )}
                     aria-current={active ? "page" : undefined}
@@ -153,7 +155,7 @@ export function AppShell({
           <div className="flex items-end justify-between gap-4 border-b border-border/70 py-5 md:py-8">
             <div className="min-w-0">
               {title ? (
-                <h1 className="truncate text-2xl font-semibold tracking-tight text-primary md:text-3xl">
+                <h1 className={cn("truncate text-2xl font-semibold tracking-tight text-primary md:text-3xl", titleClassName)}>
                   {title}
                 </h1>
               ) : null}
@@ -187,7 +189,7 @@ export function AppShell({
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
-                <span className="text-[10px] font-medium leading-none">
+                <span className="text-label-xs font-medium leading-none">
                   {item.label}
                 </span>
               </Link>
@@ -218,7 +220,7 @@ export function AppShell({
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="h-5 w-5" strokeWidth={active ? 2.25 : 1.75} />
-                <span className="text-[10px] font-medium leading-none">
+                <span className="text-label-xs font-medium leading-none">
                   {item.label}
                 </span>
               </Link>

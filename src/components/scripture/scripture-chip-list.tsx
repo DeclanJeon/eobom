@@ -15,7 +15,7 @@ export function ScriptureChipList({
       {bindings.map((b) => (
         <span
           key={b.slug}
-          className="inline-flex items-center gap-1 rounded-full border border-accent-gold/30 bg-[#F7F0E2] px-3 py-1.5 text-label-sm text-primary"
+          className="inline-flex items-center gap-1 rounded-full border border-accent-gold/30 bg-bg-warm px-3 py-1.5 text-label-sm text-primary"
         >
           {b.display}
           {onRemove ? (

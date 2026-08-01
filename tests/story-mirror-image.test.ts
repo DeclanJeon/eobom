@@ -2,6 +2,7 @@ import { describe, it, expect } from "bun:test";
 import {
   buildVisualizationPrompt,
   driveUploadCommand,
+  generateImage,
 } from "../src/lib/story-mirror/image-gen";
 
 describe("image-gen prompts (review-driven brief)", () => {
@@ -21,6 +22,15 @@ describe("image-gen prompts (review-driven brief)", () => {
     const prompt = buildVisualizationPrompt("summary", "   ");
     expect(prompt.toLowerCase()).toContain("watercolor");
     expect(prompt.toLowerCase()).toContain("no faces");
+  });
+});
+
+describe("generateImage path safety", () => {
+  it("rejects path-bearing filenames before creating output paths", () => {
+    expect(generateImage("ignored", "../escape.png")).toEqual({
+      success: false,
+      error: "invalid filename",
+    });
   });
 });
 

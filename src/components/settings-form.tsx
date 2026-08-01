@@ -46,7 +46,7 @@ export function SettingsForm({
         <input
           value={values.displayName}
           onChange={(e) => setValues((v) => ({ ...v, displayName: e.target.value }))}
-          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </label>
       <label className="block text-label-md">
@@ -59,7 +59,7 @@ export function SettingsForm({
               preferredBibleTranslation: e.target.value,
             }))
           }
-          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
         />
         <span className="mt-1 block text-label-sm text-text-muted">
           앱 내 선택 본문은 Open Bibles 한국어입니다. 개역개정이 아닙니다.

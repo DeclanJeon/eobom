@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getOptionalUser } from "@/lib/session";
 import { listSeats } from "@/lib/seats";
 import { appUrl } from "@/lib/utils";
-import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { EmptyState, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 
 function adminEmails(): Set<string> {
   const raw = process.env.ADMIN_EMAILS || "";
@@ -43,33 +43,40 @@ export default async function AdminSeatsPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {seats.map((s) => (
-          <SurfaceCard key={s.id}>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-headline-sm text-primary">
-                  {s.seatCode} · /j/{s.slug}
-                </p>
-                <p className="mt-1 break-all font-mono text-label-sm text-text-muted">
-                  {appUrl(`/j/${s.slug}`)}
-                </p>
+      {seats.length === 0 ? (
+        <EmptyState
+          title="등록된 좌석이 없습니다"
+          description="시드 CSV를 반영하면 키링 좌석이 이곳에 표시됩니다."
+        />
+      ) : (
+        <div className="space-y-3">
+          {seats.map((s) => (
+            <SurfaceCard key={s.id}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-headline-sm text-primary">
+                    {s.seatCode} · /j/{s.slug}
+                  </p>
+                  <p className="mt-1 break-all font-mono text-label-sm text-text-muted">
+                    {appUrl(`/j/${s.slug}`)}
+                  </p>
+                </div>
+                <SoftBadge>{s.status}</SoftBadge>
               </div>
-              <SoftBadge>{s.status}</SoftBadge>
-            </div>
-            {s.status === "claimed" ? (
-              <p className="mt-3 text-label-md text-text-muted">
-                {s.claimedEmail || s.claimedUser?.email || "—"}
-                {s.claimedAt
-                  ? ` · ${new Date(s.claimedAt).toLocaleString("ko-KR")}`
-                  : ""}
-              </p>
-            ) : (
-              <p className="mt-3 text-label-md text-text-muted">미연결</p>
-            )}
-          </SurfaceCard>
-        ))}
-      </div>
+              {s.status === "claimed" ? (
+                <p className="mt-3 text-label-md text-text-muted">
+                  {s.claimedEmail || s.claimedUser?.email || "—"}
+                  {s.claimedAt
+                    ? ` · ${new Date(s.claimedAt).toLocaleString("ko-KR")}`
+                    : ""}
+                </p>
+              ) : (
+                <p className="mt-3 text-label-md text-text-muted">미연결</p>
+              )}
+            </SurfaceCard>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

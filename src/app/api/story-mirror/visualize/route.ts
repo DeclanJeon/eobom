@@ -190,6 +190,36 @@ export async function GET(request: Request) {
     if (!/^[a-z0-9-]+\.png$/i.test(file)) {
       return NextResponse.json({ error: "Invalid file" }, { status: 400 });
     }
+    const imageUrl = `/api/story-mirror/visualize?file=${encodeURIComponent(file)}`;
+    const [ownedVisualization, ownedStoryVisual] = await Promise.all([
+      db.userVisualization.findFirst({
+        where: { userId: auth.user.id, imageUrl },
+        select: { id: true },
+      }),
+      db.storyVisual.findFirst({
+        where: { userId: auth.user.id, imageUrl },
+        select: { id: true },
+      }),
+    ]);
+    if (!ownedVisualization && !ownedStoryVisual) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
+    if (ownedStoryVisual) {
+      const owner = await db.user.findUnique({
+        where: { id: auth.user.id },
+        select: {
+          storyMirrorEnabled: true,
+          storyMirrorExternalConsent: true,
+        },
+      });
+      if (!owner?.storyMirrorEnabled || !owner?.storyMirrorExternalConsent) {
+        return NextResponse.json(
+          { error: "Story mirror consent required" },
+          { status: 403 },
+        );
+      }
+    }
+
     try {
       const image = await readFile(join(VISUALIZATION_OUTPUT_DIR, file));
       return new Response(image, {

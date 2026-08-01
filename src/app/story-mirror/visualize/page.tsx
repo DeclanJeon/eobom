@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { EmptyState } from "@/components/ui-blocks";
+import { Breadcrumb, EmptyState } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { VisualizationCard } from "@/components/visualization-card";
@@ -58,16 +58,13 @@ export default async function VisualizePage() {
 
   return (
     <AppShell wide bare>
-      <nav className="mb-6" aria-label="돌아보기 이동">
-        <Link
-          href="/lookback"
-          className="text-label-sm text-leaf transition hover:text-primary"
-        >
-          ← 돌아보기
-        </Link>
-        <span className="mx-2 text-label-sm text-text-muted">·</span>
-        <span className="text-label-sm text-text-muted">시각화</span>
-      </nav>
+      <Breadcrumb
+        href="/lookback"
+        label="돌아보기"
+        current="시각화"
+        ariaLabel="돌아보기 이동"
+        className="mb-6"
+      />
 
       <section className="mb-8 max-w-2xl">
         <h1 className="text-display-lg text-primary">나의 기록을 시각적으로</h1>

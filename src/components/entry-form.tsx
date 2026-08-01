@@ -234,7 +234,7 @@ export function EntryForm({
   ) {
     const isOpen = open[key];
     return (
-      <div className="rounded-2xl border border-[#E0DDD7] bg-surface-low/80">
+      <div className="rounded-2xl border border-border-subtle bg-surface-low/80">
         <button
           type="button"
           onClick={() => setOpen((v) => ({ ...v, [key]: !v[key] }))}
@@ -252,7 +252,7 @@ export function EntryForm({
               }
               rows={3}
               placeholder={placeholder}
-              className="w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-2.5 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
+              className="w-full rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
             />
           </div>
         ) : null}
@@ -298,7 +298,7 @@ export function EntryForm({
             type="button"
             disabled={bindings.length >= 5}
             onClick={() => setPickerOpen(true)}
-            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-[#E0DDD7] bg-white px-4 py-3 text-left transition hover:border-accent-gold/40 disabled:opacity-40"
+            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-border-subtle bg-white px-4 py-3 text-left transition hover:border-accent-gold/40 disabled:opacity-40"
           >
             <span className="text-label-md text-text-muted">
               {bindings.length

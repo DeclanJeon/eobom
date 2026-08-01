@@ -142,7 +142,7 @@ export function ScripturePicker({
         onClick={onClose}
       />
       <div className="relative z-10 flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-3xl bg-background shadow-xl sm:rounded-3xl">
-        <div className="flex items-center justify-between border-b border-[#E0DDD7] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
           <button
             type="button"
             className="text-label-md text-text-muted"
@@ -178,7 +178,7 @@ export function ScripturePicker({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="책 검색"
-                className="min-h-[44px] w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+                className="min-h-[44px] w-full rounded-xl border border-border-subtle bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
               />
               {(
                 [
@@ -195,7 +195,7 @@ export function ScripturePicker({
                           key={b.code}
                           type="button"
                           onClick={() => void chooseBook(b)}
-                          className="min-h-[44px] rounded-xl border border-[#E0DDD7] bg-white px-2 py-2 text-label-sm text-primary transition active:scale-95"
+                          className="min-h-[44px] rounded-xl border border-border-subtle bg-white px-2 py-2 text-label-sm text-primary transition active:scale-95"
                         >
                           {b.name}
                         </button>
@@ -215,7 +215,7 @@ export function ScripturePicker({
                     key={c}
                     type="button"
                     onClick={() => void chooseChapter(c)}
-                    className="min-h-[44px] rounded-xl border border-[#E0DDD7] bg-white text-label-md text-primary active:scale-95"
+                    className="min-h-[44px] rounded-xl border border-border-subtle bg-white text-label-md text-primary active:scale-95"
                   >
                     {c}
                     {verseCounts[c - 1] ? (
@@ -251,7 +251,7 @@ export function ScripturePicker({
                       className={`min-h-[44px] rounded-xl border text-label-md active:scale-95 ${
                         active
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-[#E0DDD7] bg-white text-primary"
+                          : "border-border-subtle bg-white text-primary"
                       }`}
                     >
                       {v.verse}
@@ -287,7 +287,7 @@ export function ScripturePicker({
         </div>
 
         {step === "verse" ? (
-          <div className="border-t border-[#E0DDD7] px-5 py-4">
+          <div className="border-t border-border-subtle px-5 py-4">
             <button
               type="button"
               disabled={startVerse == null || loading || disabled}

@@ -17,10 +17,9 @@ export default async function LoginPage({
   if (user) redirect(callbackUrl);
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center px-5">
+    <main className="relative flex min-h-dvh items-center justify-center px-5">
       <div className="w-full max-w-sm text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
           <Link href="/" className="font-journal text-title-journal text-primary">
             이어봄
@@ -55,6 +54,6 @@ export default async function LoginPage({
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

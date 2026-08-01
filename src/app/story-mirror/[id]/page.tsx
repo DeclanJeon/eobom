@@ -7,7 +7,7 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { SurfaceCard } from "@/components/ui-blocks";
+import { Breadcrumb, SurfaceCard } from "@/components/ui-blocks";
 import {
   getCardDetail,
   getChunkDetail,
@@ -89,14 +89,7 @@ function CardDetailView({
 
   return (
     <AppShell wide bare>
-      <div className="mb-6">
-        <Link
-          href="/story-mirror"
-          className="text-label-sm text-leaf transition hover:text-primary"
-        >
-          ← 이야기 거울
-        </Link>
-      </div>
+      <Breadcrumb href="/story-mirror" label="이야기 거울" className="mb-6" />
 
       <article className="max-w-2xl">
         <header className="mb-8">
@@ -224,14 +217,7 @@ function ChunkDetailView({
 
   return (
     <AppShell wide bare>
-      <div className="mb-6">
-        <Link
-          href="/story-mirror"
-          className="text-label-sm text-leaf transition hover:text-primary"
-        >
-          ← 이야기 거울
-        </Link>
-      </div>
+      <Breadcrumb href="/story-mirror" label="이야기 거울" className="mb-6" />
 
       <article className="max-w-2xl">
         <header className="mb-8">

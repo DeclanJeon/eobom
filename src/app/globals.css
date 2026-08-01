@@ -42,6 +42,17 @@
   --color-outline-variant: var(--outline-variant);
   --color-primary-container: var(--primary-container);
   --color-leaf: var(--leaf);
+  --color-safety: var(--safety);
+  --color-chalk: var(--chalk);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-border-subtle: var(--border-subtle);
+  --color-bg-warm: var(--bg-warm);
+  --color-accent-gold-soft: var(--accent-gold-soft);
+  --color-insight: var(--insight);
+  --color-reflection: var(--reflection);
+  --color-companion: var(--companion);
+  --color-mist: var(--mist);
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -65,6 +76,8 @@
   --surface: #fbf9f6;
   --surface-low: #f5f3f0;
   --surface-shared: #f0f4f2;
+  --bg-warm: #f7f0e2;
+  --border-subtle: #e0ddd7;
   --text-main: #2d2d2d;
   --text-muted: #5c574f;
   --primary: #061b0e;
@@ -72,6 +85,11 @@
   --primary-container: #1b3022;
   --secondary: #e6e2dc;
   --secondary-foreground: #1c1c18;
+  --accent-gold-soft: #c5a059;
+  --insight: var(--accent-gold);
+  --reflection: var(--leaf);
+  --companion: var(--accent-terracotta);
+  --mist: var(--surface-shared);
   --muted: #efeeeb;
   --muted-foreground: #5c574f;
   --accent: #f5f3f0;
@@ -81,6 +99,10 @@
   --accent-terracotta: #b36a5e;
   --leaf: #295c3b;
   --safety-blue: #4a6fa5;
+  --safety: #ba1a1a;
+  --chalk: #f5f3f0;
+  --line: #e0ddd7;
+  --ink: #2d2d2d;
   --destructive: #ba1a1a;
   --border: #e0ddd7;
   --input: #e0ddd7;
@@ -209,6 +231,13 @@
     line-height: 1.75rem;
   }
 
+  .text-body-sm {
+    font-family: var(--font-serif);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5rem;
+  }
+
   .text-label-md {
     font-family: var(--font-sans);
     font-size: 0.875rem;
@@ -216,12 +245,19 @@
     line-height: 1.25rem;
     letter-spacing: 0.01em;
   }
+  .text-label-xs {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 0.875rem;
+    letter-spacing: 0.02em;
+  }
 
   .text-label-sm {
     font-family: var(--font-sans);
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    line-height: 1rem;
+    line-height: 1.25rem;
   }
 
   .paper-card {
@@ -278,11 +314,17 @@
     font-size: 0.875rem;
     font-weight: 500;
     font-family: var(--font-sans);
+    min-height: 44px;
     transition: transform 200ms ease;
   }
 
   .cta-primary:active {
     transform: scale(0.98);
+  }
+  .cta-primary:disabled,
+  .cta-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .cta-secondary {
@@ -297,6 +339,7 @@
     font-size: 0.875rem;
     font-weight: 500;
     font-family: var(--font-sans);
+    min-height: 44px;
     transition: transform 200ms ease, border-color 160ms ease;
   }
 

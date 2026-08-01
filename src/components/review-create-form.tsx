@@ -34,7 +34,7 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
       </p>
 
       {error ? (
-        <p className="rounded-xl bg-safety/10 px-3 py-2 text-label-md text-safety">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
           {error}
         </p>
       ) : null}

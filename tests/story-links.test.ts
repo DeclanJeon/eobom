@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   buildStoryDetailHref,
+  buildStoryVisualId,
   normalizeStoryText,
   parseStoryDetailContext,
   pickBestStoryCandidate,
@@ -116,6 +117,10 @@ describe("score/pick story candidate", () => {
 });
 
 describe("toReviewStoryItems", () => {
+  it("namespaces visual IDs by corpus kind", () => {
+    expect(buildStoryVisualId("card", "same-id")).toBe("card:same-id");
+    expect(buildStoryVisualId("chunk", "same-id")).toBe("chunk:same-id");
+  });
   it("builds items and resolves href when possible", () => {
     const items = toReviewStoryItems(
       [

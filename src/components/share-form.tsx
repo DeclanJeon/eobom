@@ -156,7 +156,7 @@ export function ShareForm({
               type="button"
               disabled={bindings.length >= 3}
               onClick={() => setPickerOpen(true)}
-              className="rounded-full border border-accent-gold/35 bg-[#F7F0E2] px-3.5 py-2 text-label-md text-primary transition hover:border-accent-gold/55 disabled:opacity-40"
+              className="rounded-full border border-accent-gold/35 bg-bg-warm px-3.5 py-2 text-label-md text-primary transition hover:border-accent-gold/55 disabled:opacity-40"
             >
               + 성구 선택
             </button>
@@ -189,7 +189,7 @@ export function ShareForm({
             value={publicBody}
             onChange={(e) => setPublicBody(e.target.value)}
             rows={compact ? 6 : 8}
-            className="mt-1.5 w-full rounded-2xl border border-[#E0DDD7] bg-white px-4 py-3 text-body-md leading-relaxed outline-none ring-accent-gold/30 placeholder:text-zinc-400 focus:ring-2"
+            className="mt-1.5 w-full rounded-2xl border border-border-subtle bg-white px-4 py-3 text-body-md leading-relaxed outline-none ring-accent-gold/30 placeholder:text-zinc-400 focus:ring-2"
             placeholder="원문 전체가 아니라, 마음에 남은 한 토막만 남겨 주세요. (20자 이상)"
           />
           <span className="mt-1.5 flex justify-between text-label-sm text-text-muted">
@@ -198,7 +198,7 @@ export function ShareForm({
           </span>
         </label>
 
-        <div className="space-y-3 rounded-2xl border border-[#E0DDD7] bg-surface-low/70 p-4">
+        <div className="space-y-3 rounded-2xl border border-border-subtle bg-surface-low/70 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <p className="text-label-md text-primary">주제 태그</p>
@@ -210,7 +210,7 @@ export function ShareForm({
               type="button"
               onClick={() => void suggestTags()}
               disabled={suggesting || publicBody.trim().length < 12}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[#E0DDD7] bg-white px-3 py-1.5 text-label-sm text-text-main transition hover:border-accent-terracotta/40 hover:text-accent-terracotta disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-white px-3 py-1.5 text-label-sm text-text-main transition hover:border-accent-terracotta/40 hover:text-accent-terracotta disabled:opacity-40"
             >
               {suggesting ? (
                 <Loader2 className="size-3.5 animate-spin" />
@@ -248,7 +248,7 @@ export function ShareForm({
               onChange={(e) => setTagInput(e.target.value)}
               placeholder="태그 직접 추가"
               disabled={topicTags.length >= 5}
-              className="min-h-[44px] flex-1 rounded-xl border border-[#E0DDD7] bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2 disabled:opacity-40"
+              className="min-h-[44px] flex-1 rounded-xl border border-border-subtle bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2 disabled:opacity-40"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -260,7 +260,7 @@ export function ShareForm({
               type="button"
               disabled={topicTags.length >= 5 || tagInput.trim().length < 2}
               onClick={() => addTag(tagInput)}
-              className="min-h-[44px] rounded-xl border border-[#E0DDD7] bg-white px-4 text-label-md text-primary disabled:opacity-40"
+              className="min-h-[44px] rounded-xl border border-border-subtle bg-white px-4 text-label-md text-primary disabled:opacity-40"
             >
               추가
             </button>

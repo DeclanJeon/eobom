@@ -132,7 +132,7 @@ export default async function PersonalJournalPage({
     case "blocked_legacy_other": {
       return (
         <Shell>
-          <h1 className="text-display-lg text-primary">다른 사람의 입구입니다</h1>
+          <h1 className="text-display-lg text-primary">다른 사람의 키링입니다</h1>
           <Link href="/today" className="cta-primary mt-8 inline-flex">
             내 홈으로
           </Link>
@@ -156,7 +156,7 @@ export default async function PersonalJournalPage({
             개인 기록 공간입니다
           </h1>
           <p className="mt-3 text-body-md text-text-muted">
-            이 키링은 등록된 사용자만 접근할 수 있습니다.
+            이 개인 기록 공간은 소유자만 접근할 수 있습니다. 본인 기기라면 소유자 계정으로 로그인해 주세요.
           </p>
           <Link href="/contact" className="cta-secondary mt-8 inline-flex">
             문의
@@ -218,7 +218,6 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
           <Link href="/" className="font-journal text-title-journal text-primary">
             이어봄
@@ -259,7 +258,7 @@ async function OwnerView({
       </Link>
       {recent.length > 0 ? (
         <section className="mt-10 space-y-2 text-left">
-          <h2 className="text-label-md text-text-muted">최근</h2>
+          <h2 className="text-headline-sm text-primary">최근</h2>
           {recent.map((entry) => (
             <Link
               key={entry.id}

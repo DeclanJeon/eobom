@@ -12,6 +12,8 @@ export function StoryNarrativeCard({
   title,
   connection,
   differentPerspective,
+  imageUrl,
+  imageAlt,
   href,
   className,
   compact = false,
@@ -20,6 +22,8 @@ export function StoryNarrativeCard({
   title: string;
   connection: string;
   differentPerspective?: string | null;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
   href?: string;
   className?: string;
   compact?: boolean;
@@ -27,11 +31,22 @@ export function StoryNarrativeCard({
   const body = (
     <SurfaceCard
       className={cn(
-        "h-full border-l-4 border-l-accent-gold/50 transition",
+        "h-full border-l-4 border-l-accent-gold/50 transition overflow-hidden",
         href && "hover:border-accent-gold/40",
         className,
       )}
     >
+      {imageUrl && (
+        <div className="-mx-5 -mt-5 mb-4">
+          <img
+            src={imageUrl}
+            alt={imageAlt || "이야기 시각화"}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <p className="text-label-xs uppercase tracking-wide text-accent-gold-ink">
         당신의 기록과 닿은 인물
       </p>
@@ -40,36 +55,31 @@ export function StoryNarrativeCard({
       ) : null}
       <h2 className="mt-1 text-headline-sm text-primary">{title}</h2>
 
-      <p
-        className={cn(
-          "mt-3 text-body-md leading-relaxed text-text-muted",
-          compact && "line-clamp-5",
-        )}
-      >
-        {connection}
-      </p>
-
       {differentPerspective?.trim() ? (
-        <div className="mt-4 rounded-xl bg-surface-shared/80 p-3">
-          <p className="text-label-xs font-medium text-leaf">한 문장으로 보면</p>
-          <p className="mt-1 text-body-sm leading-relaxed text-primary">
-            {differentPerspective}
-          </p>
-        </div>
+        <p className="mt-3 text-body-md leading-relaxed text-primary font-medium">
+          {differentPerspective}
+        </p>
       ) : null}
 
+      <details className="mt-4 group">
+        <summary className="cursor-pointer text-label-sm text-leaf hover:text-leaf/80 transition list-none">
+          <span className="group-open:hidden">이 이야기가 당신의 기록과 닿은 이유 보기 →</span>
+          <span className="hidden group-open:inline">접기 ↑</span>
+        </summary>
+        <div className="mt-3 rounded-xl bg-surface-shared/80 p-3">
+          <p className="text-body-sm leading-relaxed text-text-muted">
+            {connection}
+          </p>
+        </div>
+      </details>
+
       {href ? (
-        <p className="mt-4 text-label-sm text-leaf">이야기 더 읽기 →</p>
+        <Link href={href} className="mt-4 block text-label-sm text-leaf">
+          이야기 더 읽기 →
+        </Link>
       ) : null}
     </SurfaceCard>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className="block h-full">
-        {body}
-      </Link>
-    );
-  }
   return body;
 }

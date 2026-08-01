@@ -48,7 +48,7 @@ export function ScriptureQuickInput({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="직접 입력 (예: 시 23:1)"
-          className="min-h-[44px] flex-1 rounded-xl border border-[#E0DDD7] bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="min-h-[44px] flex-1 rounded-xl border border-border-subtle bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();

@@ -63,7 +63,7 @@ export function KeyringClaimPrompt({ slug }: { slug: string }) {
         type="button"
         onClick={claim}
         disabled={loading}
-        className="cta-primary mt-10 w-full py-4 disabled:opacity-60"
+        className="cta-primary mt-10 w-full py-4"
       >
         {loading ? "연결 중…" : "이 키링을 내 기록으로 연결하기"}
       </button>

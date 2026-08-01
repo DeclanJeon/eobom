@@ -15,6 +15,7 @@ export type StoryDetailContext = {
 
 export type StoryMirrorItem = {
   key: string;
+  visualStoryId?: string;
   title: string;
   source?: string | null;
   connection: string;
@@ -22,6 +23,12 @@ export type StoryMirrorItem = {
   href?: string;
   origin: "review" | "rag" | "card";
 };
+export function buildStoryVisualId(
+  kind: StoryCorpusCandidate["kind"],
+  id: string,
+): string {
+  return `${kind}:${id}`;
+}
 
 const MAX_QUERY_CHARS = 900;
 
@@ -184,6 +191,7 @@ export function toReviewStoryItems(
           })
         : undefined;
       return {
+        visualStoryId: hit ? buildStoryVisualId(hit.kind, hit.id) : undefined,
         key: `review-${i}-${sc.story}`,
         title: sc.story.trim(),
         source,

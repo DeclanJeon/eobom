@@ -8,11 +8,11 @@
 
 - **전수 조사**: 각 불변식 관련 호출 지점을 `grep` + 수동 추적으로 전수 확인.
 - **독립 검증**: security-reviewer(`agent://SecurityReview`)와 architect(`agent://ArchReview`)가
-  각각 READ-ONLY로 전수 검토, 최종 APPROVE/CLEAR 회신.
-- **최종 재검증**: code-reviewer(`FinalCodeReview`)와 architect(`FinalArchitectReview`) 역할로
-  변경 후 재검토. malformed payload 400·device GET cross-site 차단까지 확인.
+  각각 READ-ONLY로 전수 검토하고 발견사항을 제시했다. 해당 사항은 후속 수정·검증으로 해소했다.
+- **최종 재검증**: PostFixReview가 변경 후 READ-ONLY로 재검토해 네임스페이스 파싱·소유권/동의 게이트를 확인하고
+  **APPROVE** 회신. 이전 SecurityReview·ArchReview 지적은 수정 후 타입체크·테스트·빌드로 재검증했다.
 - **회귀 테스트**: `tests/keyring-access.test.ts`, `tests/claim-api.test.ts`, `tests/safe-callback-url.test.ts`,
-  `tests/lookback-redesign.test.ts`가 핵심 분기 실검증 (258 pass / 0 fail).
+  `tests/lookback-redesign.test.ts`와 전체 테스트가 핵심 분기를 실검증 (262 pass / 0 fail).
 
 ---
 
@@ -108,5 +108,5 @@ claimed 상태의 소유권은 `claimedUserId`로 단일 사용자에 고정된�
 
 ## 결론
 
-brief의 여섯 아키텍처 불변식 모두 코드 전수 조사 + 독립 리뷰(보안/아키텍처) + 회귀 테스트로 유지 확인.
-최종 게이트: **259 pass / 0 fail, tsc clean, build 성공, lint clean(변경 파일)**.
+ brief의 여섯 아키텍처 불변식은 코드 전수 조사 + 독립 리뷰(SecurityReview, PostFixReview) + 회귀 테스트로 유지 확인.
+ 최종 게이트: **262 pass / 0 fail, tsc clean, build 성공, lint clean(변경 파일)**.

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { SurfaceCard } from "@/components/ui-blocks";
+import { PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireUser } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
@@ -15,10 +15,11 @@ export default async function MePage() {
     <AppShell wide bare>
       <section className="mb-8 max-w-3xl md:mb-10 md:grid md:grid-cols-[1fr_auto] md:items-end md:gap-10">
         <div>
-          <p className="text-eyebrow">계정</p>
-          <h1 className="mt-2 text-display-lg text-primary md:text-4xl">
-            {user.displayName || user.name || "사용자"}
-          </h1>
+          <PageIntro
+            className="mb-0"
+            eyebrow="계정"
+            title={user.displayName || user.name || "사용자"}
+          />
           <p className="mt-2 text-label-md text-text-muted">{user.email}</p>
           <p className="mt-3 break-all font-mono text-label-sm text-text-muted">
             {journalUrl}

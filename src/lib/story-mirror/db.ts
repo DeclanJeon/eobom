@@ -10,6 +10,7 @@ import type { StructuredReview } from "@/lib/mimo";
 import { parseJsonArray } from "@/lib/utils";
 import {
   buildStoryDetailHref,
+  buildStoryVisualId,
   toReviewStoryItems,
   type StoryCorpusCandidate,
   type StoryMirrorItem,
@@ -345,6 +346,7 @@ export async function getReviewScopedStoryItems(opts: {
           m.chunk.locator ? ` · ${m.chunk.locator}` : ""
         }`;
         return {
+          visualStoryId: buildStoryVisualId("chunk", m.chunkId),
           key: `rag-${m.id}`,
           title: m.chunk.title || m.chunk.work.title || "이야기",
           source,
@@ -377,6 +379,7 @@ export async function getReviewScopedStoryItems(opts: {
         : null;
       return {
         key: `card-${m.id}`,
+        visualStoryId: buildStoryVisualId("card", m.card.id),
         title: m.card.name,
         source,
         connection,

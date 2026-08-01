@@ -1,0 +1,115 @@
+[
+  {
+    "id": "advance",
+    "label": "출세",
+    "description": "출세의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08"
+    ]
+  },
+  {
+    "id": "crisis",
+    "label": "위기",
+    "description": "위기의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10",
+      "S11",
+      "S12",
+      "S13"
+    ]
+  },
+  {
+    "id": "growth",
+    "label": "성장",
+    "description": "성장의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S64",
+      "S63",
+      "S60",
+      "S09",
+      "S03",
+      "S56",
+      "S04"
+    ]
+  },
+  {
+    "id": "success",
+    "label": "성공",
+    "description": "성공의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06",
+      "S07",
+      "S08",
+      "S09",
+      "S10"
+    ]
+  },
+  {
+    "id": "resource",
+    "label": "재물",
+    "description": "재물의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S41",
+      "S46",
+      "S22",
+      "S62",
+      "S55",
+      "S42"
+    ]
+  },
+  {
+    "id": "connection",
+    "label": "연결",
+    "description": "연결의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S01",
+      "S02",
+      "S03",
+      "S04",
+      "S05",
+      "S06"
+    ]
+  },
+  {
+    "id": "role",
+    "label": "역할",
+    "description": "역할의 렌즈로 읽는 상황 구조",
+    "situationIds": [
+      "S29",
+      "S14",
+      "S20",
+      "S18",
+      "S50",
+      "S21",
+      "S49",
+      "S32",
+      "S19",
+      "S48",
+      "S27",
+      "S45",
+      "S08",
+      "S25"
+    ]
+  }
+]

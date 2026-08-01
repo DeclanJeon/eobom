@@ -131,7 +131,7 @@ export function OpenActionCard({ item }: { item: OpenActionItem }) {
                 type="button"
                 disabled={Boolean(pending)}
                 onClick={() => void choose(status)}
-                className="flex min-h-[48px] flex-col items-start rounded-xl border border-border bg-white px-4 py-2.5 text-left transition hover:border-accent-gold/40 disabled:opacity-50"
+                className="flex min-h-[44px] flex-col items-start rounded-xl border border-border bg-white px-4 py-2.5 text-left transition hover:border-accent-gold/40 disabled:opacity-50"
               >
                 <span className="text-label-md text-primary">
                   {pending === status ? "…" : ACTION_STATUS_LABEL[status]}

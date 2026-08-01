@@ -66,8 +66,8 @@ export function LandingHero({
           : null}
 
         {/* Soft grid lines like notebook margin */}
-        <div className="absolute inset-y-0 left-[12%] hidden w-px bg-gradient-to-b from-transparent via-[#c5a059]/35 to-transparent md:block" />
-        <div className="absolute inset-x-0 top-[18%] h-px bg-gradient-to-r from-transparent via-[#e0ddd7] to-transparent" />
+        <div className="absolute inset-y-0 left-[12%] hidden w-px bg-gradient-to-b from-transparent via-accent-gold-soft/35 to-transparent md:block" />
+        <div className="absolute inset-x-0 top-[18%] h-px bg-gradient-to-r from-transparent via-border-subtle to-transparent" />
       </div>
 
       {/* Floating micro copy */}
@@ -75,7 +75,7 @@ export function LandingHero({
         ? floatWords.map((word, i) => (
             <motion.span
               key={word}
-              className="pointer-events-none absolute hidden select-none font-journal text-sm text-primary/30 md:block"
+              className="pointer-events-none absolute hidden select-none font-journal text-body-sm text-primary/30 md:block"
               style={{
                 left: `${12 + i * 16}%`,
                 top: `${22 + (i % 2) * 48}%`,
@@ -106,7 +106,6 @@ export function LandingHero({
           transition={{ duration: 0.6, ease }}
         >
           <Link href="/" className="group flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.svg"
               alt="이어봄"
@@ -225,7 +224,7 @@ export function LandingHero({
                 >
                   <Link
                     href={isAuthenticated ? "/today" : "/login"}
-                    className="cta-primary relative inline-flex min-h-[48px] overflow-hidden px-8 py-3 text-base shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
+                    className="cta-primary relative inline-flex min-h-[44px] overflow-hidden px-8 py-3 text-label-md shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
                   >
                     {!reduce ? (
                       <motion.span
@@ -248,14 +247,14 @@ export function LandingHero({
                 {isAuthenticated ? (
                   <Link
                     href="/entries/new"
-                    className="cta-secondary min-h-[48px] px-6 py-3 text-base"
+                    className="cta-secondary min-h-[44px] px-6 py-3 text-label-md"
                   >
                     묵상 기록하기
                   </Link>
                 ) : (
                   <Link
                     href="/contact"
-                    className="cta-secondary min-h-[48px] px-6 py-3 text-base"
+                    className="cta-secondary min-h-[44px] px-6 py-3 text-label-md"
                   >
                     문의하기
                   </Link>
@@ -337,7 +336,7 @@ export function LandingHero({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.15 }}
                 >
-                  <p className="font-journal text-sm text-primary">이어봄</p>
+                  <p className="font-journal text-body-sm text-primary">이어봄</p>
                   <motion.span
                     className="text-label-sm text-text-muted"
                     animate={reduce ? undefined : { opacity: [0.45, 1, 0.45] }}
@@ -360,7 +359,7 @@ export function LandingHero({
             viewport={{ once: true, amount: 0.35 }}
             transition={{ duration: 0.65, ease }}
           >
-            <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+            <h2 className="text-headline-md font-semibold tracking-tight text-primary md:text-display-lg">
               세 걸음이면 충분합니다
             </h2>
             <p className="mt-4 text-body-md text-text-muted">
@@ -378,7 +377,7 @@ export function LandingHero({
               {
                 title: "잇다",
                 body: "어제의 기록이 오늘의 방향을 비추도록 회고로 다시 만납니다.",
-                tone: "bg-[#f7f0e2]",
+                tone: "bg-bg-warm",
               },
               {
                 title: "나누다",
@@ -394,13 +393,13 @@ export function LandingHero({
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.55, delay: index * 0.08, ease }}
               >
-                <span className="font-mono text-xs font-semibold text-primary/60">
+                <span className="font-mono text-label-xs font-semibold text-primary/60">
                   0{index + 1}
                 </span>
-                <h3 className="mt-12 text-xl font-semibold text-primary">
+                <h3 className="mt-12 text-headline-md font-semibold text-primary">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-text-muted">
+                <p className="mt-2 text-body-sm leading-relaxed text-text-muted">
                   {item.body}
                 </p>
               </motion.div>
@@ -415,7 +414,7 @@ export function LandingHero({
             viewport={{ once: true, amount: 0.35 }}
             transition={{ duration: 0.65, ease }}
           >
-            <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+            <h2 className="max-w-xl text-headline-md font-semibold tracking-tight text-primary md:text-display-lg">
               기록은 기본적으로 나만 봅니다
             </h2>
             <p className="mt-4 max-w-xl text-body-md text-text-muted">
@@ -429,7 +428,7 @@ export function LandingHero({
             viewport={{ once: true, amount: 0.35 }}
             transition={{ duration: 0.65, delay: 0.1, ease }}
           >
-            <p className="font-journal text-2xl leading-relaxed text-primary">
+            <p className="font-journal text-title-journal leading-relaxed text-primary">
               AI는 신앙을 평가하지 않습니다.
             </p>
             <p className="mt-3 text-label-md text-text-muted">
@@ -445,7 +444,7 @@ export function LandingHero({
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.65, ease }}
         >
-          <h2 className="text-3xl font-semibold tracking-tight text-primary md:text-4xl">
+          <h2 className="text-headline-md font-semibold tracking-tight text-primary md:text-display-lg">
             오늘의 한 줄부터
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-body-md text-text-muted">
@@ -453,7 +452,7 @@ export function LandingHero({
           </p>
           <Link
             href={isAuthenticated ? "/entries/new" : "/login"}
-            className="cta-primary mt-8 min-h-[48px] px-7 py-3"
+            className="cta-primary mt-8 min-h-[44px] px-7 py-3"
           >
             {isAuthenticated ? "묵상 기록하기" : "Google로 시작하기"}
           </Link>

@@ -1,5 +1,10 @@
 import type { RereadScripture } from "@/lib/reread-scriptures";
 import { deepScrubMirror } from "@/lib/content-scrub";
+import {
+  buildClassificationPrompt,
+  resolveSituationContext,
+} from "@/lib/wisdom/classifier";
+import { buildSituationPrompt } from "@/lib/wisdom/prompt-builder";
 
 const DISCLAIMER =
   "이 회고는 사용자가 남긴 기록을 정리한 성찰 자료입니다. 하나님의 뜻, 신앙 상태 또는 성경의 최종 해석을 판정하지 않으며, 기도와 성경 본문 읽기, 공동체의 분별을 대신하지 않습니다.";
@@ -242,6 +247,51 @@ export async function generateReviewWithMimo(
     };
   }
 
+  let situationPrompt = "";
+  try {
+    const classificationRes = await fetch(`${baseURL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_completion_tokens: 512,
+        messages: [
+          { role: "system", content: "너는 상황 분류기다. JSON만 응답하라." },
+          { role: "user", content: buildClassificationPrompt(entries) },
+        ],
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (classificationRes.ok) {
+      const classData = (await classificationRes.json()) as {
+        choices?: Array<{ message?: { content?: string } }>;
+      };
+      const classContent = classData.choices?.[0]?.message?.content ?? "";
+      const classJson = safeParseJson(extractJson(classContent));
+      if (classJson) {
+        const situationContext = resolveSituationContext({
+          primary: typeof classJson.primary === "string" ? classJson.primary : "",
+          secondary:
+            typeof classJson.secondary === "string"
+              ? classJson.secondary
+              : undefined,
+          theme: typeof classJson.theme === "string" ? classJson.theme : "",
+          phase: typeof classJson.phase === "string" ? classJson.phase : "",
+          reasoning:
+            typeof classJson.reasoning === "string" ? classJson.reasoning : "",
+        });
+        situationPrompt = buildSituationPrompt(situationContext);
+      }
+    }
+  } catch (error) {
+    console.warn("Situation classification skipped", error);
+  }
+
   const system = `당신은 개인 묵상 기록을 정리하는 성찰 도우미입니다.
 
 절대 금지: 하나님의 뜻을 판정, 믿음 평가, 죄 확정, 소명 선언, 예언, 의료/법률 단정.
@@ -263,7 +313,9 @@ export async function generateReviewWithMimo(
 
 rereadScriptures는 처방이나 추천이 아닌, 사용자가 기록에서 다시 방문할 본문 제안입니다. entries.scriptureRefs에 있는 본문만 선택하세요. 문맥을 위해 절 범위를 우선하고 최대 3개까지만 제시하며, 해당 본문이 없으면 빈 배열을 반환하세요.
 
-disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}`;
+disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}
+
+${situationPrompt}`;
 
   const userPayload = {
     reportType,

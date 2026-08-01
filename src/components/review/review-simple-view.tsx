@@ -61,7 +61,7 @@ export function ReviewSimpleView({
           }
         >
           {hasStories ? (
-            <SurfaceCard className="border-l-4 border-l-accent-gold/50">
+            <SurfaceCard className="border-l-4 border-l-insight/50">
               <h2 className="text-headline-sm text-primary">연관 이야깃거리</h2>
               <p className="mt-1 text-label-sm text-text-muted">
                 비슷한 마음을 살았던 이야기
@@ -104,7 +104,7 @@ export function ReviewSimpleView({
           ) : null}
 
           {hasScriptures ? (
-            <SurfaceCard className="border-l-4 border-l-leaf/50">
+            <SurfaceCard className="border-l-4 border-l-reflection/50">
               <h2 className="text-headline-sm text-primary">도움될 성구</h2>
               <p className="mt-1 text-label-sm text-text-muted">
                 다시 머물면 좋은 본문
@@ -126,8 +126,8 @@ export function ReviewSimpleView({
             <SurfaceCard
               className={
                 blockCount >= 3
-                  ? "border-l-4 border-l-accent-terracotta/50 md:col-span-2 xl:col-span-1"
-                  : "border-l-4 border-l-accent-terracotta/50"
+                  ? "border-l-4 border-l-companion/50 md:col-span-2 xl:col-span-1"
+                  : "border-l-4 border-l-companion/50"
               }
             >
               <h2 className="text-headline-sm text-primary">함께하면 좋은 사람</h2>

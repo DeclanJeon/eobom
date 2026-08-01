@@ -57,7 +57,7 @@ export function TogetherActions({
             disabled={pending === key}
             onClick={() => void toggle(key)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border border-[#E0DDD7] bg-white px-3 py-1.5 text-label-sm text-text-muted transition hover:border-accent-terracotta/30 hover:text-accent-terracotta active:scale-95 disabled:opacity-50",
+              "inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-white px-3 py-1.5 text-label-sm text-text-muted transition hover:border-accent-terracotta/30 hover:text-accent-terracotta active:scale-95 disabled:opacity-50",
               pending === key && "opacity-60",
             )}
           >

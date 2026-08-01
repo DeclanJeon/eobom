@@ -338,7 +338,7 @@ export function StoryMirrorRag({
               rows={4}
               maxLength={4000}
               placeholder="회고 내용이 그대로 담겨 있어요. 다른 마음을 잇고 싶다면 수정해 보세요."
-              className="w-full rounded-2xl border border-line bg-white/95 p-4 text-body-md text-primary outline-none transition focus:border-accent-gold/40"
+              className="w-full rounded-2xl border border-line bg-white/95 p-4 text-body-md text-primary outline-none transition ring-accent-gold/30 focus:ring-2"
             />
             <div className="flex items-center gap-3">
               {!busy ? (

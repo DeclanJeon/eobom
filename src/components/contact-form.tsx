@@ -63,7 +63,7 @@ export function ContactForm({
             value={value}
             onChange={(e) => setter(e.target.value)}
             required
-            className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
           />
         </label>
       ))}
@@ -74,7 +74,7 @@ export function ContactForm({
           onChange={(e) => setMessage(e.target.value)}
           required
           rows={6}
-          className="mt-1.5 w-full rounded-xl border border-[#E0DDD7] bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </label>
       {error ? (

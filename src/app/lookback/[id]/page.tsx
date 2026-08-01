@@ -134,7 +134,7 @@ export default async function LookbackDetailPage({
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-label-md text-text-muted">이야깃거리</h2>
+          <h2 className="text-headline-sm text-primary">이야깃거리</h2>
           <Link
             href="/story-mirror"
             className="text-label-sm text-leaf transition hover:text-primary"
@@ -151,7 +151,7 @@ export default async function LookbackDetailPage({
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-label-md text-text-muted">지금의 모습</h2>
+          <h2 className="text-headline-sm text-primary">지금의 모습</h2>
           <Link
             href="/story-mirror/visualize"
             className="text-label-sm text-leaf transition hover:text-primary"

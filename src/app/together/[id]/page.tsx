@@ -35,6 +35,7 @@ export default async function TogetherDetailPage({
       <div className="mb-4">
         <Link
           href="/together"
+          aria-label="함께 피드로 돌아가기"
           className="text-label-md text-text-muted transition hover:text-primary"
         >
           ← 피드로
@@ -42,7 +43,7 @@ export default async function TogetherDetailPage({
       </div>
       <SurfaceCard className="bg-surface-shared/70">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-full bg-[#F7F0E2] text-label-md font-semibold text-gold-ink">
+          <span className="flex size-9 items-center justify-center rounded-full bg-bg-warm text-label-md font-semibold text-gold-ink">
             {(item.pseudonym || "익").slice(0, 1)}
           </span>
           <div>
@@ -79,7 +80,7 @@ export default async function TogetherDetailPage({
           </div>
         ) : null}
 
-        <div className="mt-6 border-t border-[#E0DDD7] pt-4">
+        <div className="mt-6 border-t border-border-subtle pt-4">
           <TogetherActions id={item.id} counts={counts} />
         </div>
       </SurfaceCard>

@@ -24,7 +24,8 @@ export default async function EntryDetailPage({
 
   return (
     <AppShell
-      title="기록"
+      title={entry.title || "제목 없음"}
+      titleClassName="font-journal text-display-lg whitespace-normal break-words overflow-visible text-clip"
       action={
         <Link
           href={`/entries/${entry.id}/edit`}
@@ -39,9 +40,7 @@ export default async function EntryDetailPage({
           <p className="text-label-sm text-text-muted">
             {formatDateKo(entry.entryDate)}
           </p>
-          <h1 className="mt-2 font-journal text-display-lg text-primary">
-            {entry.title || "제목 없음"}
-          </h1>
+
           <div className="mt-3 flex flex-wrap gap-2">
             {(entry.scriptureBindings?.length
               ? entry.scriptureBindings.map((b) => b.display)
@@ -89,7 +88,7 @@ export default async function EntryDetailPage({
 
         {entry.gratitude ? (
           <SurfaceCard>
-            <h2 className="text-label-md text-text-muted">감사</h2>
+            <h2 className="text-headline-sm text-primary">감사</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.gratitude}
             </p>
@@ -97,7 +96,7 @@ export default async function EntryDetailPage({
         ) : null}
         {entry.question ? (
           <SurfaceCard>
-            <h2 className="text-label-md text-text-muted">질문</h2>
+            <h2 className="text-headline-sm text-primary">질문</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.question}
             </p>
@@ -105,13 +104,13 @@ export default async function EntryDetailPage({
         ) : null}
         {entry.prayer ? (
           <SurfaceCard>
-            <h2 className="text-label-md text-text-muted">기도</h2>
+            <h2 className="text-headline-sm text-primary">기도</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">{entry.prayer}</p>
           </SurfaceCard>
         ) : null}
         {entry.actionStep ? (
           <SurfaceCard>
-            <h2 className="text-label-md text-text-muted">결단</h2>
+            <h2 className="text-headline-sm text-primary">결단</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.actionStep}
             </p>
