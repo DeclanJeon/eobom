@@ -14,11 +14,13 @@ export const metadata = { title: "함께" };
 export default async function TogetherPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; tag?: string; compose?: string }>;
+  searchParams: Promise<{ from?: string; tag?: string; compose?: string; cursor?: string }>;
 }) {
   const user = await requireUser();
   const flags = await getUserPreferenceFlags(user.id);
-  const { from, tag, compose } = await searchParams;
+  const { from, tag, compose, cursor: cursorParam } = await searchParams;
+  const cursor = cursorParam?.trim() || undefined;
+  const pageSize = 20;
 
   const source = from
     ? await db.reflectionEntry.findFirst({
@@ -26,15 +28,52 @@ export default async function TogetherPage({
       })
     : null;
 
-  const items = await db.sharedReflection.findMany({
-    where: { visibility: "public", withdrawnAt: null, deletedAt: null },
-    orderBy: { publishedAt: "desc" },
-    take: 60,
-    include: { reactions: true },
-  });
+  const baseItemsWhere = {
+    visibility: "public" as const,
+    withdrawnAt: null,
+    deletedAt: null,
+  };
+  const loadItems = (options: { cursor?: string; take: number }) =>
+    db.sharedReflection.findMany({
+      where: baseItemsWhere,
+      orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+      ...(options.cursor ? { cursor: { id: options.cursor }, skip: 1 } : {}),
+      take: options.take,
+      include: { reactions: true },
+    });
 
+  const items = tag
+    ? await (async () => {
+        const matchingItems: Awaited<ReturnType<typeof loadItems>> = [];
+        const scanSize = 50;
+        let scanCursor = cursor;
+        const requiredCount = pageSize + 1;
+
+        while (matchingItems.length < requiredCount) {
+          const batch = await loadItems({ cursor: scanCursor, take: scanSize });
+          matchingItems.push(
+            ...batch.filter((item) => parseJsonArray(item.topicTags).includes(tag)),
+          );
+          const lastItem = batch[batch.length - 1];
+          if (!lastItem || batch.length < scanSize) break;
+          scanCursor = lastItem.id;
+        }
+
+        return matchingItems.slice(0, requiredCount);
+      })()
+    : await loadItems({ cursor, take: pageSize + 1 });
+  const hasMore = items.length > pageSize;
+  const visibleItems = items.slice(0, pageSize);
+  const nextCursor = hasMore ? visibleItems[visibleItems.length - 1]?.id : undefined;
+
+  const tagRows = await db.sharedReflection.findMany({
+    where: baseItemsWhere,
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    take: 60,
+    select: { topicTags: true },
+  });
   const allTags = new Map<string, number>();
-  for (const item of items) {
+  for (const item of tagRows) {
     for (const t of parseJsonArray(item.topicTags)) {
       allTags.set(t, (allTags.get(t) || 0) + 1);
     }
@@ -44,9 +83,7 @@ export default async function TogetherPage({
     .slice(0, 12)
     .map(([name]) => name);
 
-  const filtered = tag
-    ? items.filter((item) => parseJsonArray(item.topicTags).includes(tag))
-    : items;
+  const filtered = visibleItems;
 
   const sourceBody = source
     ? [source.title, source.reflectionBody].filter(Boolean).join("\n\n")
@@ -104,29 +141,41 @@ export default async function TogetherPage({
             }
           />
         ) : (
-          <div className="grid gap-3">
-            {filtered.map((item, index) => {
-              const counts: Record<string, number> = {};
-              for (const r of item.reactions) {
-                counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
-              }
-              return (
-                <TogetherFeedCard
-                  key={item.id}
-                  index={index}
-                  item={{
-                    id: item.id,
-                    publicBody: item.publicBody,
-                    scriptureRefs: parseJsonArray(item.scriptureRefs),
-                    topicTags: parseJsonArray(item.topicTags),
-                    pseudonym: item.pseudonym || "익명의 순례자",
-                    publishedAt: item.publishedAt,
-                    counts,
-                  }}
-                />
-              );
-            })}
-          </div>
+          <>
+            <div className="grid gap-3">
+              {filtered.map((item, index) => {
+                const counts: Record<string, number> = {};
+                for (const r of item.reactions) {
+                  counts[r.reactionType] = (counts[r.reactionType] || 0) + 1;
+                }
+                return (
+                  <TogetherFeedCard
+                    key={item.id}
+                    index={index}
+                    item={{
+                      id: item.id,
+                      publicBody: item.publicBody,
+                      scriptureRefs: parseJsonArray(item.scriptureRefs),
+                      topicTags: parseJsonArray(item.topicTags),
+                      pseudonym: item.pseudonym || "익명의 순례자",
+                      publishedAt: item.publishedAt,
+                      counts,
+                    }}
+                  />
+                );
+              })}
+            </div>
+            {hasMore && nextCursor ? (
+              <div className="mt-6 flex justify-center">
+                <Link
+                  href={`/together?cursor=${encodeURIComponent(nextCursor)}${tag ? `&tag=${encodeURIComponent(tag)}` : ""}${from ? `&from=${encodeURIComponent(from)}` : ""}${compose ? `&compose=${encodeURIComponent(compose)}` : ""}`}
+                  className="cta-secondary min-h-11 px-6"
+                >
+                  더 보기
+                </Link>
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </AppShell>
@@ -147,8 +196,8 @@ function TagChip({
       href={href}
       className={
         active
-          ? "shrink-0 rounded-full bg-primary px-3.5 py-1.5 text-label-sm text-primary-foreground"
-          : "shrink-0 rounded-full border border-border-subtle bg-white px-3.5 py-1.5 text-label-sm text-text-muted transition hover:border-accent-gold/40 hover:text-primary"
+          ? "inline-flex min-h-11 shrink-0 items-center rounded-full bg-primary px-3.5 py-1.5 text-label-sm text-primary-foreground"
+          : "inline-flex min-h-11 shrink-0 items-center rounded-full border border-border bg-white px-3.5 py-1.5 text-label-sm text-text-muted transition hover:border-accent-gold/40 hover:text-primary"
       }
     >
       {label}

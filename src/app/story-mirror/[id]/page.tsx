@@ -49,10 +49,10 @@ export default async function StoryMirrorDetailPage({
   const { id } = await params;
   const sp = await searchParams;
   const ctx = parseStoryDetailContext(sp);
+  const user = await getOptionalUser();
 
   const card = await getCardDetail(id);
   if (card && card.reviewStatus === "published") {
-    const user = await getOptionalUser();
     let matchId: string | null = null;
     if (user?.id) {
       const match = await db.storyMirrorMatch.findFirst({
@@ -61,22 +61,24 @@ export default async function StoryMirrorDetailPage({
       });
       matchId = match?.id ?? null;
     }
-    return <CardDetailView card={card} ctx={ctx} matchId={matchId} />;
+    return <CardDetailView card={card} ctx={ctx} matchId={matchId} publicLogo={!user} />;
   }
 
   const chunkView = await getChunkDetail(id);
   if (!chunkView) notFound();
-  return <ChunkDetailView chunk={chunkView.chunk} ctx={ctx} />;
+  return <ChunkDetailView chunk={chunkView.chunk} ctx={ctx} publicLogo={!user} />;
 }
 
 function CardDetailView({
   card,
   ctx,
   matchId,
+  publicLogo,
 }: {
   card: StoryCardDetail;
   ctx: StoryDetailContext;
   matchId: string | null;
+  publicLogo: boolean;
 }) {
   const themes = parseJsonArray(card.themes);
   const emotions = parseJsonArray(card.emotions);
@@ -88,7 +90,7 @@ function CardDetailView({
     `${card.work.title}${card.work.author ? ` · ${card.work.author}` : ""}`;
 
   return (
-    <AppShell wide bare>
+    <AppShell wide bare publicLogo={publicLogo}>
       <Breadcrumb href="/story-mirror" label="이야기 거울" className="mb-6" />
 
       <article className="max-w-2xl">
@@ -202,9 +204,11 @@ function CardDetailView({
 function ChunkDetailView({
   chunk,
   ctx,
+  publicLogo,
 }: {
   chunk: StoryChunkDetail;
   ctx: StoryDetailContext;
+  publicLogo: boolean;
 }) {
   const themes = parseJsonArray(chunk.themes);
   const emotions = parseJsonArray(chunk.emotions);
@@ -216,7 +220,7 @@ function ChunkDetailView({
     }`;
 
   return (
-    <AppShell wide bare>
+    <AppShell wide bare publicLogo={publicLogo}>
       <Breadcrumb href="/story-mirror" label="이야기 거울" className="mb-6" />
 
       <article className="max-w-2xl">
@@ -349,7 +353,7 @@ function TagSection({
           {situations.map((s) => (
             <span
               key={s}
-              className="rounded-full border border-line px-3 py-1 text-label-sm text-text-muted"
+              className="rounded-full border border-border px-3 py-1 text-label-sm text-text-muted"
             >
               {s}
             </span>

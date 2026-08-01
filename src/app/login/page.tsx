@@ -21,7 +21,7 @@ export default async function LoginPage({
       <div className="w-full max-w-sm text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
           <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
-          <Link href="/" className="font-journal text-title-journal text-primary">
+          <Link href="/" className="inline-flex min-h-11 items-center font-journal text-title-journal text-primary">
             이어봄
           </Link>
         </div>
@@ -31,7 +31,7 @@ export default async function LoginPage({
         </p>
 
         {params.error ? (
-          <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+          <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
             로그인에 실패했습니다. 다시 시도해 주세요.
           </p>
         ) : null}
@@ -49,7 +49,7 @@ export default async function LoginPage({
         </div>
 
         <p className="mt-6 text-label-sm text-text-muted">
-          <Link href="/" className="hover:underline">
+          <Link href="/" className="inline-flex min-h-11 items-center hover:underline">
             돌아가기
           </Link>
         </p>

@@ -242,12 +242,13 @@ async function syncActionStepForEntry(
 
 export async function listEntries(
   userId: string,
-  opts: { q?: string; limit?: number } = {},
+  opts: { q?: string; limit?: number; cursor?: string; filter?: "actions" } = {},
 ) {
   const limit = opts.limit ?? 50;
   const entries = await db.reflectionEntry.findMany({
     where: {
       userId,
+      ...(opts.filter === "actions" ? { actionStep: { not: null } } : {}),
       deletedAt: null,
       ...(opts.q
         ? {
@@ -263,7 +264,8 @@ export async function listEntries(
           }
         : {}),
     },
-    orderBy: { entryDate: "desc" },
+    orderBy: [{ entryDate: "desc" }, { id: "desc" }],
+    ...(opts.cursor ? { cursor: { id: opts.cursor }, skip: 1 } : {}),
     take: limit,
   });
   return entries.map(serializeEntry);

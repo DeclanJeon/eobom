@@ -137,7 +137,7 @@ export default async function LookbackDetailPage({
           <h2 className="text-headline-sm text-primary">이야깃거리</h2>
           <Link
             href="/story-mirror"
-            className="text-label-sm text-leaf transition hover:text-primary"
+            className="inline-flex min-h-11 items-center text-label-sm text-leaf transition hover:text-primary"
           >
             이야기 더 보기 →
           </Link>
@@ -154,7 +154,7 @@ export default async function LookbackDetailPage({
           <h2 className="text-headline-sm text-primary">지금의 모습</h2>
           <Link
             href="/story-mirror/visualize"
-            className="text-label-sm text-leaf transition hover:text-primary"
+            className="inline-flex min-h-11 items-center text-label-sm text-leaf transition hover:text-primary"
           >
             크게 보기 →
           </Link>

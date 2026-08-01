@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { Breadcrumb, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { ReviewCreateForm } from "@/components/review-create-form";
-import { PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { getUserPreferenceFlags } from "@/lib/user-preferences";
@@ -19,6 +19,7 @@ export default async function NewReviewPage() {
 
   return (
     <AppShell bare>
+      <Breadcrumb href="/lookback" label="돌아보기" current="회고 만들기" className="mb-4" />
       <PageIntro title="회고 만들기" />
       <p className="mb-4 text-label-md text-text-muted">보관 중인 기록 {count}개</p>
       {flags.aiProcessingConsent ? (

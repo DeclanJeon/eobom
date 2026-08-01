@@ -87,7 +87,6 @@ export default async function StoryMirrorPage() {
                   title={story.title}
                   connection={story.connection}
                   differentPerspective={story.differentPerspective}
-                  compact
                 />
               </div>
             ))}

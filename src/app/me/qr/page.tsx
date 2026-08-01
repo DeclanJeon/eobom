@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SurfaceCard } from "@/components/ui-blocks";
+import { Breadcrumb, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
 import QRCode from "qrcode";
@@ -20,11 +20,12 @@ export default async function QrPage() {
 
   return (
     <AppShell title="내 QR">
+      <Breadcrumb href="/me" label="내 정보" current="내 QR" className="mb-4" />
       <SurfaceCard className="flex flex-col items-center text-center">
         <img
           src={qrDataUrl}
           alt="개인 묵상기록지 QR 코드"
-          className="h-64 w-64 rounded-2xl border border-border-subtle bg-white p-3"
+          className="h-64 w-64 rounded-2xl border border-border bg-white p-3"
         />
         <p className="mt-4 break-all font-mono text-label-sm text-text-muted">
           {url}

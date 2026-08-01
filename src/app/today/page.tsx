@@ -123,7 +123,7 @@ export default async function TodayPage() {
   return (
     <AppShell wide bare>
       {/* 1. 지배적 장면 — 성구 1개 + CTA 1개 */}
-      <section className="mb-10 rounded-3xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
+      <section className="mb-10 rounded-2xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
         <PageIntro
           className="mb-0"
           eyebrow={formatDateKo(now)}
@@ -187,10 +187,10 @@ export default async function TodayPage() {
             <h2 className="text-headline-sm text-primary">열린 결단</h2>
             {moreActionsCount > 0 ? (
               <Link
-                href="/entries"
-                className="text-label-sm text-text-muted hover:text-primary"
+                href="/entries?filter=actions"
+                className="min-h-11 inline-flex items-center text-label-sm text-text-muted hover:text-primary"
               >
-                더 보기 ({openActions.length})
+                결단 기록 보기
               </Link>
             ) : null}
           </div>
@@ -207,7 +207,7 @@ export default async function TodayPage() {
             <h2 className="text-headline-sm text-primary">최근 기록</h2>
             <Link
               href="/entries"
-              className="text-label-md text-text-muted hover:text-primary"
+              className="inline-flex min-h-11 items-center text-label-md text-text-muted hover:text-primary"
             >
               전체 보기
             </Link>

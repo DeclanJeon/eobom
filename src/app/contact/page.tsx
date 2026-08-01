@@ -13,7 +13,7 @@ export default async function ContactPage() {
         <div className="mb-8 text-center">
           <Link
             href={user ? "/today" : "/"}
-            className="font-journal text-title-journal text-primary"
+            className="inline-flex min-h-11 items-center font-journal text-title-journal text-primary"
           >
             이어봄
           </Link>

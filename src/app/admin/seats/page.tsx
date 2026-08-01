@@ -33,7 +33,7 @@ export default async function AdminSeatsPage() {
     <div className="mx-auto min-h-dvh max-w-3xl px-5 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <Link href="/today" className="text-label-sm text-text-muted">
+          <Link href="/today" className="inline-flex min-h-11 items-center text-label-sm text-text-muted">
             ← 앱
           </Link>
           <h1 className="mt-2 text-display-lg text-primary">키링 좌석</h1>

@@ -36,7 +36,7 @@ export default async function TogetherDetailPage({
         <Link
           href="/together"
           aria-label="함께 피드로 돌아가기"
-          className="text-label-md text-text-muted transition hover:text-primary"
+          className="inline-flex min-h-11 items-center text-label-md text-text-muted transition hover:text-primary"
         >
           ← 피드로
         </Link>
@@ -80,7 +80,7 @@ export default async function TogetherDetailPage({
           </div>
         ) : null}
 
-        <div className="mt-6 border-t border-border-subtle pt-4">
+        <div className="mt-6 border-t border-border pt-4">
           <TogetherActions id={item.id} counts={counts} />
         </div>
       </SurfaceCard>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { Breadcrumb } from "@/components/ui-blocks";
 import { EntryForm } from "@/components/entry-form";
 import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
@@ -18,6 +19,7 @@ export default async function EditEntryPage({
 
   return (
     <AppShell bare>
+      <Breadcrumb href="/entries" label="기록" current="수정" className="mb-4" />
       <div className="mx-auto max-w-2xl">
         <EntryForm
           entryId={entry.id}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { SoftBadge, SurfaceCard } from "@/components/ui-blocks";
+import { Breadcrumb, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { DeleteEntryButton } from "@/components/delete-entry-button";
 import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
@@ -29,12 +29,13 @@ export default async function EntryDetailPage({
       action={
         <Link
           href={`/entries/${entry.id}/edit`}
-          className="rounded-full bg-primary px-4 py-2 text-label-md text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
+          className="cta-primary px-4"
         >
           수정
         </Link>
       }
     >
+      <Breadcrumb href="/entries" label="기록" current={entry.title || "제목 없음"} className="mb-4" />
       <article className="space-y-4">
         <div>
           <p className="text-label-sm text-text-muted">

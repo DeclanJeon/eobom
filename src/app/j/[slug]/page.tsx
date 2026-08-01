@@ -69,7 +69,7 @@ export default async function PersonalJournalPage({
     }
     case "revoked": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <h1 className="text-display-lg text-primary">사용할 수 없는 키링</h1>
           <p className="mt-3 text-body-md text-text-muted">
             {claimErrorMessage("revoked")}
@@ -96,7 +96,7 @@ export default async function PersonalJournalPage({
     }
     case "claim_prompt": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
           <KeyringClaimPrompt slug={slug} />
           <p className="mt-6 text-label-sm text-text-muted">
@@ -107,7 +107,7 @@ export default async function PersonalJournalPage({
     }
     case "blocked_other": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <h1 className="text-display-lg text-primary">
             다른 사람의 키링입니다
           </h1>
@@ -131,7 +131,7 @@ export default async function PersonalJournalPage({
     }
     case "blocked_legacy_other": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <h1 className="text-display-lg text-primary">다른 사람의 키링입니다</h1>
           <Link href="/today" className="cta-primary mt-8 inline-flex">
             내 홈으로
@@ -141,14 +141,14 @@ export default async function PersonalJournalPage({
     }
     case "owner_login_prompt": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <OwnerLoginPrompt slug={slug} />
         </Shell>
       );
     }
     case "private_page": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <p className="text-label-sm text-text-muted">키링 {slug}</p>
           <h1 className="mt-2 text-display-lg text-primary">
             이 주소는
@@ -166,7 +166,7 @@ export default async function PersonalJournalPage({
     }
     case "first_register": {
       return (
-        <Shell>
+        <Shell isAuthenticated={Boolean(viewer)}>
           <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
           <h1 className="mt-2 text-display-lg text-primary">
             나의
@@ -207,19 +207,28 @@ function renderClaimQueryError(code?: string) {
     ? claimErrorMessage(code as ClaimErrorCode)
     : "연결에 실패했습니다.";
   return (
-    <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+    <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
       {msg}
     </p>
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({
+  children,
+  isAuthenticated,
+}: {
+  children: React.ReactNode;
+  isAuthenticated: boolean;
+}) {
   return (
     <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 flex items-center justify-center gap-2">
           <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
-          <Link href="/" className="font-journal text-title-journal text-primary">
+          <Link
+            href={isAuthenticated ? "/today" : "/"}
+            className="inline-flex min-h-11 items-center font-journal text-title-journal text-primary"
+          >
             이어봄
           </Link>
         </div>
@@ -245,7 +254,7 @@ async function OwnerView({
   });
 
   return (
-    <Shell>
+    <Shell isAuthenticated>
       <p className="text-label-sm text-text-muted">/j/{slug}</p>
       <h1 className="mt-2 text-display-lg text-primary">
         {display}의

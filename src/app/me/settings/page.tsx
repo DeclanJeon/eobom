@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { SurfaceCard } from "@/components/ui-blocks";
+import { Breadcrumb, SurfaceCard } from "@/components/ui-blocks";
 import { SettingsForm } from "@/components/settings-form";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
@@ -14,6 +14,7 @@ export default async function SettingsPage() {
 
   return (
     <AppShell title="설정">
+      <Breadcrumb href="/me" label="내 정보" current="설정" className="mb-4" />
       <SurfaceCard>
         <SettingsForm
           initial={{
