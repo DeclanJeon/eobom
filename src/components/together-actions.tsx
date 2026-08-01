@@ -26,6 +26,7 @@ export function TogetherActions({
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [local, setLocal] = useState(counts);
+  const [reactionError, setReactionError] = useState("");
 
   useEffect(() => {
     setLocal(counts);
@@ -34,13 +35,20 @@ export function TogetherActions({
   async function toggle(reactionType: string) {
     if (pending) return;
     setPending(reactionType);
+    setReactionError("");
     try {
       const res = await fetch(`/api/together/${id}/react`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reactionType }),
       });
-      if (res.ok) router.refresh();
+      if (!res.ok) {
+        setReactionError("반응을 보내지 못했습니다.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setReactionError("반응을 보내지 못했습니다.");
     } finally {
       setPending(null);
     }
@@ -57,8 +65,7 @@ export function TogetherActions({
             disabled={pending === key}
             onClick={() => void toggle(key)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-white px-3 py-1.5 text-label-sm text-text-muted transition hover:border-accent-terracotta/30 hover:text-accent-terracotta active:scale-95 disabled:opacity-50",
-              pending === key && "opacity-60",
+              "inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-label-sm text-text-muted transition hover:border-accent-terracotta/30 hover:text-accent-terracotta active:scale-[0.98]",
             )}
           >
             <Icon className="size-3.5" />
@@ -69,6 +76,11 @@ export function TogetherActions({
           </button>
         );
       })}
+      {reactionError ? (
+        <p className="w-full text-label-sm text-destructive" role="alert">
+          {reactionError}
+        </p>
+      ) : null}
     </div>
   );
 }

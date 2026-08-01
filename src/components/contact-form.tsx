@@ -22,21 +22,27 @@ export function ContactForm({
     setLoading(true);
     setStatus("idle");
     setError("");
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, subject, message }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus("error");
+        setError(data.error || "전송에 실패했습니다.");
+        return;
+      }
+      setStatus("ok");
+      setSubject("");
+      setMessage("");
+    } catch (err) {
       setStatus("error");
-      setError(data.error || "전송에 실패했습니다.");
-      return;
+      setError(err instanceof Error ? err.message : "전송에 실패했습니다.");
+    } finally {
+      setLoading(false);
     }
-    setStatus("ok");
-    setSubject("");
-    setMessage("");
   }
 
   if (status === "ok") {
@@ -48,7 +54,7 @@ export function ContactForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} className="space-y-4">
       {(
         [
           ["이름", name, setName, "text"],
@@ -63,7 +69,7 @@ export function ContactForm({
             value={value}
             onChange={(e) => setter(e.target.value)}
             required
-            className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+            className="mt-1.5 w-full rounded-xl border border-border bg-white px-3 py-3 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
           />
         </label>
       ))}
@@ -74,11 +80,11 @@ export function ContactForm({
           onChange={(e) => setMessage(e.target.value)}
           required
           rows={6}
-          className="mt-1.5 w-full rounded-xl border border-border-subtle bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="mt-1.5 w-full rounded-xl border border-border bg-white px-3 py-3 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
         />
       </label>
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
           {error}
         </p>
       ) : null}

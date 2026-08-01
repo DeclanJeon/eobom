@@ -12,19 +12,24 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error || "회고 생성에 실패했습니다.");
-      return;
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "회고 생성에 실패했습니다.");
+        return;
+      }
+      router.push(`/lookback/${data.report.id}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "회고 생성에 실패했습니다.");
+    } finally {
+      setLoading(false);
     }
-    router.push(`/lookback/${data.report.id}`);
-    router.refresh();
   }
 
   return (
@@ -34,7 +39,7 @@ export function ReviewCreateForm({ entryCount }: { entryCount: number }) {
       </p>
 
       {error ? (
-        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
           {error}
         </p>
       ) : null}
