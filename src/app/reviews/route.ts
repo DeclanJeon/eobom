@@ -10,5 +10,7 @@ export async function GET(request: Request) {
     process.env.APP_URL ||
     process.env.NEXTAUTH_URL ||
     request.url;
-  return NextResponse.redirect(new URL("/lookback", base), 301);
+  const response = NextResponse.redirect(new URL("/lookback", base), 301);
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  return response;
 }
