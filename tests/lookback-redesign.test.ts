@@ -28,22 +28,64 @@ describe("lookback redesign", () => {
   });
 
   test("reviews page returns 301 to /lookback using request origin", async () => {
-    // literal 301 + request host 유지 — NEXTAUTH_URL 미설정 시 localhost로 오염하지 않는다.
-    const mod = await import("../src/app/reviews/route");
-    expect(typeof mod.GET).toBe("function");
-    const res = await mod.GET(new Request("https://example.test/reviews"));
-    expect(res.status).toBe(301);
-    expect(res.headers.get("location")).toBe("https://example.test/lookback");
+    // 공개 URL 설정이 없으면 내부 origin으로 fallback하되 localhost를 고정하지 않는다.
+    const previous = {
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      APP_URL: process.env.APP_URL,
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    };
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.APP_URL;
+    delete process.env.NEXTAUTH_URL;
+    try {
+      const mod = await import("../src/app/reviews/route");
+      expect(typeof mod.GET).toBe("function");
+      const res = await mod.GET(new Request("https://example.test/reviews"));
+      expect(res.status).toBe(301);
+      expect(res.headers.get("location")).toBe("https://example.test/lookback");
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
+  });
+
+  test("reviews redirect prefers configured public app URL", async () => {
+    const previous = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://public.example";
+    try {
+      const mod = await import("../src/app/reviews/route");
+      const res = await mod.GET(new Request("http://internal:3120/reviews"));
+      expect(res.headers.get("location")).toBe("https://public.example/lookback");
+    } finally {
+      if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = previous;
+    }
   });
 
   test("reviews/[id] page returns 301 to /lookback/[id] using request origin", async () => {
-    const mod = await import("../src/app/reviews/[id]/route");
-    expect(typeof mod.GET).toBe("function");
-    const res = await mod.GET(new Request("https://example.test/reviews/e12"), {
-      params: Promise.resolve({ id: "e12" }),
-    });
-    const location = res.headers.get("location");
-    expect(res.headers.get("location")).toBe("https://example.test/lookback/e12");
+    const previous = {
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+      APP_URL: process.env.APP_URL,
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    };
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    delete process.env.APP_URL;
+    delete process.env.NEXTAUTH_URL;
+    try {
+      const mod = await import("../src/app/reviews/[id]/route");
+      expect(typeof mod.GET).toBe("function");
+      const res = await mod.GET(new Request("https://example.test/reviews/e12"), {
+        params: Promise.resolve({ id: "e12" }),
+      });
+      expect(res.headers.get("location")).toBe("https://example.test/lookback/e12");
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
   });
 
   test("db: reviewReport + userVisualization 조회 쿼리 형태 검증", async () => {

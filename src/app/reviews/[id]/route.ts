@@ -9,6 +9,11 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  const target = new URL(`/lookback/${id}`, request.url);
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    request.url;
+  const target = new URL(`/lookback/${id}`, base);
   return NextResponse.redirect(target, 301);
 }
