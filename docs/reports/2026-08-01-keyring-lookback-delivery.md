@@ -113,14 +113,17 @@
 
 | 항목 | 상태 | 증거 |
 |---|---|---|
-| 로컬 커밋 | 대기 | 보고서 작성 후 생성 |
-| `origin/main` 푸시 | 대기 | 커밋 후 확인 |
-| production 배포 | 대기 | `deploy/deploy.sh --remote` 실행 후 확인 |
-| production health | 대기 | 배포 후 `https://eobom.ponslink.com/api/health` 확인 |
+| 로컬 커밋 | ✅ | `d7c9e98`, `f3b17ef`, `52c31e1` |
+| `origin/main` 푸시 | ✅ | `main` push 완료, 최신 `52c31e1` |
+| production 배포 | ✅ | `deploy/deploy.sh --remote` 성공, systemd `active`, `home:200` |
+| production health | ✅ | `GET https://eobom.ponslink.com/api/health` → **200**, `{"ok":true,"service":"eobom"}` |
 
 ---
 
 ## 7. 종료 판정
 
-코드·문서·테스트 검증은 완료됐다. Lore 형식 커밋, `origin/main` push, production rsync 배포와
-health check가 모두 성공하면 릴리즈를 종료한다.
+코드 커밋·push·rsync 배포·health check는 완료됐다.
+`/reviews?cachebust=...`와 `/reviews/[id]`는 canonical public URL + `no-store`를 반환한다.
+다만 Cloudflare가 이전 exact `/reviews` 301을 edge에 캐시하고 있어, purge 권한을 확보하기 전까지
+캐시 HIT 요청은 기존 `localhost` Location을 반환할 수 있다. origin 수정은 완료됐고 cache TTL 만료 또는
+Cloudflare URL purge 후 정상 상태가 된다.
