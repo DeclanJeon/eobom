@@ -154,8 +154,8 @@ export function StoryVisual({
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center h-48 bg-gray-50 rounded-lg ${className}`}>
-        <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+      <div className={`flex items-center justify-center h-48 bg-surface-low rounded-lg ${className}`}>
+        <Loader2 className="w-8 h-8 text-text-muted animate-spin" />
       </div>
     );
   }

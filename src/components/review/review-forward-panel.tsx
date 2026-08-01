@@ -37,7 +37,7 @@ export function ReviewForwardPanel({
           </div>
           <Link
             href="/entries/new"
-            className="mt-4 inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
+            className="mt-4 inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
           >
             이 한 걸음을 기록으로 남기기 →
           </Link>

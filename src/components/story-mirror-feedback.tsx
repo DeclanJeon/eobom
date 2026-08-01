@@ -57,12 +57,12 @@ export function StoryMirrorFeedback({ matchId }: { matchId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-line p-4">
+    <div className="rounded-xl border border-border p-4">
       <p className="mb-3 text-label-sm text-text-muted">
         이 이야기가 유용했나요?
       </p>
       {error && (
-        <p className="mb-2 text-label-xs text-destructive">
+        <p className="mb-2 text-label-xs text-destructive" role="alert">
           피드백 전송에 실패했습니다. 잠시 후 다시 시도해 주세요.
         </p>
       )}
@@ -74,7 +74,7 @@ export function StoryMirrorFeedback({ matchId }: { matchId: string }) {
             onClick={() => sendFeedback(fb.type)}
             disabled={loading}
             aria-pressed={sent === fb.type}
-            className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-label-sm transition hover:border-accent-gold/30 hover:bg-chalk disabled:opacity-50"
+            className="flex min-h-11 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-label-sm transition hover:border-accent-gold/30 hover:bg-chalk"
           >
             <span>{fb.icon}</span>
             <span>{fb.label}</span>

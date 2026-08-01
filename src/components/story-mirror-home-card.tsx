@@ -38,7 +38,7 @@ export async function StoryMirrorHomeCard({ userId, storyMirrorEnabled }: { user
             <Link
               key={match.id}
               href={`/story-mirror/${match.card.id}`}
-              className="group block rounded-2xl border border-line bg-white/95 p-4 transition hover:border-accent-gold/30"
+              className="group block rounded-2xl border border-border bg-white/95 p-4 transition hover:border-accent-gold/30"
             >
               <div className="flex items-start justify-between gap-2">
                 <div>

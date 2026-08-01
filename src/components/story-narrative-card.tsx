@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SurfaceCard } from "@/components/ui-blocks";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,6 @@ export function StoryNarrativeCard({
   imageAlt,
   href,
   className,
-  compact = false,
 }: {
   source?: string | null;
   title: string;
@@ -26,7 +26,6 @@ export function StoryNarrativeCard({
   imageAlt?: string | null;
   href?: string;
   className?: string;
-  compact?: boolean;
 }) {
   const body = (
     <SurfaceCard
@@ -37,12 +36,14 @@ export function StoryNarrativeCard({
       )}
     >
       {imageUrl && (
-        <div className="-mx-5 -mt-5 mb-4">
-          <img
+        <div className="relative -mx-5 -mt-5 mb-4 h-48">
+          <Image
             src={imageUrl}
             alt={imageAlt || "이야기 시각화"}
-            className="w-full h-48 object-cover"
-            loading="lazy"
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
           />
         </div>
       )}
@@ -62,7 +63,7 @@ export function StoryNarrativeCard({
       ) : null}
 
       <details className="mt-4 group">
-        <summary className="cursor-pointer text-label-sm text-leaf hover:text-leaf/80 transition list-none">
+        <summary className="flex min-h-11 cursor-pointer items-center text-label-sm text-leaf hover:text-leaf/80 transition list-none">
           <span className="group-open:hidden">이 이야기가 당신의 기록과 닿은 이유 보기 →</span>
           <span className="hidden group-open:inline">접기 ↑</span>
         </summary>
@@ -74,7 +75,7 @@ export function StoryNarrativeCard({
       </details>
 
       {href ? (
-        <Link href={href} className="mt-4 block text-label-sm text-leaf">
+        <Link href={href} className="mt-4 inline-flex min-h-11 items-center text-label-sm text-leaf">
           이야기 더 읽기 →
         </Link>
       ) : null}

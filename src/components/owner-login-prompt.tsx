@@ -29,7 +29,7 @@ export function OwnerLoginPrompt({ slug }: { slug: string }) {
           setLoading(true);
           await signIn("google", { callbackUrl: `/j/${slug}` });
         }}
-        className="cta-primary mt-10 w-full py-4 disabled:opacity-60"
+        className="cta-primary mt-10 w-full py-4"
       >
         {loading ? "로그인 중…" : "Google로 로그인"}
       </button>

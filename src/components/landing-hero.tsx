@@ -105,7 +105,7 @@ export function LandingHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease }}
         >
-          <Link href="/" className="group flex items-center gap-3">
+          <Link href="/" className="group flex min-h-11 items-center gap-3">
             <img
               src="/logo.svg"
               alt="이어봄"
@@ -120,21 +120,21 @@ export function LandingHero({
           <nav className="flex items-center gap-2 text-label-md">
             <Link
               href="/contact"
-              className="rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
             >
               문의
             </Link>
             {isAuthenticated ? (
               <Link
                 href="/today"
-                className="rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+                className="inline-flex min-h-11 items-center rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
               >
                 {displayName ? `${displayName}의 오늘` : "내 기록으로"}
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
+                className="inline-flex min-h-11 items-center rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
               >
                 로그인
               </Link>
@@ -372,7 +372,7 @@ export function LandingHero({
               {
                 title: "모으다",
                 body: "흩어진 성구와 기도, 결단을 한 기록지에 남깁니다.",
-                tone: "bg-[#edf3ec]",
+                tone: "bg-surface-shared",
               },
               {
                 title: "잇다",
@@ -382,7 +382,7 @@ export function LandingHero({
               {
                 title: "나누다",
                 body: "원할 때만 한 문장을 익명으로 나눠 공감과 기도를 나눕니다.",
-                tone: "bg-[#f3ebe7]",
+                tone: "bg-bg-warm",
               },
             ].map((item, index) => (
               <motion.div
@@ -466,7 +466,7 @@ export function LandingHero({
         >
           <p>© {new Date().getFullYear()} 이어봄 · PonsLink</p>
           <div className="flex gap-4">
-            <Link href={isAuthenticated ? "/today" : "/login"} className="hover:text-primary">
+            <Link href={isAuthenticated ? "/today" : "/login"} className="inline-flex min-h-11 items-center hover:text-primary">
               {isAuthenticated ? "내 기록" : "시작하기"}
             </Link>
           </div>

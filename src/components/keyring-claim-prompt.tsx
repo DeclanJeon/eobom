@@ -55,7 +55,7 @@ export function KeyringClaimPrompt({ slug }: { slug: string }) {
         공간이 되며, 다른 사용자는 접근할 수 없습니다.
       </p>
       {error ? (
-        <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+        <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
           {error}
         </p>
       ) : null}

@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { BookMeta, ScriptureBinding } from "@/lib/bible";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 type Step = "book" | "chapter" | "verse";
 
@@ -131,42 +137,39 @@ export function ScripturePicker({
     }
   }
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4">
-      <button
-        type="button"
-        className="absolute inset-0 cursor-default"
-        aria-label="닫기"
-        onClick={onClose}
-      />
-      <div className="relative z-10 flex max-h-[88dvh] w-full max-w-lg flex-col rounded-t-3xl bg-background shadow-xl sm:rounded-3xl">
-        <div className="flex items-center justify-between border-b border-border-subtle px-5 py-4">
-          <button
-            type="button"
-            className="text-label-md text-text-muted"
-            onClick={() => {
-              if (step === "verse") setStep("chapter");
-              else if (step === "chapter") setStep("book");
-              else onClose();
-            }}
-          >
-            {step === "book" ? "닫기" : "뒤로"}
-          </button>
-          <h2 className="text-headline-sm text-primary">
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto">
+        <SheetHeader className="border-b border-border px-5 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center text-label-md text-text-muted"
+              onClick={() => {
+                if (step === "verse") setStep("chapter");
+                else if (step === "chapter") setStep("book");
+                else onClose();
+              }}
+            >
+              {step === "book" ? "닫기" : "뒤로"}
+            </button>
+            <SheetTitle className="text-headline-sm text-primary">성구 선택</SheetTitle>
+            <span className="w-10" aria-hidden="true" />
+          </div>
+          <p className="text-center text-label-sm text-text-muted">
             {step === "book"
               ? "책 선택"
               : step === "chapter"
                 ? `${book?.name} · 장`
                 : `${book?.name} ${chapter}장 · 절`}
-          </h2>
-          <span className="w-10" />
-        </div>
+          </p>
+        </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {error ? (
-            <p className="mb-3 text-label-sm text-destructive">{error}</p>
+            <p className="mb-3 text-label-sm text-destructive" role="alert">
+              {error}
+            </p>
           ) : null}
           {loading ? (
             <p className="text-label-md text-text-muted">불러오는 중…</p>
@@ -178,7 +181,7 @@ export function ScripturePicker({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="책 검색"
-                className="min-h-[44px] w-full rounded-xl border border-border-subtle bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+                className="min-h-[44px] w-full rounded-xl border border-border bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
               />
               {(
                 [
@@ -195,7 +198,7 @@ export function ScripturePicker({
                           key={b.code}
                           type="button"
                           onClick={() => void chooseBook(b)}
-                          className="min-h-[44px] rounded-xl border border-border-subtle bg-white px-2 py-2 text-label-sm text-primary transition active:scale-95"
+                          className="min-h-[44px] rounded-xl border border-border bg-white px-2 py-2 text-label-sm text-primary transition active:scale-[0.98]"
                         >
                           {b.name}
                         </button>
@@ -215,7 +218,7 @@ export function ScripturePicker({
                     key={c}
                     type="button"
                     onClick={() => void chooseChapter(c)}
-                    className="min-h-[44px] rounded-xl border border-border-subtle bg-white text-label-md text-primary active:scale-95"
+                    className="min-h-[44px] rounded-xl border border-border bg-white text-label-md text-primary active:scale-[0.98]"
                   >
                     {c}
                     {verseCounts[c - 1] ? (
@@ -248,10 +251,10 @@ export function ScripturePicker({
                       key={v.verse}
                       type="button"
                       onClick={() => tapVerse(v.verse)}
-                      className={`min-h-[44px] rounded-xl border text-label-md active:scale-95 ${
+                      className={`min-h-[44px] rounded-xl border text-label-md active:scale-[0.98] ${
                         active
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border-subtle bg-white text-primary"
+                          : "border-border bg-white text-primary"
                       }`}
                     >
                       {v.verse}
@@ -287,18 +290,18 @@ export function ScripturePicker({
         </div>
 
         {step === "verse" ? (
-          <div className="border-t border-border-subtle px-5 py-4">
+          <div className="border-t border-border px-5 py-4">
             <button
               type="button"
               disabled={startVerse == null || loading || disabled}
               onClick={() => void confirm()}
-              className="cta-primary w-full py-4 disabled:opacity-40"
+              className="cta-primary w-full py-4"
             >
               성구 추가
             </button>
           </div>
         ) : null}
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

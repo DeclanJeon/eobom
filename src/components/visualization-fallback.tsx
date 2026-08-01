@@ -6,6 +6,8 @@
 
 "use client";
 
+import { EmptyState } from "@/components/ui-blocks";
+
 type TimelinePoint = { date: string; count: number; themes: string[]; emotions: string[] };
 type NetworkNode = { id: string; label: string; weight: number };
 type NetworkEdge = { source: string; target: string; weight: number };
@@ -13,18 +15,20 @@ type EmotionPoint = { date: string; emotions: Record<string, number> };
 type MatchLink = { entryDate: string; entryExcerpt: string; cardName: string; workTitle: string; matchThemes: string[] };
 
 const EMOTION_COLORS: Record<string, string> = {
-  "기쁨": "#c5a059",
-  "슬픔": "#b36a5e",
-  "두려움": "#5c574f",
-  "감사": "#061b0e",
-  "희망": "#295c3b",
-  "불안": "#8a7a6a",
-  "후회": "#b36a5e",
-  "인내": "#061b0e",
+  "기쁨": "var(--accent-gold)",
+  "슬픔": "var(--accent-terracotta)",
+  "두려움": "var(--text-muted)",
+  "감사": "var(--primary)",
+  "희망": "var(--leaf)",
+  "불안": "var(--text-muted)",
+  "후회": "var(--accent-terracotta)",
+  "인내": "var(--primary)",
 };
 
+const FALLBACK_EMOTION_COLOR = "var(--text-muted)";
+
 export function TimelineFallback({ data }: { data: TimelinePoint[] }) {
-  if (data.length === 0) return <div className="p-4 text-label-sm text-text-muted">데이터 없음</div>;
+  if (data.length === 0) return <EmptyState title="데이터 없음" />;
 
   const maxCount = Math.max(...data.map((d) => d.count));
 
@@ -37,7 +41,7 @@ export function TimelineFallback({ data }: { data: TimelinePoint[] }) {
               className="w-full rounded-t"
               style={{
                 height: `${(d.count / maxCount) * 100}px`,
-                backgroundColor: EMOTION_COLORS[d.emotions[0]] ?? "#061b0e",
+                backgroundColor: EMOTION_COLORS[d.emotions[0]] ?? FALLBACK_EMOTION_COLOR,
                 opacity: 0.7,
               }}
             />
@@ -50,7 +54,7 @@ export function TimelineFallback({ data }: { data: TimelinePoint[] }) {
 }
 
 export function NetworkFallback({ nodes, edges }: { nodes: NetworkNode[]; edges: NetworkEdge[] }) {
-  if (nodes.length === 0) return <div className="p-4 text-label-sm text-text-muted">데이터 없음</div>;
+  if (nodes.length === 0) return <EmptyState title="데이터 없음" />;
 
   return (
     <div className="rounded-xl bg-chalk p-4">
@@ -65,7 +69,7 @@ export function NetworkFallback({ nodes, edges }: { nodes: NetworkNode[]; edges:
           const y1 = 50 + Math.floor(si / 5) * 70;
           const x2 = 50 + (ti % 5) * 70;
           const y2 = 50 + Math.floor(ti / 5) * 70;
-          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#061b0e" strokeWidth={1} opacity={0.3} />;
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--primary)" strokeWidth={1} opacity={0.3} />;
         })}
         {nodes.map((n, i) => {
           const x = 50 + (i % 5) * 70;
@@ -73,8 +77,8 @@ export function NetworkFallback({ nodes, edges }: { nodes: NetworkNode[]; edges:
           const r = Math.max(8, Math.min(20, n.weight * 3));
           return (
             <g key={n.id}>
-              <circle cx={x} cy={y} r={r} fill="#061b0e" opacity={0.6} />
-              <text x={x} y={y + r + 12} textAnchor="middle" fontSize={8} fill="#5c574f">
+              <circle cx={x} cy={y} r={r} fill="var(--primary)" opacity={0.6} />
+              <text x={x} y={y + r + 12} textAnchor="middle" fontSize={8} fill="var(--text-muted)">
                 {n.label.length > 6 ? n.label.slice(0, 6) + "…" : n.label}
               </text>
             </g>
@@ -86,7 +90,7 @@ export function NetworkFallback({ nodes, edges }: { nodes: NetworkNode[]; edges:
 }
 
 export function EmotionFallback({ data }: { data: EmotionPoint[] }) {
-  if (data.length === 0) return <div className="p-4 text-label-sm text-text-muted">데이터 없음</div>;
+  if (data.length === 0) return <EmptyState title="데이터 없음" />;
 
   const allEmotions = [...new Set(data.flatMap((d) => Object.keys(d.emotions)))];
 
@@ -101,7 +105,7 @@ export function EmotionFallback({ data }: { data: EmotionPoint[] }) {
                 className="w-full"
                 style={{
                   height: `${(d.emotions[e] ?? 0) * 8}px`,
-                  backgroundColor: EMOTION_COLORS[e] ?? "#999",
+                  backgroundColor: EMOTION_COLORS[e] ?? FALLBACK_EMOTION_COLOR,
                   opacity: 0.6,
                 }}
               />
@@ -113,7 +117,7 @@ export function EmotionFallback({ data }: { data: EmotionPoint[] }) {
       <div className="mt-2 flex flex-wrap gap-2">
         {allEmotions.map((e) => (
           <span key={e} className="flex items-center gap-1 text-[10px] text-text-muted">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: EMOTION_COLORS[e] ?? "#999" }} />
+            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: EMOTION_COLORS[e] ?? FALLBACK_EMOTION_COLOR }} />
             {e}
           </span>
         ))}
@@ -123,7 +127,7 @@ export function EmotionFallback({ data }: { data: EmotionPoint[] }) {
 }
 
 export function StoryMatchFallback({ links }: { links: MatchLink[] }) {
-  if (links.length === 0) return <div className="p-4 text-label-sm text-text-muted">데이터 없음</div>;
+  if (links.length === 0) return <EmptyState title="데이터 없음" />;
 
   return (
     <div className="rounded-xl bg-chalk p-4">

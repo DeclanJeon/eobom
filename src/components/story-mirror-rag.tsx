@@ -299,7 +299,7 @@ export function StoryMirrorRag({
 
   return (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-line bg-white/60 p-3 text-label-sm text-text-muted">
+        <div className="rounded-2xl border border-border bg-white/60 p-3 text-label-sm text-text-muted">
           <span className="text-accent-gold-ink">{seedLabel}</span> 회고를 바탕으로
           닮은 이야기를 찾아요.
         </div>
@@ -338,7 +338,7 @@ export function StoryMirrorRag({
               rows={4}
               maxLength={4000}
               placeholder="회고 내용이 그대로 담겨 있어요. 다른 마음을 잇고 싶다면 수정해 보세요."
-              className="w-full rounded-2xl border border-line bg-white/95 p-4 text-body-md text-primary outline-none transition ring-accent-gold/30 focus:ring-2"
+              className="w-full rounded-xl border border-border bg-white/95 p-4 text-body-md text-primary outline-none transition ring-accent-gold/30 focus:ring-2"
             />
             <div className="flex items-center gap-3">
               {!busy ? (
@@ -355,7 +355,7 @@ export function StoryMirrorRag({
                 <button
                   type="button"
                   onClick={() => setShowRefine(false)}
-                  className="text-label-xs text-text-muted underline"
+                  className="inline-flex min-h-11 items-center text-label-xs text-text-muted underline"
                 >
                   닫기
                 </button>
@@ -367,7 +367,7 @@ export function StoryMirrorRag({
         <button
           type="button"
           onClick={toggleHistory}
-          className="text-label-sm text-accent-gold-ink hover:underline"
+          className="inline-flex min-h-11 items-center text-label-sm text-accent-gold-ink hover:underline"
         >
           지난 연결{history ? ` (${history.length})` : ""} 보기
         </button>
@@ -388,7 +388,7 @@ export function StoryMirrorRag({
               key={r.id}
               type="button"
               onClick={() => openRun(r.id)}
-              className="w-full rounded-xl border border-line bg-white/80 p-3 text-left transition hover:border-accent-gold/40"
+              className="flex min-h-11 w-full rounded-xl border border-border bg-white/80 p-3 text-left transition hover:border-accent-gold/40"
             >
               <p className="line-clamp-2 text-body-sm text-primary">
                 {r.summary ?? "(요약 없음)"}
@@ -403,7 +403,7 @@ export function StoryMirrorRag({
             <button
               type="button"
               onClick={toggleHistory}
-              className="text-label-xs text-text-muted underline"
+              className="inline-flex min-h-11 items-center text-label-xs text-text-muted underline"
             >
               닫기
             </button>
@@ -488,7 +488,7 @@ export function StoryMirrorRag({
       {status === "error" && (
         <SurfaceCard className="text-center">
           <p className="text-headline-sm text-primary">잠시 멈춰 있어요</p>
-          <p className="mt-2 text-body-md text-text-muted">
+          <p className="mt-2 text-body-md text-destructive" role="alert">
             {errorMsg || "이야기 생성 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요."}
           </p>
         </SurfaceCard>

@@ -36,7 +36,7 @@ export function ReviewSectionNav({ items }: { items: TocItem[] }) {
       href={`#${it.id}`}
       aria-current={active === it.id ? "true" : undefined}
       className={cn(
-        "whitespace-nowrap rounded-full px-3 py-1.5 text-label-sm transition motion-reduce:transition-none",
+        "inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-1.5 text-label-sm transition motion-reduce:transition-none",
         active === it.id
           ? "bg-primary/5 text-primary"
           : "text-text-muted hover:text-primary",
@@ -67,7 +67,7 @@ export function ReviewSectionNav({ items }: { items: TocItem[] }) {
                 href={`#${it.id}`}
                 aria-current={active === it.id ? "true" : undefined}
                 className={cn(
-                  "block py-1 text-label-sm transition motion-reduce:transition-none",
+                  "flex min-h-11 items-center py-2 text-label-sm transition motion-reduce:transition-none",
                   active === it.id
                     ? "text-primary"
                     : "text-text-muted hover:text-primary",

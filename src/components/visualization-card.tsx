@@ -140,7 +140,7 @@ export function VisualizationCard({
 
       {!loading && error ? (
         <div className="rounded-xl bg-destructive/5 p-4 text-center">
-          <p className="text-label-sm text-destructive">{error}</p>
+          <p className="text-label-sm text-destructive" role="alert">{error}</p>
           <button
             type="button"
             onClick={() => generate(true)}

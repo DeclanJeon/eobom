@@ -37,7 +37,7 @@ export function ReviewSimpleView({
 
   return (
     <div className="mx-auto w-full max-w-reading space-y-6 md:space-y-8">
-      <section className="surface-card-dark rounded-3xl p-6 md:p-8">
+      <section className="surface-card-dark rounded-2xl p-6 md:p-8">
         <p className="text-label-sm text-on-dark-muted">이 기간의 요약</p>
         <h1 className="mt-3 text-display-lg leading-tight text-white md:text-4xl">
           {view.headline}

@@ -33,7 +33,7 @@ export function LoginButton({
           setLoading(false);
         }
       }}
-      className="cta-primary w-full py-4 disabled:opacity-60"
+      className="cta-primary w-full py-4"
     >
       {loading ? "연결 중…" : label}
     </button>

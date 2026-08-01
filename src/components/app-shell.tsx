@@ -48,14 +48,17 @@ export function AppShell({
   action,
   bare = false,
   wide = false,
+  publicLogo = false,
 }: {
   children: React.ReactNode;
   title?: string;
   titleClassName?: string;
   action?: React.ReactNode;
   bare?: boolean;
-  /** wider reading column for desktop (default false = content max-w-3xl) */
+  /** wider content container for desktop (default false = content max-w-3xl) */
   wide?: boolean;
+  /** keep the logo on the public landing page for unauthenticated surfaces */
+  publicLogo?: boolean;
 }) {
   const pathname = usePathname();
   const showPageHeader = Boolean(title || action) && !bare;
@@ -64,10 +67,12 @@ export function AppShell({
     <div className="min-h-dvh bg-background text-text-main">
       {/* Desktop / tablet top site chrome */}
       <header className="sticky top-0 z-40 hidden border-b border-border/80 bg-background/90 backdrop-blur-md md:block">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-8">
-            <Link href="/" className="flex shrink-0 items-center gap-2.5">
-              { }
+            <Link
+              href={publicLogo ? "/" : "/today"}
+              className="flex min-h-11 shrink-0 items-center gap-2.5"
+            >
               <img
                 src="/logo.svg"
                 alt=""
@@ -87,7 +92,7 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "rounded-lg border-b-2 border-transparent px-3.5 py-2 text-sm font-medium transition duration-200",
+                      "flex min-h-11 items-center rounded-lg border-b-2 border-transparent px-3.5 py-2 text-sm font-medium transition duration-200",
                       active
                         ? "border-accent-gold bg-primary/[0.06] text-primary"
                         : "text-text-muted hover:bg-surface-low hover:text-primary",
@@ -103,13 +108,13 @@ export function AppShell({
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/entries/new"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98]"
+              className="cta-primary px-4 text-sm"
             >
               새 묵상
             </Link>
             <Link
               href="/me"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-primary transition hover:border-accent-gold/40"
+              className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-primary transition hover:border-accent-gold/40"
               aria-label="내 정보"
             >
               <CircleUserRound className="h-5 w-5" strokeWidth={1.75} />
@@ -121,8 +126,7 @@ export function AppShell({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link href="/" className="flex items-center gap-2">
-            { }
+          <Link href={publicLogo ? "/" : "/today"} className="flex min-h-11 items-center gap-2">
             <img
               src="/logo.svg"
               alt=""
@@ -136,7 +140,7 @@ export function AppShell({
           </Link>
           <Link
             href="/me"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-primary"
+            className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-primary"
             aria-label="내 정보"
           >
             <CircleUserRound className="h-5 w-5" strokeWidth={1.75} />
@@ -147,26 +151,31 @@ export function AppShell({
       <div
         className={cn(
           "mx-auto w-full px-4 sm:px-6 lg:px-8",
-          wide ? "max-w-6xl" : "max-w-3xl",
+          "max-w-7xl",
           "pb-28 md:pb-12",
         )}
       >
-        {showPageHeader ? (
-          <div className="flex items-end justify-between gap-4 border-b border-border/70 py-5 md:py-8">
-            <div className="min-w-0">
-              {title ? (
-                <h1 className={cn("truncate text-2xl font-semibold tracking-tight text-primary md:text-3xl", titleClassName)}>
-                  {title}
-                </h1>
-              ) : null}
+        <div className={cn("mx-auto w-full", !wide && "max-w-3xl")}>
+          {showPageHeader ? (
+            <div className="flex items-end justify-between gap-4 border-b border-border/70 py-5 md:py-8">
+              <div className="min-w-0">
+                {title ? (
+                  <h1
+                    className={cn(
+                      "truncate text-2xl font-semibold tracking-tight text-primary md:text-3xl",
+                      titleClassName,
+                    )}
+                  >
+                    {title}
+                  </h1>
+                ) : null}
+              </div>
+              {action ? <div className="shrink-0">{action}</div> : null}
             </div>
-            {action ? <div className="shrink-0">{action}</div> : null}
-          </div>
-        ) : null}
+          ) : null}
 
-        <main className={cn(showPageHeader ? "py-5 md:py-8" : "py-5 md:py-8")}>
-          {children}
-        </main>
+          <main className="py-5 md:py-8">{children}</main>
+        </div>
       </div>
 
       {/* Mobile bottom: 오늘 | 기록 | ＋ | 돌아보기 | 함께 */}
@@ -183,7 +192,7 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-95",
+                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-[0.98]",
                   active ? "text-primary" : "text-text-muted",
                 )}
                 aria-current={active ? "page" : undefined}
@@ -201,7 +210,7 @@ export function AppShell({
             className="-mt-5 flex min-h-14 min-w-14 flex-col items-center justify-center"
             aria-label="새 묵상 쓰기"
           >
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition active:scale-95">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition active:scale-[0.98]">
               <Plus className="h-7 w-7" strokeWidth={2.25} />
             </span>
           </Link>
@@ -214,7 +223,7 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-95",
+                  "flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition active:scale-[0.98]",
                   active ? "text-primary" : "text-text-muted",
                 )}
                 aria-current={active ? "page" : undefined}

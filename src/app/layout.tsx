@@ -3,7 +3,6 @@ import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 import "@mdxeditor/editor/style.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { Toaster } from "@/components/ui/toaster";
 import { JsonLd } from "@/components/json-ld";
 
 const notoSans = Noto_Sans_KR({
@@ -150,7 +149,6 @@ export default function RootLayout({
         <JsonLd />
         <Providers>
           {children}
-          <Toaster />
         </Providers>
       </body>
     </html>

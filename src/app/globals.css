@@ -44,9 +44,7 @@
   --color-leaf: var(--leaf);
   --color-safety: var(--safety);
   --color-chalk: var(--chalk);
-  --color-line: var(--line);
   --color-ink: var(--ink);
-  --color-border-subtle: var(--border-subtle);
   --color-bg-warm: var(--bg-warm);
   --color-accent-gold-soft: var(--accent-gold-soft);
   --color-insight: var(--insight);
@@ -70,6 +68,7 @@
 }
 
 :root {
+  --nav-height: calc(3.5rem + env(safe-area-inset-bottom));
   /* Stitch Quiet Reflection palette */
   --background: #fbf9f6;
   --foreground: #1b1c1a;
@@ -77,7 +76,6 @@
   --surface-low: #f5f3f0;
   --surface-shared: #f0f4f2;
   --bg-warm: #f7f0e2;
-  --border-subtle: #e0ddd7;
   --text-main: #2d2d2d;
   --text-muted: #5c574f;
   --primary: #061b0e;
@@ -101,7 +99,6 @@
   --safety-blue: #4a6fa5;
   --safety: #ba1a1a;
   --chalk: #f5f3f0;
-  --line: #e0ddd7;
   --ink: #2d2d2d;
   --destructive: #ba1a1a;
   --border: #e0ddd7;
@@ -315,16 +312,31 @@
     font-weight: 500;
     font-family: var(--font-sans);
     min-height: 44px;
-    transition: transform 200ms ease;
+    transition: transform 200ms ease, background-color 160ms ease, box-shadow 160ms ease;
   }
 
-  .cta-primary:active {
+  .cta-primary:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--primary) 85%, white);
+    box-shadow: 0 4px 16px -4px rgba(6, 27, 14, 0.3);
+  }
+  .cta-primary:focus-visible,
+  .cta-secondary:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+  }
+
+  .cta-primary:active:not(:disabled) {
     transform: scale(0.98);
   }
+
   .cta-primary:disabled,
   .cta-secondary:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
+  }
+  :where(button, input, textarea, select):disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
   .cta-secondary {
@@ -340,10 +352,15 @@
     font-weight: 500;
     font-family: var(--font-sans);
     min-height: 44px;
-    transition: transform 200ms ease, border-color 160ms ease;
+    transition: transform 200ms ease, border-color 160ms ease, background-color 160ms ease;
   }
 
-  .cta-secondary:active {
+  .cta-secondary:hover:not(:disabled) {
+    border-color: var(--accent-gold);
+    background: color-mix(in oklab, var(--accent-gold) 20%, white);
+  }
+
+  .cta-secondary:active:not(:disabled) {
     transform: scale(0.98);
   }
 

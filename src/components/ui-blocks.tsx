@@ -40,7 +40,7 @@ export function Breadcrumb({
 }) {
   return (
     <nav className={cn("flex flex-wrap items-center gap-x-2 text-label-sm", className)} aria-label={ariaLabel}>
-      <Link href={href} className="text-leaf transition hover:text-primary">
+      <Link href={href} className="inline-flex min-h-11 items-center text-leaf transition hover:text-primary">
         ← {label}
       </Link>
       {current ? (
@@ -124,7 +124,7 @@ export function EntryRow({
   return (
     <Link
       href={href}
-      className="group flex min-h-11 items-start justify-between gap-3 border-b border-border/60 py-3 transition last:border-b-0 hover:bg-surface-low/50 active:scale-[0.99]"
+      className="group flex min-h-11 items-start justify-between gap-3 border-b border-border/60 py-3 transition last:border-b-0 hover:bg-surface-low/50 active:scale-[0.98]"
     >
       <div className="min-w-0 flex-1">
         <p className="text-label-xs text-text-muted">{date}</p>

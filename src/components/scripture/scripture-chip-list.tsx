@@ -23,7 +23,7 @@ export function ScriptureChipList({
               type="button"
               aria-label={`${b.display} 제거`}
               onClick={() => onRemove(b.slug)}
-              className="ml-1 text-text-muted hover:text-destructive"
+              className="-my-1.5 ml-1 flex min-h-[44px] min-w-[44px] items-center justify-center text-text-muted hover:text-destructive"
             >
               ×
             </button>

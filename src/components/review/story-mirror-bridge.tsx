@@ -24,13 +24,13 @@ export function StoryMirrorBridge({
           <div className="mt-3 flex flex-wrap gap-3">
             <Link
               href="/story-mirror"
-              className="inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
+              className="inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
             >
               이야기 보기 →
             </Link>
             <Link
               href="/story-mirror/visualize"
-              className="inline-flex items-center gap-1 text-label-md text-leaf hover:text-primary"
+              className="inline-flex min-h-11 items-center gap-1 text-label-md text-leaf hover:text-primary"
             >
               시각화 보기 →
             </Link>
@@ -51,7 +51,7 @@ export function StoryMirrorBridge({
         </div>
         <Link
           href="/story-mirror"
-          className="text-label-sm text-leaf hover:text-primary"
+          className="inline-flex min-h-11 items-center text-label-sm text-leaf hover:text-primary"
         >
           이야기 전체 →
         </Link>
@@ -66,7 +66,6 @@ export function StoryMirrorBridge({
             connection={story.connection}
             differentPerspective={story.differentPerspective}
             href={story.href}
-            compact
           />
         ))}
       </div>
@@ -74,7 +73,7 @@ export function StoryMirrorBridge({
       <div className="flex flex-wrap gap-3 pt-1">
         <Link
           href="/story-mirror/visualize"
-          className="inline-flex items-center gap-1 text-label-sm text-leaf hover:text-primary"
+          className="inline-flex min-h-11 items-center gap-1 text-label-sm text-leaf hover:text-primary"
         >
           이 흐름을 이미지로 기억하기 →
         </Link>

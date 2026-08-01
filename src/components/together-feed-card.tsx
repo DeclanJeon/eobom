@@ -71,7 +71,7 @@ export function TogetherFeedCard({
         ) : null}
       </Link>
 
-      <div className="mt-4 border-t border-border-subtle/70 px-5 py-3">
+      <div className="mt-4 border-t border-border/70 px-5 py-3">
         <TogetherActions id={item.id} counts={item.counts} />
       </div>
     </motion.article>

@@ -65,10 +65,10 @@ export function ObservationFeedback({
               onClick={() => sendFeedback(fb.type)}
               disabled={loading}
               aria-pressed={selected}
-              className={`rounded-full border px-3 py-1.5 text-label-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold/60 disabled:cursor-wait disabled:opacity-50 ${
+              className={`inline-flex min-h-11 items-center rounded-full border px-3 py-1.5 text-label-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-gold/60 disabled:cursor-wait ${
                 selected
                   ? "border-accent-gold bg-accent-gold/10 text-accent-gold-ink"
-                  : "border-line text-text-muted hover:border-accent-gold/50 hover:bg-chalk"
+                  : "border-border text-text-muted hover:border-accent-gold/50 hover:bg-chalk"
               }`}
             >
               {fb.label}
@@ -82,7 +82,7 @@ export function ObservationFeedback({
         </p>
       ) : null}
       {status === "error" ? (
-        <p className="text-label-xs text-accent-terracotta" role="alert">
+        <p className="text-label-xs text-destructive" role="alert">
           저장하지 못했어요. 잠시 후 다시 시도해 주세요.
         </p>
       ) : null}

@@ -209,21 +209,26 @@ export function EntryForm({
       templateType: values.templateType || "free",
     };
 
-    const res = await fetch(entryId ? `/api/entries/${entryId}` : "/api/entries", {
-      method: entryId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (!res.ok) {
-      setError(data.error || "저장에 실패했습니다.");
-      return;
+    try {
+      const res = await fetch(entryId ? `/api/entries/${entryId}` : "/api/entries", {
+        method: entryId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "저장에 실패했습니다.");
+        return;
+      }
+      localStorage.removeItem(draftKey);
+      setDraftMessage("");
+      router.push(`/entries/${data.entry.id}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "저장에 실패했습니다.");
+    } finally {
+      setSaving(false);
     }
-    localStorage.removeItem(draftKey);
-    setDraftMessage("");
-    router.push(`/entries/${data.entry.id}`);
-    router.refresh();
   }
 
   function optionalBlock(
@@ -234,9 +239,10 @@ export function EntryForm({
   ) {
     const isOpen = open[key];
     return (
-      <div className="rounded-2xl border border-border-subtle bg-surface-low/80">
+      <div className="rounded-2xl border border-border bg-surface-low/80">
         <button
           type="button"
+          aria-expanded={isOpen}
           onClick={() => setOpen((v) => ({ ...v, [key]: !v[key] }))}
           className="flex min-h-11 w-full items-center justify-between px-4 py-3.5 text-left text-label-md text-text-main"
         >
@@ -252,7 +258,7 @@ export function EntryForm({
               }
               rows={3}
               placeholder={placeholder}
-              className="w-full rounded-xl border border-border-subtle bg-white px-3 py-2.5 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
+              className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-body-md outline-none ring-accent-gold/30 focus:ring-2"
             />
           </div>
         ) : null}
@@ -265,7 +271,7 @@ export function EntryForm({
       <form
         id="entry-form"
         onSubmit={onSubmit}
-        className="space-y-8 pb-36 md:pb-28"
+        className="space-y-6 pb-36 md:pb-28"
       >
         <div className="flex items-center justify-between">
           <button
@@ -298,7 +304,7 @@ export function EntryForm({
             type="button"
             disabled={bindings.length >= 5}
             onClick={() => setPickerOpen(true)}
-            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-border-subtle bg-white px-4 py-3 text-left transition hover:border-accent-gold/40 disabled:opacity-40"
+            className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-border bg-white px-4 py-3 text-left transition hover:border-accent-gold/40"
           >
             <span className="text-label-md text-text-muted">
               {bindings.length
@@ -384,13 +390,13 @@ export function EntryForm({
         </section>
 
         {error ? (
-          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive">
+          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
             {error}
           </p>
         ) : null}
       </form>
 
-      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-border/70 bg-background/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:pb-safe">
+      <div className="fixed inset-x-0 bottom-[var(--nav-height)] z-40 border-t border-border/70 bg-background/95 px-4 py-3 backdrop-blur-md md:bottom-0 md:pb-safe">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <p className="text-label-sm text-text-muted" role="status">
             {autosaveLabel}
@@ -402,10 +408,13 @@ export function EntryForm({
               const form = document.getElementById("entry-form");
               if (form instanceof HTMLFormElement) form.requestSubmit();
             }}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 text-label-md text-primary-foreground transition hover:bg-primary/90 active:scale-[0.98] disabled:opacity-40"
+            className="cta-primary"
           >
             {saving ? "저장 중…" : entryId ? "수정 완료" : "묵상 마치기"}
           </button>
+          {!canSave && !saving ? (
+            <p className="text-label-sm text-text-muted">본문을 작성하면 저장할 수 있어요</p>
+          ) : null}
         </div>
       </div>
 

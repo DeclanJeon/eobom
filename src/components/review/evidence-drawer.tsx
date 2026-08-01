@@ -39,7 +39,7 @@ export function EvidenceDrawer({
             <div key={`${ev.entryId}-${idx}`} className="text-label-sm text-text-muted">
               <Link
                 href={`/entries/${ev.entryId}`}
-                className="text-primary underline-offset-2 hover:underline"
+                className="inline-flex min-h-11 items-center text-primary underline-offset-2 hover:underline"
               >
                 {ev.date
                   ? `${ev.date.slice(0, 10)} 기록 열기`

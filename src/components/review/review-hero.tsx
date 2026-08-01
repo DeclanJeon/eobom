@@ -22,7 +22,7 @@ export function ReviewHero({
     .join(" · ");
 
   return (
-    <section className="surface-card-dark rounded-3xl p-6 md:p-8">
+    <section className="surface-card-dark rounded-2xl p-6 md:p-8">
       <p className="text-label-sm text-on-dark-muted">AI 회고 초안</p>
       <h1 className="mt-3 text-display-lg leading-tight text-white md:text-4xl">
         {title}

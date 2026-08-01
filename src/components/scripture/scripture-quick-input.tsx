@@ -48,7 +48,7 @@ export function ScriptureQuickInput({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="직접 입력 (예: 시 23:1)"
-          className="min-h-[44px] flex-1 rounded-xl border border-border-subtle bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
+          className="min-h-[44px] flex-1 rounded-xl border border-border bg-white px-3 py-2 text-label-md outline-none ring-accent-gold/30 focus:ring-2"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -60,12 +60,16 @@ export function ScriptureQuickInput({
           type="button"
           disabled={loading || disabled || !text.trim()}
           onClick={() => void submit()}
-          className="min-h-[44px] rounded-xl bg-primary px-4 text-label-md text-primary-foreground disabled:opacity-40"
+          className="cta-primary min-h-11 rounded-xl px-4"
         >
           {loading ? "…" : "추가"}
         </button>
       </div>
-      {error ? <p className="text-label-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="text-label-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -131,7 +131,7 @@ export function OpenActionCard({ item }: { item: OpenActionItem }) {
                 type="button"
                 disabled={Boolean(pending)}
                 onClick={() => void choose(status)}
-                className="flex min-h-[44px] flex-col items-start rounded-xl border border-border bg-white px-4 py-2.5 text-left transition hover:border-accent-gold/40 disabled:opacity-50"
+                className="flex min-h-[44px] flex-col items-start rounded-xl border border-border bg-white px-4 py-2.5 text-left transition hover:border-accent-gold/40"
               >
                 <span className="text-label-md text-primary">
                   {pending === status ? "…" : ACTION_STATUS_LABEL[status]}
@@ -143,12 +143,12 @@ export function OpenActionCard({ item }: { item: OpenActionItem }) {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="text-label-sm text-text-muted underline-offset-2 hover:underline"
+            className="inline-flex min-h-11 items-center px-2 text-label-sm text-text-muted underline-offset-2 hover:underline"
           >
             접기
           </button>
           {error ? (
-            <p className="text-label-sm text-destructive">{error}</p>
+            <p className="text-label-sm text-destructive" role="alert">{error}</p>
           ) : null}
         </div>
       )}
