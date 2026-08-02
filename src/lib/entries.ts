@@ -1,5 +1,11 @@
 import { db } from "@/lib/db";
 import type { ScriptureBinding } from "@/lib/bible";
+import {
+  normalizeShareVisibility,
+  syncEntryShare,
+  withdrawSharesForDeletedEntry,
+  type ShareVisibility,
+} from "@/lib/entry-share";
 import { parseJsonArray, toJsonArray } from "@/lib/utils";
 
 export type EntryInput = {
@@ -18,6 +24,7 @@ export type EntryInput = {
   templateType?: string;
   privateNote?: string | null;
   cellShareSummary?: string | null;
+  shareVisibility?: ShareVisibility | string | null;
 };
 
 function normalizeBindings(input?: ScriptureBinding[] | null): ScriptureBinding[] {
@@ -106,6 +113,7 @@ export function serializeEntry(entry: {
   templateType: string;
   privateNote: string | null;
   cellShareSummary: string | null;
+  shareVisibility?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -114,6 +122,7 @@ export function serializeEntry(entry: {
   const scriptureRefs = parseJsonArray(entry.scriptureRefs);
   return {
     ...entry,
+    shareVisibility: normalizeShareVisibility(entry.shareVisibility),
     scriptureRefs,
     scriptureBindings,
     emotions: parseJsonArray(entry.emotions),
@@ -142,6 +151,7 @@ export async function createEntry(userId: string, input: EntryInput) {
       templateType: input.templateType || "free",
       privateNote: input.privateNote?.trim() || null,
       cellShareSummary: input.cellShareSummary?.trim() || null,
+      shareVisibility: normalizeShareVisibility(input.shareVisibility),
     },
   });
 
@@ -168,6 +178,7 @@ export async function createEntry(userId: string, input: EntryInput) {
     });
   }
 
+  await syncEntryShare(userId, entry.id);
   return serializeEntry(entry);
 }
 
@@ -196,10 +207,14 @@ export async function updateEntry(userId: string, id: string, input: EntryInput)
       templateType: input.templateType || existing.templateType,
       privateNote: input.privateNote?.trim() || null,
       cellShareSummary: input.cellShareSummary?.trim() || null,
+      shareVisibility: normalizeShareVisibility(
+        input.shareVisibility ?? existing.shareVisibility,
+      ),
     },
   });
 
   await syncActionStepForEntry(userId, entry.id, input.actionStep);
+  await syncEntryShare(userId, entry.id);
 
   return serializeEntry(entry);
 }
@@ -287,4 +302,5 @@ export async function softDeleteEntry(userId: string, id: string) {
     where: { id },
     data: { deletedAt: new Date() },
   });
+  await withdrawSharesForDeletedEntry(userId, id);
 }

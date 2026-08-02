@@ -37,6 +37,7 @@ export type EntryFormValues = {
   emotionsText?: string;
   tagsText?: string;
   templateType?: string;
+  shareVisibility?: "public" | "private";
 };
 
 function splitList(value?: string) {
@@ -76,6 +77,7 @@ export function EntryForm({
       reflectionBody: "",
       templateType: "free",
       scriptureBindings: [],
+      shareVisibility: "public",
     },
   );
   const [bindings, setBindings] = useState<ScriptureBinding[]>(
@@ -207,6 +209,7 @@ export function EntryForm({
       emotions: splitList(values.emotionsText),
       tags: splitList(values.tagsText),
       templateType: values.templateType || "free",
+      shareVisibility: values.shareVisibility === "private" ? "private" : "public",
     };
 
     try {
@@ -387,6 +390,63 @@ export function EntryForm({
             "actionStep",
             "작게 실천할 한 가지",
           )}
+        </section>
+
+        <section className="space-y-3 rounded-2xl border border-border bg-surface-low/70 p-4">
+          <div>
+            <p className="text-label-md text-primary">함께 공개</p>
+            <p className="mt-1 text-label-sm text-text-muted">
+              기본은 공개입니다. 공개하면 익명으로 함께 피드에 올라갑니다. 원문 전체 대신 정리된 나눔 문장만 보입니다.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() =>
+                setValues((prev) => ({ ...prev, shareVisibility: "public" }))
+              }
+              className={`min-h-11 rounded-xl border px-4 py-3 text-left transition ${
+                (values.shareVisibility ?? "public") === "public"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-white text-primary hover:border-accent-gold/40"
+              }`}
+              aria-pressed={(values.shareVisibility ?? "public") === "public"}
+            >
+              <span className="block text-label-md">공개</span>
+              <span
+                className={`mt-1 block text-label-sm ${
+                  (values.shareVisibility ?? "public") === "public"
+                    ? "text-primary-foreground/80"
+                    : "text-text-muted"
+                }`}
+              >
+                익명으로 함께에 나눔
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setValues((prev) => ({ ...prev, shareVisibility: "private" }))
+              }
+              className={`min-h-11 rounded-xl border px-4 py-3 text-left transition ${
+                values.shareVisibility === "private"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-white text-primary hover:border-accent-gold/40"
+              }`}
+              aria-pressed={values.shareVisibility === "private"}
+            >
+              <span className="block text-label-md">비공개</span>
+              <span
+                className={`mt-1 block text-label-sm ${
+                  values.shareVisibility === "private"
+                    ? "text-primary-foreground/80"
+                    : "text-text-muted"
+                }`}
+              >
+                나만 보는 기록
+              </span>
+            </button>
+          </div>
         </section>
 
         {error ? (

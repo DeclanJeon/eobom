@@ -108,6 +108,7 @@ model ReflectionEntry {
   templateType     String    @default("free")
   privateNote      String?
   cellShareSummary String?
+  shareVisibility  String    @default("public")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?

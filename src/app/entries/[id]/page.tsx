@@ -43,6 +43,9 @@ export default async function EntryDetailPage({
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2">
+            <SoftBadge>
+              {entry.shareVisibility === "private" ? "비공개" : "함께 공개"}
+            </SoftBadge>
             {(entry.scriptureBindings?.length
               ? entry.scriptureBindings.map((b) => b.display)
               : entry.scriptureRefs
@@ -119,9 +122,15 @@ export default async function EntryDetailPage({
         ) : null}
 
         <div className="flex flex-wrap gap-3 pt-2">
-          <Link href={`/together?from=${entry.id}`} className="cta-secondary">
-            공유
-          </Link>
+          {entry.shareVisibility === "private" ? (
+            <Link href={`/entries/${entry.id}/edit`} className="cta-secondary">
+              공개로 바꾸기
+            </Link>
+          ) : (
+            <Link href="/together" className="cta-secondary">
+              함께에서 보기
+            </Link>
+          )}
           <DeleteEntryButton id={entry.id} />
         </div>
       </article>

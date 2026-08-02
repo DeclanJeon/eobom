@@ -31,6 +31,7 @@ export const entryBodySchema = z.object({
   templateType: z.string().optional(),
   privateNote: z.string().nullable().optional(),
   cellShareSummary: z.string().nullable().optional(),
+  shareVisibility: z.enum(["public", "private"]).optional(),
 });
 
 export const reviewCreateSchema = z.object({

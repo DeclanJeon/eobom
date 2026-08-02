@@ -37,6 +37,7 @@ export default async function EditEntryPage({
             emotionsText: entry.emotions.join(", "),
             tagsText: entry.tags.join(", "),
             templateType: entry.templateType,
+            shareVisibility: entry.shareVisibility === "private" ? "private" : "public",
           }}
         />
       </div>
