@@ -45,6 +45,7 @@ export const togetherCreateSchema = z.object({
   publicBody: z.string(),
   scriptureRefs: z.array(z.string()).max(5).optional(),
   topicTags: z.array(z.string()).max(5).optional(),
+  imageUrls: z.array(z.string()).max(4).optional(),
   pseudonym: z.string().optional(),
 });
 

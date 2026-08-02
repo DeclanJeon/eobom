@@ -94,16 +94,16 @@ export default async function TogetherPage({
 
   return (
     <AppShell wide bare>
-      <section className="mb-6 max-w-2xl md:mb-8">
+      <section className="mb-5 max-w-xl md:mb-7">
         <PageIntro
           className="mb-0"
           eyebrow="익명 나눔"
           title="함께"
-          description="나눌 한 문장으로, 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지 않습니다."
+          description="Threads처럼 가볍게, 이어봄답게 조용히. 문장과 사진으로 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지 않습니다."
         />
       </section>
 
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-xl">
         <TogetherComposer
           sourceEntryId={source?.id}
           initialBody={sourceBody}
@@ -131,8 +131,8 @@ export default async function TogetherPage({
             title={tag ? `"#${tag}" 나눔이 아직 없습니다` : "아직 나눈 묵상이 없습니다"}
             description={
               tag
-                ? "다른 주제를 보거나, 첫 문장을 남겨 보세요."
-                : "마음에 남은 한 문장으로 조용히 시작해 보세요."
+                ? "다른 주제를 보거나, 첫 문장과 사진을 남겨 보세요."
+                : "마음에 남은 한 문장, 또는 한 장의 사진으로 조용히 시작해 보세요."
             }
             action={
               <Link href="/together?compose=1#together-composer" className="cta-primary">
@@ -155,6 +155,7 @@ export default async function TogetherPage({
                     item={{
                       id: item.id,
                       publicBody: item.publicBody,
+                      imageUrls: parseJsonArray(item.imageUrls),
                       scriptureRefs: parseJsonArray(item.scriptureRefs),
                       topicTags: parseJsonArray(item.topicTags),
                       pseudonym: item.pseudonym || "익명의 순례자",

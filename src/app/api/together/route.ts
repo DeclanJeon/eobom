@@ -23,6 +23,7 @@ import {
   consentCommunityDeniedBody,
   getUserPreferenceFlags,
 } from "@/lib/user-preferences";
+import { sanitizeCommunityImageUrls } from "@/lib/together-media";
 import { parseJsonArray, toJsonArray } from "@/lib/utils";
 
 export async function GET() {
@@ -43,6 +44,7 @@ export async function GET() {
     items: items.map((item) => ({
       id: item.id,
       publicBody: item.publicBody,
+      imageUrls: parseJsonArray(item.imageUrls),
       scriptureRefs: parseJsonArray(item.scriptureRefs),
       topicTags: parseJsonArray(item.topicTags),
       pseudonym: item.pseudonym || "익명의 순례자",
@@ -133,11 +135,14 @@ export async function POST(request: Request) {
     topicTags = generated.tags;
   }
 
+  const imageUrls = sanitizeCommunityImageUrls(body.imageUrls, 4);
+
   const created = await db.sharedReflection.create({
     data: {
       ownerUserId: user.id,
       sourceEntryId: body.sourceEntryId || null,
       publicBody,
+      imageUrls: toJsonArray(imageUrls),
       scriptureRefs: toJsonArray(scriptureRefs),
       topicTags: toJsonArray(topicTags),
       pseudonym: body.pseudonym?.trim() || "익명의 순례자",
@@ -150,6 +155,7 @@ export async function POST(request: Request) {
     {
       item: {
         ...created,
+        imageUrls,
         scriptureRefs,
         topicTags,
       },

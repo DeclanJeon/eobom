@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Sparkles, X } from "lucide-react";
+import { ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import type { ScriptureBinding } from "@/lib/bible";
 import { ScriptureChipList } from "@/components/scripture/scripture-chip-list";
 import { ScripturePicker } from "@/components/scripture/scripture-picker";
 import { ScripturePreviewCard } from "@/components/scripture/scripture-preview-card";
 import { ScriptureQuickInput } from "@/components/scripture/scripture-quick-input";
+import { TogetherImageGrid } from "@/components/together-image-grid";
+import { TOGETHER_MEDIA_MAX_COUNT } from "@/lib/together-media-shared";
+import { cn } from "@/lib/utils";
 
 export function ShareForm({
   sourceEntryId,
@@ -23,14 +26,17 @@ export function ShareForm({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [publicBody, setPublicBody] = useState(initialBody);
   const [bindings, setBindings] = useState<ScriptureBinding[]>(initialBindings);
   const [topicTags, setTopicTags] = useState<string[]>([]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showQuick, setShowQuick] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestNote, setSuggestNote] = useState("");
 
@@ -47,31 +53,67 @@ export function ShareForm({
     [bindings],
   );
 
-  const canSubmit = publicBody.trim().length >= 20 && !loading;
+  const canSubmit = publicBody.trim().length >= 20 && !loading && !uploading;
 
   function addBindings(next: ScriptureBinding[]) {
     setBindings((prev) => {
-      const map = new Map(prev.map((b) => [b.slug, b]));
-      for (const b of next) {
-        if (map.size >= 3) break;
-        map.set(b.slug, b);
+      const merged = [...prev];
+      for (const binding of next) {
+        if (!merged.some((item) => item.slug === binding.slug) && merged.length < 3) {
+          merged.push(binding);
+        }
       }
-      return [...map.values()].slice(0, 3);
+      return merged;
     });
   }
 
   function addTag(raw: string) {
-    const tag = raw.replace(/^#+/, "").trim().slice(0, 12);
+    const tag = raw.trim().replace(/^#/, "");
     if (tag.length < 2) return;
-    setTopicTags((prev) => {
-      if (prev.includes(tag) || prev.length >= 5) return prev;
-      return [...prev, tag];
-    });
+    setTopicTags((prev) => (prev.includes(tag) || prev.length >= 5 ? prev : [...prev, tag]));
     setTagInput("");
   }
 
   function removeTag(tag: string) {
     setTopicTags((prev) => prev.filter((t) => t !== tag));
+  }
+
+  function removeImage(url: string) {
+    setImageUrls((prev) => prev.filter((item) => item !== url));
+  }
+
+  async function uploadImages(files: FileList | File[]) {
+    const selected = Array.from(files).slice(0, TOGETHER_MEDIA_MAX_COUNT - imageUrls.length);
+    if (!selected.length) return;
+
+    setUploading(true);
+    setError("");
+    try {
+      for (const file of selected) {
+        const form = new FormData();
+        form.set("image", file);
+        const res = await fetch("/api/together/media", {
+          method: "POST",
+          body: form,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.error || "이미지 업로드에 실패했습니다.");
+        }
+        if (typeof data.url === "string") {
+          setImageUrls((prev) =>
+            prev.includes(data.url) || prev.length >= TOGETHER_MEDIA_MAX_COUNT
+              ? prev
+              : [...prev, data.url],
+          );
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "이미지 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   async function suggestTags() {
@@ -127,6 +169,7 @@ export function ShareForm({
           publicBody,
           scriptureRefs,
           topicTags,
+          imageUrls,
           pseudonym: "익명의 순례자",
         }),
       });
@@ -138,6 +181,7 @@ export function ShareForm({
       setPublicBody("");
       setBindings([]);
       setTopicTags([]);
+      setImageUrls([]);
       setSuggestNote("");
       onSuccess?.();
       router.refresh();
@@ -151,59 +195,112 @@ export function ShareForm({
   return (
     <>
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-label-md text-gold-ink">성구</p>
-              <p className="mt-0.5 text-label-sm text-text-muted">
-                선택하면 피드에 함께 표시됩니다
-              </p>
+        <div className="rounded-[1.75rem] border border-border/80 bg-white/95 p-4 shadow-[0_18px_50px_-36px_rgba(27,28,26,0.55)]">
+          <div className="flex items-start gap-3">
+            <span className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-warm text-label-md font-semibold text-gold-ink">
+              익
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-label-md text-primary">익명의 순례자</p>
+                <span className="rounded-full bg-surface-shared px-2 py-0.5 text-label-xs text-text-muted">
+                  원문 비공개
+                </span>
+              </div>
+              <textarea
+                value={publicBody}
+                onChange={(e) => setPublicBody(e.target.value)}
+                rows={compact ? 5 : 7}
+                className="mt-3 w-full resize-none border-0 bg-transparent p-0 text-[17px] leading-7 text-text-main outline-none placeholder:text-text-muted/70"
+                placeholder="마음에 남은 한 토막을 남겨 보세요. 사진도 함께 올릴 수 있어요."
+              />
+              <div className="mt-2 flex items-center justify-between gap-3 text-label-sm text-text-muted">
+                <span>원문은 공개되지 않습니다</span>
+                <span>{publicBody.trim().length}자</span>
+              </div>
             </div>
+          </div>
+
+          {imageUrls.length ? (
+            <div className="relative mt-4">
+              <TogetherImageGrid urls={imageUrls} />
+              <div className="absolute right-2 top-2 flex flex-wrap justify-end gap-1">
+                {imageUrls.map((url, index) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur"
+                    aria-label={`이미지 ${index + 1} 제거`}
+                  >
+                    <X className="size-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/70 pt-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                if (e.target.files?.length) void uploadImages(e.target.files);
+              }}
+            />
+            <button
+              type="button"
+              disabled={uploading || imageUrls.length >= TOGETHER_MEDIA_MAX_COUNT}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-white px-3.5 text-label-sm text-primary transition hover:border-accent-terracotta/40 hover:text-accent-terracotta"
+            >
+              {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+              {uploading ? "올리는 중…" : "사진"}
+            </button>
             <button
               type="button"
               disabled={bindings.length >= 3}
               onClick={() => setPickerOpen(true)}
-              className="min-h-11 rounded-full border border-accent-gold/35 bg-bg-warm px-3.5 py-2 text-label-md text-primary transition hover:border-accent-gold/55"
+              className="inline-flex min-h-11 items-center rounded-full border border-accent-gold/35 bg-bg-warm px-3.5 text-label-sm text-primary transition hover:border-accent-gold/55"
             >
-              + 성구 선택
+              + 성구
             </button>
+            <button
+              type="button"
+              onClick={() => setShowQuick((v) => !v)}
+              className="inline-flex min-h-11 items-center px-2 text-label-sm text-text-muted underline-offset-2 hover:underline"
+            >
+              {showQuick ? "직접 입력 닫기" : "성구 직접 입력"}
+            </button>
+            <span className="ml-auto text-label-xs text-text-muted">
+              사진 {imageUrls.length}/{TOGETHER_MEDIA_MAX_COUNT}
+            </span>
           </div>
-          <ScriptureChipList
-            bindings={bindings}
-            onRemove={(slug) =>
-              setBindings((prev) => prev.filter((b) => b.slug !== slug))
-            }
-          />
-          {bindings[0] ? <ScripturePreviewCard binding={bindings[0]} /> : null}
-          <button
-            type="button"
-            onClick={() => setShowQuick((v) => !v)}
-            className="inline-flex min-h-11 items-center px-2 text-label-sm text-text-muted underline-offset-2 hover:underline"
-          >
-            {showQuick ? "직접 입력 닫기" : "성구 직접 입력"}
-          </button>
+
+          {bindings.length ? (
+            <div className="mt-3 space-y-2">
+              <ScriptureChipList
+                bindings={bindings}
+                onRemove={(slug) =>
+                  setBindings((prev) => prev.filter((b) => b.slug !== slug))
+                }
+              />
+              {bindings[0] ? <ScripturePreviewCard binding={bindings[0]} /> : null}
+            </div>
+          ) : null}
+
           {showQuick ? (
-            <ScriptureQuickInput
-              disabled={bindings.length >= 3}
-              onAdd={addBindings}
-            />
+            <div className="mt-3">
+              <ScriptureQuickInput
+                disabled={bindings.length >= 3}
+                onAdd={addBindings}
+              />
+            </div>
           ) : null}
         </div>
-
-        <label className="block">
-          <span className="text-label-md text-primary">나누고 싶은 문장</span>
-          <textarea
-            value={publicBody}
-            onChange={(e) => setPublicBody(e.target.value)}
-            rows={compact ? 6 : 8}
-            className="mt-1.5 w-full rounded-xl border border-border bg-white px-4 py-3 text-body-md leading-relaxed outline-none ring-accent-gold/30 placeholder:text-zinc-400 focus:ring-2"
-            placeholder="원문 전체가 아니라, 마음에 남은 한 토막만 남겨 주세요. (20자 이상)"
-          />
-          <span className="mt-1.5 flex justify-between text-label-sm text-text-muted">
-            <span>원문은 공개되지 않습니다</span>
-            <span>{publicBody.trim().length}자</span>
-          </span>
-        </label>
 
         <div className="space-y-3 rounded-2xl border border-border bg-surface-low/70 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -288,7 +385,7 @@ export function ShareForm({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="cta-primary w-full"
+          className={cn("cta-primary w-full", !canSubmit && "opacity-60")}
         >
           {loading ? "게시 중…" : "익명으로 나누기"}
         </button>

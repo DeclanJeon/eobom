@@ -4,11 +4,13 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { SoftBadge } from "@/components/ui-blocks";
 import { TogetherActions } from "@/components/together-actions";
+import { TogetherImageGrid } from "@/components/together-image-grid";
 import { formatDateShort } from "@/lib/utils";
 
 export type TogetherFeedItem = {
   id: string;
   publicBody: string;
+  imageUrls?: string[];
   scriptureRefs: string[];
   topicTags: string[];
   pseudonym: string;
@@ -24,6 +26,8 @@ export function TogetherFeedCard({
   index?: number;
 }) {
   const reduceMotion = useReducedMotion();
+  const imageUrls = item.imageUrls ?? [];
+
   return (
     <motion.article
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
@@ -33,45 +37,58 @@ export function TogetherFeedCard({
           ? { duration: 0 }
           : { duration: 0.28, delay: Math.min(index * 0.04, 0.24) }
       }
-      className="paper-card overflow-hidden bg-surface-shared/55 p-0 transition hover:border-accent-gold/35"
+      className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-surface-shared/40 transition hover:border-accent-gold/35 hover:bg-surface-shared/70"
     >
-      <Link href={`/together/${item.id}`} className="block px-5 pt-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-full bg-bg-warm text-label-sm font-semibold text-gold-ink">
+      <div className="px-4 pt-4 sm:px-5 sm:pt-5">
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-bg-warm text-label-md font-semibold text-gold-ink">
             {(item.pseudonym || "익").slice(0, 1)}
           </span>
-          <p className="text-label-md text-primary">
-            {item.pseudonym || "익명의 순례자"}
-          </p>
-          <span className="text-label-sm text-text-muted">
-            {formatDateShort(item.publishedAt)}
-          </span>
-        </div>
-
-        {item.scriptureRefs.length ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {item.scriptureRefs.map((ref) => (
-              <span key={ref} className="chip-gold">
-                {ref}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className="text-label-md text-primary">
+                {item.pseudonym || "익명의 순례자"}
+              </p>
+              <span className="text-label-sm text-text-muted">·</span>
+              <span className="text-label-sm text-text-muted">
+                {formatDateShort(item.publishedAt)}
               </span>
-            ))}
+            </div>
+
+            <Link href={`/together/${item.id}`} className="mt-2 block">
+              {item.scriptureRefs.length ? (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {item.scriptureRefs.map((ref) => (
+                    <span key={ref} className="chip-gold">
+                      {ref}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <p className="whitespace-pre-wrap text-[16px] leading-7 text-text-main sm:text-[17px]">
+                {item.publicBody}
+              </p>
+
+              {imageUrls.length ? (
+                <div className="mt-3">
+                  <TogetherImageGrid urls={imageUrls} />
+                </div>
+              ) : null}
+
+              {item.topicTags.length ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {item.topicTags.map((tag) => (
+                    <SoftBadge key={tag}>#{tag}</SoftBadge>
+                  ))}
+                </div>
+              ) : null}
+            </Link>
           </div>
-        ) : null}
+        </div>
+      </div>
 
-        <p className="mt-3 line-clamp-6 whitespace-pre-wrap text-body-md leading-relaxed text-text-main">
-          {item.publicBody}
-        </p>
-
-        {item.topicTags.length ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {item.topicTags.map((tag) => (
-              <SoftBadge key={tag}>#{tag}</SoftBadge>
-            ))}
-          </div>
-        ) : null}
-      </Link>
-
-      <div className="mt-4 border-t border-border/70 px-5 py-3">
+      <div className="mt-3 border-t border-border/60 px-4 py-2.5 sm:px-5">
         <TogetherActions id={item.id} counts={item.counts} />
       </div>
     </motion.article>

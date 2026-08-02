@@ -40,8 +40,15 @@ describe("parseWithSchema", () => {
     expect(
       parseWithSchema(togetherCreateSchema, {
         publicBody: "x".repeat(20),
+        imageUrls: ["/api/together/media/11111111-1111-1111-1111-111111111111.jpg"],
       }).ok,
     ).toBe(true);
+    expect(
+      parseWithSchema(togetherCreateSchema, {
+        publicBody: "x".repeat(20),
+        imageUrls: Array.from({ length: 5 }, (_, i) => `/api/together/media/${i}.jpg`),
+      }).ok,
+    ).toBe(false);
     expect(parseWithSchema(reactionSchema, { reactionType: "pray" }).ok).toBe(
       true,
     );
