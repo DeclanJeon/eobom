@@ -70,7 +70,7 @@ export function AppShell({
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-8">
             <Link
-              href={publicLogo ? "/" : "/today"}
+              href="/"
               className="flex min-h-11 shrink-0 items-center gap-2.5"
             >
               <img
@@ -126,7 +126,7 @@ export function AppShell({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur-md md:hidden">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
-          <Link href={publicLogo ? "/" : "/today"} className="flex min-h-11 items-center gap-2">
+          <Link href="/" className="flex min-h-11 items-center gap-2">
             <img
               src="/logo.svg"
               alt=""
