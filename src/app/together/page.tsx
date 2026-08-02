@@ -99,7 +99,7 @@ export default async function TogetherPage({
           className="mb-0"
           eyebrow="익명 나눔"
           title="함께"
-          description="Threads처럼 가볍게, 이어봄답게 조용히. 문장과 사진으로 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지 않습니다."
+          description="문장과 사진으로 서로의 짐을 조금 덜어 줍니다. 원문은 공개되지 않습니다."
         />
       </section>
 

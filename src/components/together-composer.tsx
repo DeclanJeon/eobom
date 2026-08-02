@@ -82,7 +82,7 @@ export function TogetherComposer({
               익명으로 나누기
             </SheetTitle>
             <SheetDescription className="text-label-sm text-text-muted">
-              Threads처럼 가볍게, 이어봄답게 조용히. 원문은 공개되지 않습니다.
+              가볍게, 조용히. 원문은 공개되지 않습니다.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 py-4">
