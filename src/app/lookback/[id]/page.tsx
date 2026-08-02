@@ -134,23 +134,6 @@ export default async function LookbackDetailPage({
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-headline-sm text-primary">이야깃거리</h2>
-          <Link
-            href="/story-mirror"
-            className="inline-flex min-h-11 items-center text-label-sm text-leaf transition hover:text-primary"
-          >
-            이야기 더 보기 →
-          </Link>
-        </div>
-        <SurfaceCard className="p-4 text-body-md text-text-muted">
-          {storyItems.length > 0
-            ? "이 회고에서 닿은 이야기가 아래 본문에 담겨 있습니다."
-            : "아직 닿은 이야기가 없습니다. 기록을 쌓으면 고전·성경 이야기와 연결됩니다."}
-        </SurfaceCard>
-      </section>
-
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-headline-sm text-primary">지금의 모습</h2>
           <Link
             href="/story-mirror/visualize"

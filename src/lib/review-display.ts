@@ -43,6 +43,7 @@ export type DisplayReview = {
   actionFlow: DisplayObservation[];
   changesOrUnknown: string | null;
   rereadEntries: StructuredReview["rereadEntries"];
+  rereadScriptures: StructuredReview["rereadScriptures"];
   nextSteps: StructuredReview["nextSteps"];
   prayerPrompts: StructuredReview["prayerPrompts"];
   smallPractices: string[];
@@ -70,8 +71,18 @@ export type SimpleReviewCompanion = {
 export type SimpleReviewView = {
   headline: string;
   summary: string;
+  themes: DisplayObservation[];
+  questions: DisplayObservation[];
+  emotions: DisplayObservation[];
+  scriptureConnections: DisplayObservation[];
+  actionFlow: DisplayObservation[];
+  changesOrUnknown: string | null;
+  nextSteps: StructuredReview["nextSteps"];
+  prayerPrompts: StructuredReview["prayerPrompts"];
+  smallPractices: string[];
   stories: SimpleReviewStory[];
   scriptures: SimpleReviewScripture[];
+  rereadScriptures: SimpleReviewScripture[];
   companions: SimpleReviewCompanion[];
 };
 
@@ -143,6 +154,9 @@ export function normalizeReviewForDisplay(review: StructuredReview): DisplayRevi
     rereadEntries: (review.rereadEntries ?? [])
       .filter((r) => r?.entryId)
       .slice(0, 5),
+    rereadScriptures: (review.rereadScriptures ?? [])
+      .filter((r) => r?.ref?.trim())
+      .slice(0, 3),
     nextSteps: (review.nextSteps ?? [])
       .filter((n) => n?.action?.trim())
       .slice(0, CAPS.nextSteps),
@@ -333,6 +347,13 @@ export function toSimpleReviewView(
       why: s.reason?.trim() || s.focus?.trim() || "이 시기에 다시 머물 만한 본문입니다.",
     }));
 
+  const rereadScriptures: SimpleReviewScripture[] = display.rereadScriptures
+    .slice(0, 3)
+    .map((s) => ({
+      ref: s.display || s.ref,
+      why: s.openQuestion || s.reason || "지난 기록에서 이어진 본문입니다.",
+    }));
+
   const companions = buildCompanions(display);
 
   // community questions can enrich companions if still short
@@ -351,8 +372,18 @@ export function toSimpleReviewView(
   return {
     headline,
     summary: summary || headline,
+    themes: display.themes.slice(0, 3),
+    questions: display.questions.slice(0, 3),
+    emotions: display.emotions.slice(0, 3),
+    scriptureConnections: display.scriptureConnections.slice(0, 3),
+    actionFlow: display.actionFlow.slice(0, 3),
+    changesOrUnknown: display.changesOrUnknown,
+    nextSteps: display.nextSteps.slice(0, 3),
+    prayerPrompts: display.prayerPrompts.slice(0, 3),
+    smallPractices: display.smallPractices.slice(0, 3),
     stories,
     scriptures,
+    rereadScriptures,
     companions: companions.slice(0, 3),
   };
 }
