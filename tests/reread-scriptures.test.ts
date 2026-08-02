@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { generateReviewWithMimo } from "../src/lib/mimo";
 import {
+  excludeUsedScriptureReadings,
   finalizeReviewRereadScriptures,
   isReviewStaleForHome,
   normalizeRereadScriptures,
@@ -398,6 +399,87 @@ describe("generateReviewWithMimo fallback reread", () => {
       if (prev === undefined) delete process.env.MIMO_API_KEY;
       else process.env.MIMO_API_KEY = prev;
     }
+  });
+
+  test("local fallback scriptureReadings are new refs, never reuse entry scriptures", async () => {
+    const prev = process.env.MIMO_API_KEY;
+    process.env.MIMO_API_KEY = "";
+    try {
+      const entries = [
+        {
+          id: "e1",
+          entryDate: "2026-07-01T00:00:00.000Z",
+          title: "t",
+          scriptureRefs: ["시편 23:1", "마태복음 11:28-30"],
+          scriptureExcerpt: null,
+          reflectionBody: "묵상 본문입니다.",
+          gratitude: null,
+          question: null,
+          prayer: null,
+          actionStep: null,
+          emotions: ["평안"],
+          tags: ["말씀"],
+        },
+      ];
+      const { review, modelProvider } = await generateReviewWithMimo(entries, "cumulative");
+      expect(modelProvider).toBe("local-fallback");
+      expect(review.scriptureReadings.length).toBeGreaterThan(0);
+      // 재사용 금지: 추천 성구는 사용자가 기록한 본문과 겹치면 안 된다.
+      const used = new Set(entries.flatMap((e) => e.scriptureRefs));
+      for (const s of review.scriptureReadings) {
+        expect(used.has(s.ref)).toBe(false);
+        expect(s.ref).not.toContain("시편 23");
+        expect(s.ref).not.toContain("마태복음 11");
+      }
+    } finally {
+      if (prev === undefined) delete process.env.MIMO_API_KEY;
+      else process.env.MIMO_API_KEY = prev;
+    }
+  });
+});
+
+describe("excludeUsedScriptureReadings (POST path)", () => {
+  test("drops refs the user already recorded, keeps new ones", () => {
+    const out = excludeUsedScriptureReadings(
+      [
+        { ref: "시편 23:1", reason: "기록에 이미 있음", focus: "x" },
+        { ref: "빌립보서 4:6-7", reason: "새 본문", focus: "y" },
+        { ref: "이사야 43:1-2", reason: "또 다른 새 본문", focus: "z" },
+      ],
+      ["시 23:1"],
+      3,
+    );
+    expect(out.map((s) => s.ref)).toEqual(["빌립보서 4:6-7", "이사야 43:1-2"]);
+    expect(out[0]?.reason).toBe("새 본문");
+  });
+
+  test("same chapter counts as reuse even with different verse range", () => {
+    const out = excludeUsedScriptureReadings(
+      [
+        { ref: "시편 23:1-6", reason: "같은 장 다른 절", focus: "f" },
+        { ref: "마태복음 11:28-30", reason: "진짜 새 본문", focus: "f" },
+      ],
+      ["시 23:1"],
+      3,
+    );
+    expect(out.map((s) => s.ref)).toEqual(["마태복음 11:28-30"]);
+  });
+
+  test("handles broken input and honors max", () => {
+    expect(excludeUsedScriptureReadings(null, [])).toEqual([]);
+    expect(excludeUsedScriptureReadings(undefined, [])).toEqual([]);
+    expect(excludeUsedScriptureReadings("x" as never, [])).toEqual([]);
+    const out = excludeUsedScriptureReadings(
+      [
+        { ref: "마태복음 11:28-30", reason: "a", focus: "f" },
+        { ref: "시 11:28", reason: "중복 키", focus: "f" },
+        { ref: "요한복음 3:16", reason: "b", focus: "f" },
+        { ref: "창세기 1:1", reason: "c", focus: "f" },
+      ],
+      [],
+      2,
+    );
+    expect(out).toHaveLength(2);
   });
 });
 

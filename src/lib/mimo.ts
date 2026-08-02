@@ -5,9 +5,78 @@ import {
   resolveSituationContext,
 } from "@/lib/wisdom/classifier";
 import { buildSituationPrompt } from "@/lib/wisdom/prompt-builder";
+import {
+  formatBibleReferenceKey,
+  parseBibleReferences,
+} from "@/lib/bible";
 
 const DISCLAIMER =
   "이 회고는 사용자가 남긴 기록을 정리한 성찰 자료입니다. 하나님의 뜻, 신앙 상태 또는 성경의 최종 해석을 판정하지 않으며, 기도와 성경 본문 읽기, 공동체의 분별을 대신하지 않습니다.";
+
+/**
+ * fallback(AI 불가/미설정) 시 제안하는 신규 성구 후보.
+ * 사용자가 이미 기록한 성구와 겹치지 않는 것만 선택한다.
+ */
+const FALLBACK_SCRIPTURE_READINGS: ScriptureReading[] = [
+  {
+    ref: "시편 23:1-6",
+    reason:
+      "길을 잃은 듯할 때, 인도하시는 목자를 다시 떠올리게 하는 본문입니다.",
+    focus:
+      "‘부족함이 없으리라’는 고백이 당신의 현재 상황에서 어떤 의미인지 천천히 읽어 보세요.",
+  },
+  {
+    ref: "마태복음 11:28-30",
+    reason:
+      "지치고 무거운 마음을 내려놓을 자리를 제안하는 본문입니다.",
+    focus:
+      "‘내게로 오라’는 말씀이 당신이 붙들고 있는 고민과 어떻게 만나는지 보세요.",
+  },
+  {
+    ref: "빌립보서 4:6-7",
+    reason:
+      "염려가 반복될 때, 감사와 기도로 평안을 찾는 길을 보여 줍니다.",
+    focus:
+      "염려 목록을 기도로 옮겨 적어 보면 말씀이 구체적으로 다가옵니다.",
+  },
+  {
+    ref: "이사야 43:1-2",
+    reason:
+      "두려움과 고립의 자리에서 함께하시는 분을 기억하게 하는 본문입니다.",
+    focus:
+      "‘두려워하지 말라’는 말씀이 당신의 어떤 두려움과 마주하는지 살펴보세요.",
+  },
+  {
+    ref: "고린도전서 13:4-7",
+    reason:
+      "관계와 사랑의 방향을 다시 세우는 본문입니다.",
+    focus:
+      "‘오래 참고’ ‘온유하며’ 같은 표현이 당신의 관계에서 어떤 자리를 찾는지 보세요.",
+  },
+];
+
+/** 기록에 등장한 성구 키 집합 (장 단위 — 같은 장이면 재사용으로 본다) */
+function usedScriptureKeys(entries: EntryForReview[]): Set<string> {
+  const keys = new Set<string>();
+  for (const entry of entries) {
+    for (const raw of entry.scriptureRefs) {
+      const parsed = parseBibleReferences(raw)[0];
+      if (parsed) keys.add(`${parsed.code}-${parsed.chapter}`);
+    }
+  }
+  return keys;
+}
+
+/** fallback용 신규 성구: 사용자가 이미 쓴 본문(장)은 제외하고 최대 2개 제안. */
+function pickFallbackScriptureReadings(
+  entries: EntryForReview[],
+): ScriptureReading[] {
+  const used = usedScriptureKeys(entries);
+  return FALLBACK_SCRIPTURE_READINGS.filter((r) => {
+    const parsed = parseBibleReferences(r.ref)[0];
+    return parsed ? !used.has(`${parsed.code}-${parsed.chapter}`) : false;
+  }).slice(0, 2);
+}
 
 
 export type ReviewObservation = {
@@ -198,13 +267,7 @@ function fallbackReview(entries: EntryForReview[]): StructuredReview {
           "버림의 장면이 아니라, 보이지 않던 사람이 비로소 발견되는 장면입니다.",
       },
     ],
-    scriptureReadings: [
-      ...new Set(entries.flatMap((e) => e.scriptureRefs)),
-    ].slice(0, 2).map((ref) => ({
-      ref,
-      reason: "이 기록에서 마음이 움직인 본문입니다.",
-      focus: "문맥 전체를 읽고, 현재 자신의 상황과 연결해 보세요.",
-    })),
+    scriptureReadings: pickFallbackScriptureReadings(entries),
     nextSteps: [
       { action: "이번 주 한 번의 묵상만 남겨 보기", reason: "부담 없이 시작하기" },
       { action: "이전 결단 중 하나를 다시 읽고 한 줄 결과 적기", reason: "결단의 흐름을 이어가기" },
@@ -304,7 +367,7 @@ export async function generateReviewWithMimo(
 2. emotions: 기록에서 나타나는 감정 2~3개. key, title, body, confidence, evidence 포함.
 3. questions: 기록에서 드러난 질문 1~2개. key, title, body, evidence 포함.
 4. storyConnections: 사용자의 주제와 겹치는 고전 인물·비유·교훈 2~3개. story(제목), source(출처), connection(2~4문장 입체 서사: 겉으로 보이는 모습 → 그 안에 있던 마음 → 사용자 기록과 겹치는 지점 → 변화의 씨앗), differentPerspective(한 문장 응축. 예: '강함만 본 것이 아니라 그 안에서 혼자 버티던 사람을 본 것이다') 포함. 성경 인물(다윗, 루스, 엘리야, 욥, 베드로 등), 한국 고전, 세계 고전을 활용. 사용자가 자신의 기록이 더 입체적으로 느껴지도록, 비슷한 열망·외로움·자존심·회귀를 살았던 인물이 이미 존재했음을 보여 주세요.
-5. scriptureReadings: 주제와 연결된 성경 본문 2~3개. ref(성구), reason(읽는 이유), focus(주목할 점) 포함.
+5. scriptureReadings: 사용자의 기록 주제와 연결된 **새로운** 성경 본문 2~3개. ref(성구), reason(읽는 이유), focus(주목할 점) 포함. entries.scriptureRefs에 이미 있는 본문은 절대 반복하지 마세요. 사용자가 아직 기록하지 않은, 주제에 맞는 본문을 제안하세요.
 6. actionFlow: 이전 기록에서 나타난 결단과 그 흐름.
 7. changesOrUnknown: 달라진 점과 아직 알 수 없는 점.
 8. nextSteps: 구체적 다음 실천 1~2개. action(실천), reason(이유) 포함.

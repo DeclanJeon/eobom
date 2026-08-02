@@ -5,6 +5,7 @@ import {
   toSlug,
 } from "@/lib/bible";
 import { scrubMirrorText } from "@/lib/content-scrub";
+import type { ScriptureReading } from "@/lib/mimo";
 
 
 const DEFAULT_MAX = 3;
@@ -276,4 +277,60 @@ export function finalizeReviewRereadScriptures(
   max = DEFAULT_MAX,
 ): RereadScripture[] {
   return normalizeRereadScriptures(rereadScriptures, { allowedRefs, max });
+}
+
+/**
+ * Persist-path helper for scriptureReadings (신규 추천 성구):
+ * 사용자가 이미 기록한 본문(usedRefs)과 겹치는 항목을 제거한다.
+ * scriptureReadings는 재방문 제안이 아니라 주제 기반 새 본문이어야 하므로,
+ * 재사용이 섞여 들어오면 잘라낸다.
+ */
+export function excludeUsedScriptureReadings(
+  readings:
+    | Array<{ ref: string; reason?: string; focus?: string }>
+    | undefined
+    | null,
+  usedRefs: string[],
+  max = DEFAULT_MAX,
+): ScriptureReading[] {
+  if (!Array.isArray(readings)) return [];
+  // 장 단위 비교: 이미 기록한 본문과 같은 장이면 재사용으로 보고 제거한다.
+  const usedChapterKeys = new Set<string>();
+  for (const raw of usedRefs) {
+    const parsed = parseFirstRef(raw);
+    if (parsed) usedChapterKeys.add(`${parsed.code}-${parsed.chapter}`);
+  }
+  const seen = new Set<string>();
+  const out: ScriptureReading[] = [];
+
+  for (const item of readings) {
+    if (out.length >= max) break;
+    if (!item || typeof item !== "object") continue;
+
+    const raw = item as Record<string, unknown>;
+    const refRaw = typeof raw.ref === "string" ? raw.ref.trim() : "";
+    if (!refRaw) continue;
+
+    const parsed = parseFirstRef(refRaw);
+    if (!parsed) continue;
+
+    if (usedChapterKeys.has(`${parsed.code}-${parsed.chapter}`)) continue;
+
+    const slug = toSlug(parsed);
+    if (seen.has(slug)) continue;
+    seen.add(slug);
+
+    const reasonRaw =
+      typeof raw.reason === "string" ? scrubReason(raw.reason) : "";
+    const focusRaw =
+      typeof raw.focus === "string" ? scrubReason(raw.focus) : "";
+
+    out.push({
+      ref: toDisplay(parsed),
+      reason: reasonRaw || "이 시기에 다시 머물 만한 본문입니다.",
+      focus: focusRaw || "문맥 전체를 읽고, 현재 자신의 상황과 연결해 보세요.",
+    });
+  }
+
+  return out;
 }

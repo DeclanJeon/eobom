@@ -4,7 +4,10 @@ import { parseJsonBody, reviewCreateSchema } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
 import { parseJsonArray } from "@/lib/utils";
 import { generateReviewWithMimo } from "@/lib/mimo";
-import { finalizeReviewRereadScriptures } from "@/lib/reread-scriptures";
+import {
+  excludeUsedScriptureReadings,
+  finalizeReviewRereadScriptures,
+} from "@/lib/reread-scriptures";
 import {
   checkRateLimit,
   RATE_LIMITS,
@@ -99,6 +102,11 @@ export async function POST(request: Request) {
   const allowed = mapped.flatMap((e) => e.scriptureRefs);
   review.rereadScriptures = finalizeReviewRereadScriptures(
     review.rereadScriptures,
+    allowed,
+    3,
+  );
+  review.scriptureReadings = excludeUsedScriptureReadings(
+    review.scriptureReadings,
     allowed,
     3,
   );
