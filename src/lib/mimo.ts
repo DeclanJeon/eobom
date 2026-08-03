@@ -341,31 +341,62 @@ export async function generateReviewWithMimo(
   entries: EntryForReview[],
   reportType: string,
 ): Promise<{ review: StructuredReview; modelProvider: string; modelName: string }> {
-  const apiKey = process.env.MIMO_API_KEY?.trim();
-  const baseURL = (process.env.MIMO_BASE_URL || "https://api.xiaomimimo.com/v1").replace(
-    /\/$/,
-    "",
-  );
-  const model = process.env.MIMO_MODEL || "mimo-v2.5";
+  // 1차: MIMO(주력, reasoning 계열이라 시간 여유) → 2차: DeepSeek(OpenAI 호환 fallback)
+  //     → 최종: local-fallback(휴리스틱)
+  type Provider = {
+    name: string;
+    apiKey: string | undefined;
+    baseURL: string;
+    model: string;
+    timeoutMs: number;
+    retries: number;
+  };
+  const providers: Provider[] = [];
 
-  if (!apiKey || entries.length === 0) {
+  const mimoKey = process.env.MIMO_API_KEY?.trim();
+  if (mimoKey) {
+    providers.push({
+      name: "mimo",
+      apiKey: mimoKey,
+      baseURL: (process.env.MIMO_BASE_URL || "https://api.xiaomimimo.com/v1").replace(/\/$/, ""),
+      model: process.env.MIMO_MODEL || "mimo-v2.5",
+      timeoutMs: 90_000,
+      retries: 1,
+    });
+  }
+
+  const deepseekKey = process.env.DEEPSEEK_API_KEY?.trim();
+  if (deepseekKey) {
+    providers.push({
+      name: "deepseek",
+      apiKey: deepseekKey,
+      baseURL: (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, ""),
+      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
+      timeoutMs: 60_000,
+      retries: 1,
+    });
+  }
+
+  if (providers.length === 0 || entries.length === 0) {
     return {
       review: deepScrubMirror(fallbackReview(entries)),
-      modelProvider: apiKey ? "mimo" : "local-fallback",
-      modelName: apiKey ? model : "heuristic-v1",
+      modelProvider: providers.length ? providers[0].name : "local-fallback",
+      modelName: providers[0]?.model ?? "heuristic-v1",
     };
   }
 
+  // 상황 분류는 첫 번째 provider로 시도한다. 실패해도(콘텐츠 스킵) 회고 생성은 진행.
   let situationPrompt = "";
+  const primary = providers[0];
   try {
-    const classificationRes = await fetch(`${baseURL}/chat/completions`, {
+    const classificationRes = await fetch(`${primary.baseURL}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${primary.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: primary.model,
         temperature: 0.2,
         max_completion_tokens: 512,
         messages: [
@@ -438,28 +469,17 @@ export async function generateReviewWithMimo(
     },
   };
 
-  /**
-   * mimo-v2.5는 reasoning 계열이라 버프가 끝난 뒤에야 content(JSON)를 낸다.
-   * 긴 회고 생성은 30초 안에 끝나지 못해 fallback으로 밀려나는 실측(서버 로그
-   * "MiMo generate failed [TimeoutError]")에 따라 첫 시도 타임아웃을 90초로
-   * 잡고, 그래도 실패하면 1회 재시도한다. 재시도까지 실패 시에만 fallback.
-   */
-  const REVIEW_TIMEOUT_MS = 90_000;
-  const REVIEW_MAX_RETRIES = 1;
-
-  async function requestReview(): Promise<{
+  async function requestReview(provider: Provider): Promise<{
     review: StructuredReview;
-    provider: string;
-    name: string;
   }> {
-    const res = await fetch(`${baseURL}/chat/completions`, {
+    const res = await fetch(`${provider.baseURL}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: provider.model,
         temperature: 0.4,
         max_completion_tokens: 8192,
         messages: [
@@ -470,12 +490,12 @@ export async function generateReviewWithMimo(
           },
         ],
       }),
-      signal: AbortSignal.timeout(REVIEW_TIMEOUT_MS),
+      signal: AbortSignal.timeout(provider.timeoutMs),
     });
 
     if (!res.ok) {
       const text = await res.text();
-      const err = new Error(`MiMo HTTP ${res.status}: ${text.slice(0, 200)}`);
+      const err = new Error(`[${provider.name}] HTTP ${res.status}: ${text.slice(0, 200)}`);
       throw err;
     }
 
@@ -485,36 +505,36 @@ export async function generateReviewWithMimo(
     const content = data.choices?.[0]?.message?.content ?? "";
     if (!content.trim()) {
       // reasoning 계열 모델이 reasoning_content에만 답을 남기고 content가
-      // 비어 돌아오는 경우를 막기 위해 여기서 재시도 대상으로 잡는다.
-      throw new Error("MiMo returned empty content");
+      // 비어 돌아오는 경우를 재시도 대상으로 잡는다.
+      throw new Error(`[${provider.name}] returned empty content`);
     }
     const jsonText = extractJson(content);
     const parsed = safeParseJson(jsonText) as StructuredReview | null;
-    if (!parsed) throw new Error("MiMo JSON parse failed");
+    if (!parsed) throw new Error(`[${provider.name}] JSON parse failed`);
     parsed.disclaimer = DISCLAIMER;
-    return {
-      review: deepScrubMirror(parsed),
-      provider: "mimo",
-      name: model,
-    };
+    return { review: deepScrubMirror(parsed) };
   }
 
+  // provider 순서대로 각각의 재시도 횟수만큼 시도하고, 다음 provider로 넘어간다.
+  // 모든 provider 실패 시에만 local-fallback(휴리스틱).
   let lastError: unknown = null;
-  for (let attempt = 0; attempt <= REVIEW_MAX_RETRIES; attempt++) {
-    try {
-      const out = await requestReview();
-      return {
-        review: out.review,
-        modelProvider: out.provider,
-        modelName: out.name,
-      };
-    } catch (error) {
-      lastError = error;
-      console.warn(`MiMo generate attempt ${attempt + 1} failed`, error);
+  for (const provider of providers) {
+    for (let attempt = 0; attempt <= provider.retries; attempt++) {
+      try {
+        const out = await requestReview(provider);
+        return {
+          review: out.review,
+          modelProvider: provider.name,
+          modelName: provider.model,
+        };
+      } catch (error) {
+        lastError = error;
+        console.warn(`[${provider.name}] generate attempt ${attempt + 1} failed`, error);
+      }
     }
   }
 
-  console.error("MiMo generate exhausted retries", lastError);
+  console.error("All providers exhausted", lastError);
   return {
     review: deepScrubMirror(fallbackReview(entries)),
     modelProvider: "local-fallback",
