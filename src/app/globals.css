@@ -635,10 +635,17 @@
   font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.8;
+  caret-color: var(--primary, #061b0e);
 }
 
 .eobom-editor-content:focus {
   outline: none;
+}
+
+/* 포커스 중에는 안내 문구를 숨기고 커서만 남긴다 */
+.eobom-editor-shell[data-focused="true"] .eobom-editor [class*="_placeholder_"] {
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 
 .eobom-editor-content img,
