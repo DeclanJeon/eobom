@@ -81,7 +81,9 @@ export function OpenActionCard({ item }: { item: OpenActionItem }) {
     <div className="paper-card writing-margin border border-border p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-eyebrow">열린 결단</p>
-        <span className="chip-gold">{item.statusLabel}</span>
+        {item.status !== "pending" ? (
+          <span className="chip-gold">{item.statusLabel}</span>
+        ) : null}
       </div>
 
       <p className="mt-3 font-journal text-lg leading-relaxed text-primary">

@@ -23,12 +23,15 @@ export function toJsonArray(values: string[] | undefined | null): string {
 
 export function formatDateKo(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("ko-KR", {
+  const base = new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "long",
     day: "numeric",
+  }).format(d);
+  const weekday = new Intl.DateTimeFormat("ko-KR", {
     weekday: "short",
   }).format(d);
+  return `${base} (${weekday})`;
 }
 
 export function formatDateShort(date: Date | string): string {

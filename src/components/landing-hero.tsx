@@ -122,19 +122,19 @@ export function LandingHero({
           <nav className="flex items-center gap-2 text-label-md">
             <Link
               href="/updates"
-              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+              className="hidden min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary md:inline-flex"
             >
               개발노트
             </Link>
             <Link
               href="/suggest"
-              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+              className="hidden min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary md:inline-flex"
             >
               제안하기
             </Link>
             <Link
               href="/contact"
-              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+              className="hidden min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary md:inline-flex"
             >
               문의
             </Link>
