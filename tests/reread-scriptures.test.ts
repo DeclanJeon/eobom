@@ -361,8 +361,10 @@ describe("finalizeReviewRereadScriptures (POST path)", () => {
 
 describe("generateReviewWithMimo fallback reread", () => {
   test("local fallback reread refs come from entry scriptures and finalize cleanly", async () => {
-    const prev = process.env.MIMO_API_KEY;
+    const prevMimo = process.env.MIMO_API_KEY;
+    const prevDeepseek = process.env.DEEPSEEK_API_KEY;
     process.env.MIMO_API_KEY = "";
+    process.env.DEEPSEEK_API_KEY = "";
     try {
       const entries = [
         {
@@ -396,14 +398,18 @@ describe("generateReviewWithMimo fallback reread", () => {
         true,
       );
     } finally {
-      if (prev === undefined) delete process.env.MIMO_API_KEY;
-      else process.env.MIMO_API_KEY = prev;
+      if (prevMimo === undefined) delete process.env.MIMO_API_KEY;
+      else process.env.MIMO_API_KEY = prevMimo;
+      if (prevDeepseek === undefined) delete process.env.DEEPSEEK_API_KEY;
+      else process.env.DEEPSEEK_API_KEY = prevDeepseek;
     }
   });
 
   test("local fallback scriptureReadings are new refs, never reuse entry scriptures", async () => {
-    const prev = process.env.MIMO_API_KEY;
+    const prevMimo = process.env.MIMO_API_KEY;
+    const prevDeepseek = process.env.DEEPSEEK_API_KEY;
     process.env.MIMO_API_KEY = "";
+    process.env.DEEPSEEK_API_KEY = "";
     try {
       const entries = [
         {
@@ -432,8 +438,10 @@ describe("generateReviewWithMimo fallback reread", () => {
         expect(s.ref).not.toContain("마태복음 11");
       }
     } finally {
-      if (prev === undefined) delete process.env.MIMO_API_KEY;
-      else process.env.MIMO_API_KEY = prev;
+      if (prevMimo === undefined) delete process.env.MIMO_API_KEY;
+      else process.env.MIMO_API_KEY = prevMimo;
+      if (prevDeepseek === undefined) delete process.env.DEEPSEEK_API_KEY;
+      else process.env.DEEPSEEK_API_KEY = prevDeepseek;
     }
   });
 });

@@ -371,8 +371,8 @@ export async function generateReviewWithMimo(
       name: "deepseek",
       apiKey: deepseekKey,
       baseURL: (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, ""),
-      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-pro",
-      timeoutMs: 60_000,
+      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
+      timeoutMs: 90_000,
       retries: 1,
     });
   }
@@ -398,7 +398,9 @@ export async function generateReviewWithMimo(
       body: JSON.stringify({
         model: primary.model,
         temperature: 0.2,
-        max_completion_tokens: 512,
+        ...(primary.name === "deepseek"
+          ? { max_tokens: 512, thinking: { type: "disabled" } }
+          : { max_completion_tokens: 512 }),
         messages: [
           { role: "system", content: "너는 상황 분류기다. JSON만 응답하라." },
           { role: "user", content: buildClassificationPrompt(entries) },
@@ -409,10 +411,18 @@ export async function generateReviewWithMimo(
 
     if (classificationRes.ok) {
       const classData = (await classificationRes.json()) as {
-        choices?: Array<{ message?: { content?: string } }>;
+        choices?: Array<{
+          message?: { content?: string; reasoning_content?: string };
+        }>;
       };
-      const classContent = classData.choices?.[0]?.message?.content ?? "";
-      const classJson = safeParseJson(extractJson(classContent));
+      const classMessage = classData.choices?.[0]?.message;
+      const classContent =
+        classMessage?.content?.trim() ||
+        classMessage?.reasoning_content?.trim() ||
+        "";
+      const classJson = classContent
+        ? safeParseJson(extractJson(classContent))
+        : null;
       if (classJson) {
         const situationContext = resolveSituationContext({
           primary: typeof classJson.primary === "string" ? classJson.primary : "",
@@ -481,7 +491,12 @@ export async function generateReviewWithMimo(
       body: JSON.stringify({
         model: provider.model,
         temperature: 0.4,
-        max_completion_tokens: 8192,
+        // OpenAI 신형(MIMO)은 max_completion_tokens, DeepSeek OpenAI-compat은 max_tokens.
+        // DeepSeek V4는 thinking 기본 enabled라 content가 비고 reasoning만 차는 경우가 있어
+        // 회고 JSON 생성에서는 thinking을 끈다.
+        ...(provider.name === "deepseek"
+          ? { max_tokens: 8192, thinking: { type: "disabled" } }
+          : { max_completion_tokens: 8192 }),
         messages: [
           { role: "system", content: system },
           {
@@ -495,17 +510,23 @@ export async function generateReviewWithMimo(
 
     if (!res.ok) {
       const text = await res.text();
-      const err = new Error(`[${provider.name}] HTTP ${res.status}: ${text.slice(0, 200)}`);
-      throw err;
+      throw new Error(
+        `[${provider.name}] HTTP ${res.status}: ${text.slice(0, 200)}`,
+      );
     }
 
     const data = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      choices?: Array<{
+        message?: { content?: string; reasoning_content?: string };
+      }>;
     };
-    const content = data.choices?.[0]?.message?.content ?? "";
-    if (!content.trim()) {
-      // reasoning 계열 모델이 reasoning_content에만 답을 남기고 content가
-      // 비어 돌아오는 경우를 재시도 대상으로 잡는다.
+    const message = data.choices?.[0]?.message;
+    // reasoning 계열은 content가 비고 reasoning_content에만 JSON이 올 수 있다.
+    const content =
+      message?.content?.trim() ||
+      message?.reasoning_content?.trim() ||
+      "";
+    if (!content) {
       throw new Error(`[${provider.name}] returned empty content`);
     }
     const jsonText = extractJson(content);
