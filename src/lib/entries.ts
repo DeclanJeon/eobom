@@ -179,6 +179,13 @@ export async function createEntry(userId: string, input: EntryInput) {
   }
 
   await syncEntryShare(userId, entry.id);
+
+  // 마지막 기록 시간 업데이트 (이메일 리마인더용)
+  await db.user.update({
+    where: { id: userId },
+    data: { lastRecordedAt: new Date() },
+  });
+
   return serializeEntry(entry);
 }
 

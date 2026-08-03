@@ -12,7 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "test": "bun run pretest && bun test tests/",
-    "pretest": "echo 'DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;' | DATABASE_URL=file:./db/eobom-test.db prisma db execute --stdin --schema prisma/schema.prisma; DATABASE_URL=file:./db/eobom-test.db prisma db push --accept-data-loss --skip-generate && DATABASE_URL=file:./db/eobom-test.db prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma",
+    "pretest": "echo 'DROP TRIGGER IF EXISTS story_chunk_ai; DROP TRIGGER IF EXISTS story_chunk_ad; DROP TRIGGER IF EXISTS story_chunk_au; DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;' | DATABASE_URL=file:./db/eobom-test.db prisma db execute --stdin --schema prisma/schema.prisma; DATABASE_URL=file:./db/eobom-test.db prisma db push --accept-data-loss --skip-generate && DATABASE_URL=file:./db/eobom-test.db prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma",
     "postinstall": "prisma generate",
     "test:unit": "bun run pretest && DATABASE_URL=file:./db/eobom-test.db bun test tests/",
     "test:seats": "bun run pretest && DATABASE_URL=file:./db/eobom-test.db bun test tests/seats.test.ts",

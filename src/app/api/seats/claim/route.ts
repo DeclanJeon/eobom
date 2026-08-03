@@ -12,6 +12,7 @@ import {
   normalizeSeatSlug,
   registerDevice,
 } from "@/lib/seats";
+import { trySendWelcomeEmail } from "@/lib/mail";
 
 function clearClaimCookie(res: NextResponse) {
   res.cookies.set(CLAIM_COOKIE, "", {
@@ -75,6 +76,14 @@ export async function POST(request: Request) {
       const { token } = generateDeviceToken();
       await registerDevice(user.id, token, "keyring-claim");
       res = setDeviceCookie(res, token);
+
+      // 환영 메일 발송 — 중복 방지/로그는 헬퍼가 담당, 실패해도 claim은 성공
+      void trySendWelcomeEmail({
+        userId: user.id,
+        email: user.email,
+        name: user.name || "",
+        slug: seat.slug,
+      });
     }
     clearClaimCookie(res);
     return res;

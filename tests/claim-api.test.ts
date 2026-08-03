@@ -18,6 +18,15 @@ mock.module("@/lib/session", () => ({
   }),
 }));
 
+// 환영 메일 발송은 실제 SMTP를 타지 않도록 스텁 처리한다.
+// fire-and-forget 비동기 작업이 테스트 정리 이후에도 DB를 건드려
+// FK 위반을 일으키는 것을 막는다. 실제 모듈 export는 보존한다.
+const realMail = await import("../src/lib/mail");
+mock.module("@/lib/mail", () => ({
+  ...realMail,
+  trySendWelcomeEmail: async () => false,
+}));
+
 const route = await import("../src/app/api/seats/claim/route");
 
 describe("claim API", () => {

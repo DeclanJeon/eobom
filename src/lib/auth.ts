@@ -13,6 +13,7 @@ import {
   isKeyringSlug,
   normalizeSeatSlug,
 } from "@/lib/seats";
+import { trySendWelcomeEmail } from "@/lib/mail";
 
 const ONE_YEAR = 365 * 24 * 60 * 60;
 const useHttps = (process.env.NEXTAUTH_URL ?? "").startsWith("https://");
@@ -35,7 +36,14 @@ async function applyClaimIfNeeded(
   const slug = await readClaimSlugFromCookie();
   if (!slug || !isKeyringSlug(slug)) return;
   try {
-    await claimSeat(userId, email, slug);
+    const seat = await claimSeat(userId, email, slug);
+    // OAuth 재로그인 시 키링 claim → 환영 메일 (중복 방지/로그는 헬퍼가 담당)
+    void trySendWelcomeEmail({
+      userId,
+      email,
+      name: "",
+      slug: seat.slug,
+    });
   } catch (e) {
     if (!(e instanceof ClaimError)) {
       console.error("claim on signIn failed", e);
@@ -141,6 +149,15 @@ export const authOptions: NextAuthOptions = {
           if (!taken) {
             try {
               await claimSeat(user.id, user.email, claimSlug);
+              // OAuth 신규 가입 시 키링 claim → 환영 메일 (중복 방지/로그는 헬퍼가 담당)
+              if (user.email) {
+                void trySendWelcomeEmail({
+                  userId: user.id,
+                  email: user.email,
+                  name: user.name || "",
+                  slug: claimSlug,
+                });
+              }
               personalSlug = claimSlug;
               viaKeyring = true;
             } catch (e) {

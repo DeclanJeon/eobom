@@ -48,8 +48,25 @@ model User {
   storyMirrorEnabled              Boolean  @default(false)
   storyMirrorExternalConsent      Boolean  @default(false)
   storyMirrorLastConsentVersion   String?
+  lastRecordedAt                 DateTime?
+  emailNotifications             Boolean   @default(true)
+
+  emailLogs EmailLog[]
 
   @@index([personalSlug])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailType String   // welcome | reminder_3d | reminder_7d | weekly_digest | admin_report | daily_scripture
+  sentAt    DateTime @default(now())
+  recipient String   // 수신 이메일 주소
+  meta      String?  // daily_scripture: slug 형식 (PSA-42-1-5)
+
+  @@index([userId, emailType])
+  @@index([sentAt])
 }
 
 model Account {
