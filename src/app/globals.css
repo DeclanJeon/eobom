@@ -429,6 +429,176 @@
   .nav-active-mark {
     background: var(--accent-gold);
   }
+
+  /* ── Mirror Narrative (돌아보기 서사) ─────────────────────── */
+
+  /* 막 번호 — 서사의 장을 여는 큰 숫자 */
+  .act-number {
+    font-family: var(--font-sans);
+    font-size: clamp(2.25rem, 6vw, 3rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: color-mix(in oklab, var(--accent-gold-ink) 70%, transparent);
+  }
+
+  /* 막 제목 아래 금실 */
+  .act-rule {
+    height: 1px;
+    width: 3rem;
+    background: color-mix(in oklab, var(--accent-gold) 60%, transparent);
+  }
+
+  /* 사용자 원문 인용구 — 서사의 주인공 */
+  .narrative-quote {
+    position: relative;
+    border-left: 2px solid color-mix(in oklab, var(--accent-gold) 45%, transparent);
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    transition: border-color 200ms ease;
+  }
+  .narrative-quote::before {
+    content: "\201C";
+    position: absolute;
+    left: 0.125rem;
+    top: -0.4rem;
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    line-height: 1;
+    color: color-mix(in oklab, var(--accent-gold) 55%, transparent);
+  }
+  .narrative-quote:hover {
+    border-left-color: var(--accent-gold);
+  }
+  .narrative-quote-text {
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    line-height: 1.9;
+    color: var(--text-main);
+  }
+  .narrative-quote-date {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* 막 전환 문장 — 다음 막으로 잇는 등뼈 */
+  .act-transition {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--leaf) 80%, var(--text-muted));
+  }
+
+  .tone-bar {
+    height: 6px;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--accent-gold) 30%, var(--surface-low));
+    overflow: hidden;
+  }
+  .tone-bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--accent-gold-ink) 75%, var(--leaf));
+  }
+
+  /* 좌측 등뼈 목차 (데스크톱 sticky rail) */
+  .spine-rail {
+    position: sticky;
+    top: calc(var(--nav-height) + 2rem);
+  }
+  .spine-line {
+    position: absolute;
+    left: 5px;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: color-mix(in oklab, var(--accent-gold) 22%, var(--border));
+  }
+  .spine-node {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  .spine-node::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    border: 2px solid color-mix(in oklab, var(--accent-gold) 40%, var(--border));
+    background: var(--background);
+    transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .spine-node[data-active="true"]::before {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent-gold) 22%, transparent);
+  }
+  .spine-node[data-passed="true"]::before {
+    background: color-mix(in oklab, var(--accent-gold) 60%, var(--leaf));
+    border-color: color-mix(in oklab, var(--accent-gold) 60%, var(--leaf));
+  }
+
+  /* 막 진입 reveal — reduced-motion은 전역 @media가 0.01ms로 무력화 */
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+  .reveal[data-shown="true"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* spine 진행률 — 지나온 막을 금실로 채운다 */
+  .spine-progress {
+    position: absolute;
+    left: 5px;
+    top: 0.5rem;
+    width: 2px;
+    background: linear-gradient(
+      to bottom,
+      var(--accent-gold),
+      color-mix(in oklab, var(--accent-gold) 70%, var(--leaf))
+    );
+    border-radius: 9999px;
+    transition: height 320ms ease;
+  }
+
+  /* 막 ambient — linen 위 옅은 forest 그레인이 막 진입 시 숨쉰다 */
+  .act-ambient {
+    position: relative;
+  }
+  .act-ambient::before {
+    content: "";
+    position: absolute;
+    inset: -1.5rem -1rem;
+    z-index: -1;
+    border-radius: 1.5rem;
+    background: radial-gradient(
+      120% 80% at 0% 0%,
+      color-mix(in oklab, var(--leaf) 5%, transparent),
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 400ms ease;
+    pointer-events: none;
+  }
+  .act-ambient[data-shown="true"]::before {
+    opacity: 1;
+  }
+
+  /* 인용구 출처 — hover 시 살짝 떠오른다 */
+  .narrative-quote-date {
+    transition: transform 200ms ease, color 200ms ease;
+  }
+  .narrative-quote:hover .narrative-quote-date {
+    transform: translateY(-1px);
+    color: var(--accent-gold-ink);
+  }
 }
 
 /* MDXEditor: calm, high-contrast journal surface */

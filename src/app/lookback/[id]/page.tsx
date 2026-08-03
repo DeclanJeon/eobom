@@ -13,6 +13,7 @@ import {
 } from "@/lib/review-display";
 import { ReviewDetailHeader } from "@/components/review/review-detail-header";
 import { ReviewSimpleView } from "@/components/review/review-simple-view";
+import { ReviewSectionNav } from "@/components/review/review-section-nav";
 import { VisualizationCard } from "@/components/visualization-card";
 import { getReviewScopedStoryItems } from "@/lib/story-mirror/db";
 import {
@@ -100,9 +101,24 @@ export default async function LookbackDetailPage({
     });
   }
 
+  const spineItems = simple
+    ? [
+        ...simple.acts.map((a) => ({ id: a.id, number: a.number, title: a.title })),
+        ...(simple.hasMeet
+          ? [
+              {
+                id: "act-meet",
+                number: String(simple.acts.length + 1).padStart(2, "0"),
+                title: "만남과 말씀",
+              },
+            ]
+          : []),
+      ]
+    : [];
+
   return (
     <AppShell>
-      <div className="mb-5">
+      <div className="mb-6">
         <ReviewDetailHeader
           reportType={report.reportType}
           periodStart={report.periodStart}
@@ -111,15 +127,65 @@ export default async function LookbackDetailPage({
       </div>
 
       {simple && display ? (
-        <ReviewSimpleView
-          periodStart={report.periodStart}
-          periodEnd={report.periodEnd}
-          entryCount={entryCount}
-          view={simple}
-          boundary={reviewLimitationsText(display)}
-        />
+        <div className="mx-auto grid w-full max-w-6xl gap-10 lg:grid-cols-[12rem_minmax(0,1fr)]">
+          <ReviewSectionNav items={spineItems} variant="rail" />
+          <div className="min-w-0">
+            <ReviewSimpleView
+              periodStart={report.periodStart}
+              periodEnd={report.periodEnd}
+              entryCount={entryCount}
+              view={simple}
+              boundary={reviewLimitationsText(display)}
+              spineItems={spineItems}
+            />
+
+            <section id="act-epilogue" className="mt-14 scroll-mt-24">
+              <header className="mb-4">
+                <span className="act-number block">
+                  {String(spineItems.length + 1).padStart(2, "0")}
+                </span>
+                <h2 className="mt-2 text-headline-md text-primary">지금의 모습</h2>
+                <p className="mt-1 text-label-sm text-text-muted">
+                  지금까지의 나를 한 장으로
+                </p>
+                <span aria-hidden className="act-rule mt-4 block" />
+              </header>
+              {vizRow ? (
+                <VisualizationCard
+                  kind="summary"
+                  initial={{
+                    id: vizRow.id,
+                    kind: vizRow.kind,
+                    status: vizRow.status,
+                    imageUrl: vizRow.imageUrl,
+                    dataJson: vizRow.dataJson,
+                    freshness: vizFreshness,
+                  }}
+                  initialFreshness={vizFreshness}
+                />
+              ) : (
+                <VisualizationCard kind="summary" initialFreshness="none" />
+              )}
+            </section>
+
+            <div className="mt-10 flex flex-wrap gap-3 border-t border-border/70 pt-6">
+              <Link
+                href="/reviews/new"
+                className="cta-secondary min-h-[44px] px-5 py-2.5"
+              >
+                새 회고 작성
+              </Link>
+              <Link
+                href="/lookback"
+                className="text-label-sm text-leaf transition hover:text-primary inline-flex min-h-11 items-center"
+              >
+                다른 회고 목록 →
+              </Link>
+            </div>
+          </div>
+        </div>
       ) : (
-        <div className="mt-4">
+        <div className="mx-auto max-w-reading">
           <SurfaceCard>
             <h2 className="text-headline-sm text-primary">
               회고 본문을 열 수 없습니다
@@ -131,49 +197,6 @@ export default async function LookbackDetailPage({
           </SurfaceCard>
         </div>
       )}
-
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-headline-sm text-primary">지금의 모습</h2>
-          <Link
-            href="/story-mirror/visualize"
-            className="inline-flex min-h-11 items-center text-label-sm text-leaf transition hover:text-primary"
-          >
-            크게 보기 →
-          </Link>
-        </div>
-        {vizRow ? (
-          <VisualizationCard
-            kind="summary"
-            initial={{
-              id: vizRow.id,
-              kind: vizRow.kind,
-              status: vizRow.status,
-              imageUrl: vizRow.imageUrl,
-              dataJson: vizRow.dataJson,
-              freshness: vizFreshness,
-            }}
-            initialFreshness={vizFreshness}
-          />
-        ) : (
-          <VisualizationCard kind="summary" initialFreshness="none" />
-        )}
-      </section>
-
-      <div className="mt-8 flex flex-wrap gap-3 border-t border-border/70 pt-6">
-        <Link
-          href="/reviews/new"
-          className="cta-primary min-h-[44px] px-5 py-2.5"
-        >
-          새 회고 작성
-        </Link>
-        <Link
-          href="/lookback"
-          className="cta-secondary min-h-[44px] px-5 py-2.5"
-        >
-          다른 회고 목록
-        </Link>
-      </div>
     </AppShell>
   );
 }
