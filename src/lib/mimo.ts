@@ -373,7 +373,7 @@ export async function generateReviewWithMimo(
           { role: "user", content: buildClassificationPrompt(entries) },
         ],
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(25_000),
     });
 
     if (classificationRes.ok) {
@@ -438,7 +438,20 @@ export async function generateReviewWithMimo(
     },
   };
 
-  try {
+  /**
+   * mimo-v2.5는 reasoning 계열이라 버프가 끝난 뒤에야 content(JSON)를 낸다.
+   * 긴 회고 생성은 30초 안에 끝나지 못해 fallback으로 밀려나는 실측(서버 로그
+   * "MiMo generate failed [TimeoutError]")에 따라 첫 시도 타임아웃을 90초로
+   * 잡고, 그래도 실패하면 1회 재시도한다. 재시도까지 실패 시에만 fallback.
+   */
+  const REVIEW_TIMEOUT_MS = 90_000;
+  const REVIEW_MAX_RETRIES = 1;
+
+  async function requestReview(): Promise<{
+    review: StructuredReview;
+    provider: string;
+    name: string;
+  }> {
     const res = await fetch(`${baseURL}/chat/completions`, {
       method: "POST",
       headers: {
@@ -457,40 +470,56 @@ export async function generateReviewWithMimo(
           },
         ],
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(REVIEW_TIMEOUT_MS),
     });
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("MiMo error", res.status, text);
-      return {
-        review: deepScrubMirror(fallbackReview(entries)),
-        modelProvider: "local-fallback",
-        modelName: "heuristic-v1",
-      };
+      const err = new Error(`MiMo HTTP ${res.status}: ${text.slice(0, 200)}`);
+      throw err;
     }
 
     const data = (await res.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
     const content = data.choices?.[0]?.message?.content ?? "";
+    if (!content.trim()) {
+      // reasoning 계열 모델이 reasoning_content에만 답을 남기고 content가
+      // 비어 돌아오는 경우를 막기 위해 여기서 재시도 대상으로 잡는다.
+      throw new Error("MiMo returned empty content");
+    }
     const jsonText = extractJson(content);
     const parsed = safeParseJson(jsonText) as StructuredReview | null;
-    if (!parsed) throw new Error("JSON parse failed");
+    if (!parsed) throw new Error("MiMo JSON parse failed");
     parsed.disclaimer = DISCLAIMER;
     return {
       review: deepScrubMirror(parsed),
-      modelProvider: "mimo",
-      modelName: model,
-    };
-  } catch (error) {
-    console.error("MiMo generate failed", error);
-    return {
-      review: deepScrubMirror(fallbackReview(entries)),
-      modelProvider: "local-fallback",
-      modelName: "heuristic-v1",
+      provider: "mimo",
+      name: model,
     };
   }
+
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt <= REVIEW_MAX_RETRIES; attempt++) {
+    try {
+      const out = await requestReview();
+      return {
+        review: out.review,
+        modelProvider: out.provider,
+        modelName: out.name,
+      };
+    } catch (error) {
+      lastError = error;
+      console.warn(`MiMo generate attempt ${attempt + 1} failed`, error);
+    }
+  }
+
+  console.error("MiMo generate exhausted retries", lastError);
+  return {
+    review: deepScrubMirror(fallbackReview(entries)),
+    modelProvider: "local-fallback",
+    modelName: "heuristic-v1",
+  };
 }
 
 function extractJson(content: string): string {
