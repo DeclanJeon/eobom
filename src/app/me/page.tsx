@@ -4,6 +4,7 @@ import { PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireUser } from "@/lib/session";
 import { appUrl } from "@/lib/utils";
+import { appVersionLabel } from "@/lib/version";
 
 export const metadata = { title: "내 정보" };
 
@@ -57,8 +58,11 @@ export default async function MePage() {
         ))}
       </div>
 
-      <div className="mt-8 max-w-sm">
+      <div className="mt-8 max-w-sm space-y-3">
         <SignOutButton />
+        <p className="text-label-sm text-text-muted">
+          이어봄 {appVersionLabel()}
+        </p>
       </div>
     </AppShell>
   );

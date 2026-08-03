@@ -1,0 +1,85 @@
+name: Release notes
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-notes-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump-and-note:
+    if: ${{ !contains(github.event.head_commit.message, '[skip release]') && !startsWith(github.event.head_commit.message, 'chore(release):') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Detect bump from commits since previous tag
+        id: prep
+        run: |
+          set -euo pipefail
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            FROM=$(git describe --tags --abbrev=0)
+          else
+            FROM=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "from=$FROM" >> "$GITHUB_OUTPUT"
+          SUBJECTS=$(git log "$FROM"..HEAD --pretty=format:%s --no-merges | sed '/^chore(release)/d' || true)
+          if [ -z "$SUBJECTS" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          BUMP=patch
+          if echo "$SUBJECTS" | grep -Eiq '\[major\]|BREAKING CHANGE'; then
+            BUMP=major
+          elif echo "$SUBJECTS" | grep -Eiq '\[minor\]|^feat(\(.+\))?:|전면|재설계|추가한다|확장한다|신설'; then
+            BUMP=minor
+          fi
+          echo "bump=$BUMP" >> "$GITHUB_OUTPUT"
+          echo "subjects<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$SUBJECTS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Generate version + dev note
+        if: steps.prep.outputs.skip != 'true'
+        run: |
+          bun scripts/release-note.ts --bump "${{ steps.prep.outputs.bump }}" --from "${{ steps.prep.outputs.from }}"
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Commit release artifacts
+        if: steps.prep.outputs.skip != 'true'
+        run: |
+          git add package.json CHANGELOG.md docs/dev-notes src/lib/version.ts
+          if git diff --cached --quiet; then
+            echo "No release file changes"
+            exit 0
+          fi
+          git commit -m "chore(release): v${VERSION} [skip release]"
+          # tag
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "tag v${VERSION} already exists"
+          else
+            git tag -a "v${VERSION}" -m "v${VERSION}"
+          fi
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
