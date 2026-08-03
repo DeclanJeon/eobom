@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -11,9 +11,11 @@ const floatWords = ["잇다", "모으다", "다시 보다", "동행", "오늘"];
 export function LandingHero({
   isAuthenticated = false,
   displayName = null,
+  children,
 }: {
   isAuthenticated?: boolean;
   displayName?: string | null;
+  children?: ReactNode;
 }) {
   const reduce = useReducedMotion();
 
@@ -118,6 +120,12 @@ export function LandingHero({
             </span>
           </Link>
           <nav className="flex items-center gap-2 text-label-md">
+            <Link
+              href="/updates"
+              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+            >
+              개발노트
+            </Link>
             <Link
               href="/suggest"
               className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
@@ -443,6 +451,8 @@ export function LandingHero({
           </motion.div>
         </section>
 
+        {children}
+
         <motion.section
           className="border-t border-border/70 py-20 text-center md:py-28"
           initial={reduce ? false : { opacity: 0, y: 16 }}
@@ -471,8 +481,23 @@ export function LandingHero({
           transition={{ delay: 1.1, duration: 0.5 }}
         >
           <p>© {new Date().getFullYear()} 이어봄 · PonsLink</p>
-          <div className="flex gap-4">
-            <Link href={isAuthenticated ? "/today" : "/login"} className="inline-flex min-h-11 items-center hover:text-primary">
+          <div className="flex flex-wrap gap-4">
+            <Link
+              href="/updates"
+              className="inline-flex min-h-11 items-center hover:text-primary"
+            >
+              개발노트
+            </Link>
+            <Link
+              href="/suggest"
+              className="inline-flex min-h-11 items-center hover:text-primary"
+            >
+              제안하기
+            </Link>
+            <Link
+              href={isAuthenticated ? "/today" : "/login"}
+              className="inline-flex min-h-11 items-center hover:text-primary"
+            >
               {isAuthenticated ? "내 기록" : "시작하기"}
             </Link>
           </div>

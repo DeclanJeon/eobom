@@ -34,6 +34,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${siteUrl}/updates`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.55,
+    },
   ];
 
   // Public keyring entry points (no private content in sitemap beyond URL)

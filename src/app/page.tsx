@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getOptionalUser } from "@/lib/session";
 import { LandingHero } from "@/components/landing-hero";
+import { DevNotesSection } from "@/components/dev-notes-section";
+import { getLatestDevNote } from "@/lib/dev-notes";
 
 export const metadata: Metadata = {
   title: "이어봄 — 흩어진 묵상을 잇다",
@@ -15,11 +17,14 @@ export const metadata: Metadata = {
 
 export default async function LandingPage() {
   const user = await getOptionalUser();
+  const latestNote = getLatestDevNote();
 
   return (
     <LandingHero
       isAuthenticated={Boolean(user)}
       displayName={user?.displayName || user?.name || null}
-    />
+    >
+      <DevNotesSection note={latestNote} />
+    </LandingHero>
   );
 }
