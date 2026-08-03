@@ -10,8 +10,17 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState, PageIntro, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
-import { formatDateShort } from "@/lib/utils";
-import { reportTypeLabel } from "@/lib/review-display";
+import { formatDateShort, parseJsonArray } from "@/lib/utils";
+import { reportTypeLabel, reviewListFace } from "@/lib/review-display";
+import type { StructuredReview } from "@/lib/mimo";
+
+function parseReview(report: { structuredOutput: string }): StructuredReview | null {
+  try {
+    return JSON.parse(report.structuredOutput) as StructuredReview;
+  } catch {
+    return null;
+  }
+}
 
 export const metadata = { title: "돌아보기" };
 
@@ -68,64 +77,96 @@ export default async function LookbackPage() {
         <>
           <section className="mb-8">
             <h2 className="text-headline-sm text-primary">지금의 회고</h2>
-            <Link
-              href={`/lookback/${latest!.id}`}
-              className="mt-3 block"
-            >
-              <SurfaceCard className="grid gap-4 p-5 transition hover:border-accent-gold/30 sm:grid-cols-[1fr_auto] sm:items-center">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <SoftBadge>
-                      {reportTypeLabel(latest!.reportType)}
-                    </SoftBadge>
-                    <span className="text-label-sm text-text-muted">
-                      {formatDateShort(latest!.periodStart)} –{" "}
-                      {formatDateShort(latest!.periodEnd)}
-                    </span>
-                  </div>
-                  <h3 className="mt-3 line-clamp-4 text-headline-md text-primary">
-                    {latest!.summary || "회고 초안"}
-                  </h3>
-                  <p className="mt-4 text-label-sm text-leaf">회고 보기 →</p>
-                </div>
-                {latestViz?.imageUrl ? (
-                  <div className="hidden sm:block">
-                    {/* imageUrl은 이미 API URL 형식(/api/story-mirror/visualize?file=...) */}
-                    <img
-                      src={latestViz.imageUrl}
-                      alt="최근 시각화 미리보기"
-                      width={160}
-                      height={160}
-                      className="h-40 w-40 rounded-xl object-cover"
-                    />
-                  </div>
-                ) : null}
-              </SurfaceCard>
-            </Link>
+            {(() => {
+              const r = parseReview(latest!);
+              const count = parseJsonArray(latest!.includedEntryIds).length;
+              const face = reviewListFace(r, {
+                entryCount: count,
+                periodStart: latest!.periodStart,
+                periodEnd: latest!.periodEnd,
+              });
+              return (
+                <Link href={`/lookback/${latest!.id}`} className="mt-3 block">
+                  <SurfaceCard
+                    className={
+                      latestViz?.imageUrl
+                        ? "grid gap-5 p-6 transition hover:border-accent-gold/30 sm:grid-cols-[1fr_auto] sm:items-center"
+                        : "p-6 transition hover:border-accent-gold/30"
+                    }
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <SoftBadge>{reportTypeLabel(latest!.reportType)}</SoftBadge>
+                        <span className="text-label-sm text-text-muted">
+                          {formatDateShort(latest!.periodStart)} –{" "}
+                          {formatDateShort(latest!.periodEnd)}
+                          {count > 0 ? ` · 기록 ${count}편` : ""}
+                        </span>
+                      </div>
+                      <h3 className="mt-3 line-clamp-4 font-serif text-headline-md leading-relaxed text-primary">
+                        {face.sentence}
+                      </h3>
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        {face.mood ? (
+                          <span className="chip">자주 머물던 마음 · {face.mood}</span>
+                        ) : null}
+                        <span className="text-label-sm text-leaf">이 거울 다시 보기 →</span>
+                      </div>
+                    </div>
+                    {latestViz?.imageUrl ? (
+                      <div className="hidden sm:block">
+                        <img
+                          src={latestViz.imageUrl}
+                          alt="최근 시각화 미리보기"
+                          width={160}
+                          height={160}
+                          className="h-40 w-40 rounded-xl object-cover"
+                        />
+                      </div>
+                    ) : null}
+                  </SurfaceCard>
+                </Link>
+              );
+            })()}
           </section>
 
           {past.length > 0 ? (
             <section>
-            <h2 className="text-headline-sm text-primary">지난 회고</h2>
+              <h2 className="text-headline-sm text-primary">지난 회고</h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {past.map((report) => (
-                  <Link key={report.id} href={`/lookback/${report.id}`}>
-                    <SurfaceCard className="h-full transition hover:border-accent-gold/30">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <SoftBadge>
-                          {reportTypeLabel(report.reportType)}
-                        </SoftBadge>
-                        <span className="text-label-sm text-text-muted">
-                          {formatDateShort(report.periodStart)} –{" "}
-                          {formatDateShort(report.periodEnd)}
-                        </span>
-                      </div>
-                      <h3 className="mt-3 line-clamp-3 text-headline-sm text-primary">
-                        {report.summary || "회고 초안"}
-                      </h3>
-                    </SurfaceCard>
-                  </Link>
-                ))}
+                {past.map((report) => {
+                  const r = parseReview(report);
+                  const count = parseJsonArray(report.includedEntryIds).length;
+                  const face = reviewListFace(r, {
+                    entryCount: count,
+                    periodStart: report.periodStart,
+                    periodEnd: report.periodEnd,
+                  });
+                  return (
+                    <Link key={report.id} href={`/lookback/${report.id}`}>
+                      <SurfaceCard className="flex h-full flex-col transition hover:border-accent-gold/30">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <SoftBadge>{reportTypeLabel(report.reportType)}</SoftBadge>
+                          <span className="text-label-sm text-text-muted">
+                            {formatDateShort(report.periodStart)} –{" "}
+                            {formatDateShort(report.periodEnd)}
+                          </span>
+                        </div>
+                        <h3 className="mt-3 line-clamp-3 font-serif text-body-lg leading-relaxed text-primary">
+                          {face.sentence}
+                        </h3>
+                        <div className="mt-auto flex flex-wrap items-center gap-2 pt-4">
+                          {count > 0 ? (
+                            <span className="chip">기록 {count}편</span>
+                          ) : null}
+                          {face.mood ? (
+                            <span className="chip">{face.mood}</span>
+                          ) : null}
+                        </div>
+                      </SurfaceCard>
+                    </Link>
+                  );
+                })}
               </div>
             </section>
           ) : null}
