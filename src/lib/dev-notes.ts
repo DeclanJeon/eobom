@@ -157,6 +157,10 @@ export function getLatestDevNote(): DevNote | null {
   try {
     return parseNoteMarkdown("LATEST.md", readFileSync(latestPath, "utf8"));
   } catch {
+    return null;
+  }
+}
+
 export function getDevNoteBySlug(slug: string): DevNote | null {
   const all = listDevNotes();
   const direct = all.find((n) => n.slug === slug);
@@ -165,8 +169,4 @@ export function getDevNoteBySlug(slug: string): DevNote | null {
     return all.find((n) => n.version === slug.slice(1)) || null;
   }
   return all.find((n) => n.version === slug || n.slug === `v${slug}`) || null;
-}
-    return all.find((n) => n.version === slug.slice(1)) || null;
-  }
-  return all.find((n) => n.version === slug) || null;
 }
