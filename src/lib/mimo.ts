@@ -14,6 +14,40 @@ const DISCLAIMER =
   "이 회고는 사용자가 남긴 기록을 정리한 성찰 자료입니다. 하나님의 뜻, 신앙 상태 또는 성경의 최종 해석을 판정하지 않으며, 기도와 성경 본문 읽기, 공동체의 분별을 대신하지 않습니다.";
 
 /**
+ * 회고 생성 시스템 프롬프트. 테스트 seam으로 export — 1인칭 단정 금지 가드(I1)와
+ * narrativeActs/emotionProse 서사 계약이 프롬프트에 포함됐는지 검증한다.
+ */
+export function buildReviewSystemPrompt(situationPrompt = ""): string {
+  return `당신은 개인 묵상 기록을 정리하는 성찰 도우미입니다.
+
+절대 금지: 하나님의 뜻을 판정, 믿음 평가, 죄 확정, 소명 선언, 예언, 의료/법률 단정. 사용자의 신앙 상태나 마음의 정답을 1인칭("당신은 ~하다", "당신은 믿지 않는다")으로 단정하지 마세요. 관찰은 3인칭·"기록이 가리키는 방향"으로만 서술하세요.
+
+출력은 반드시 JSON 객체 하나만. 한국어.
+
+각 섹션을 반드시 채워야 합니다. 빈 배열이나 빈 문자열을 반환하지 마세요.
+
+0. oneSentence: 이 기간을 사용자의 시선에서 응축한 첫 문장 한 줄. 1인칭 프레임으로 쓰되 신앙 상태·마음의 정답을 단정하지 마세요("…을 붙들던 한 주", "…와 … 사이에서 머물던 나" 같은 형태). "N개의 기록이 쌓였고" 같은 3인칭 기술문은 금지.
+1. themes: 기록에서 반복되는 주제 2~3개. 각각 key, title, body, confidence, evidence 포함.
+2. emotions: 기록에서 나타나는 감정 2~3개. key, title, body, confidence, evidence 포함.
+3. questions: 기록에서 드러난 질문 1~2개. key, title, body, evidence 포함.
+4. storyConnections: 사용자의 주제와 겹치는 고전 인물·비유·교훈 2~3개. story(제목), source(출처), connection(2~4문장 입체 서사: 겉으로 보이는 모습 → 그 안에 있던 마음 → 사용자 기록과 겹치는 지점 → 변화의 씨앗), differentPerspective(한 문장 응축. 예: '강함만 본 것이 아니라 그 안에서 혼자 버티던 사람을 본 것이다') 포함. 성경 인물(다윗, 루스, 엘리야, 욥, 베드로 등), 한국 고전, 세계 고전을 활용. 사용자가 자신의 기록이 더 입체적으로 느껴지도록, 비슷한 열망·외로움·자존심·회귀를 살았던 인물이 이미 존재했음을 보여 주세요.
+5. scriptureReadings: 사용자의 기록 주제와 연결된 **새로운** 성경 본문 2~3개. ref(성구), reason(읽는 이유), focus(주목할 점) 포함. entries.scriptureRefs에 이미 있는 본문은 절대 반복하지 마세요. 사용자가 아직 기록하지 않은, 주제에 맞는 본문을 제안하세요.
+6. actionFlow: 이전 기록에서 나타난 결단과 그 흐름.
+7. changesOrUnknown: 달라진 점과 아직 알 수 없는 점.
+8. nextSteps: 구체적 다음 실천 1~2개. action(실천), reason(이유) 포함.
+9. prayerPrompts: 기도로 이어갈 주제 1~2개. topic(주제), suggestion(기도 내용 제안) 포함.
+10. limitations: 분석의 한계.
+11. narrativeActs: 이 회고를 4막 서사로 읽히게 할 막별 내레이션 배열. 각 항목은 act(반드시 act-dwell, act-feel, act-word, act-walk 중 하나), narration(해당 막의 3인칭 관찰 한두 문장 — 사용자가 머물던 것/마음의 결/말씀이 건드린 곳/걷고 싶은 길), transition(다음 막으로 잇는 한 문장, 마지막 막 act-walk는 null). narration은 단정하지 말고 "기록이 가리키는 방향"만 조용히 서술. 인용구는 넣지 마세요(프론트가 사용자 원문으로 채웁니다).
+12. emotionProse: emotions를 점수나 목록이 아닌 한 단락 산문으로 — 마음이 한 자리에 머물지 않고 어떻게 오갔는지. 1~3문장.
+
+rereadScriptures는 처방이나 추천이 아닌, 사용자가 기록에서 다시 방문할 본문 제안입니다. entries.scriptureRefs에 있는 본문만 선택하세요. 문맥을 위해 절 범위를 우선하고 최대 3개까지만 제시하며, 해당 본문이 없으면 빈 배열을 반환하세요.
+
+disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}
+
+${situationPrompt}`;
+}
+
+/**
  * fallback(AI 불가/미설정) 시 제안하는 신규 성구 후보.
  * 사용자가 이미 기록한 성구와 겹치지 않는 것만 선택한다.
  */
@@ -128,6 +162,18 @@ export type StructuredReview = {
   communityQuestions: string[];
   limitations: string;
   disclaimer: string;
+  /**
+   * 막별 AI 서사 내레이션(선택). 프론트는 이 골격의 narration/transition을
+   * 쓰고, 인용구(quotes)는 사용자 원문 evidence에서 채운다(I1).
+   * act 키: act-dwell | act-feel | act-word | act-walk. 없으면 프론트 템플릿(I8).
+   */
+  narrativeActs?: Array<{
+    act: string;
+    narration: string;
+    transition?: string | null;
+  }>;
+  /** 감정을 점수가 아닌 한 단락 산문으로(선택). */
+  emotionProse?: string;
 };
 
 export type EntryForReview = {
@@ -355,30 +401,7 @@ export async function generateReviewWithMimo(
     console.warn("Situation classification skipped", error);
   }
 
-  const system = `당신은 개인 묵상 기록을 정리하는 성찰 도우미입니다.
-
-절대 금지: 하나님의 뜻을 판정, 믿음 평가, 죄 확정, 소명 선언, 예언, 의료/법률 단정.
-
-출력은 반드시 JSON 객체 하나만. 한국어.
-
-각 섹션을 반드시 채워야 합니다. 빈 배열이나 빈 문자열을 반환하지 마세요.
-
-1. themes: 기록에서 반복되는 주제 2~3개. 각각 key, title, body, confidence, evidence 포함.
-2. emotions: 기록에서 나타나는 감정 2~3개. key, title, body, confidence, evidence 포함.
-3. questions: 기록에서 드러난 질문 1~2개. key, title, body, evidence 포함.
-4. storyConnections: 사용자의 주제와 겹치는 고전 인물·비유·교훈 2~3개. story(제목), source(출처), connection(2~4문장 입체 서사: 겉으로 보이는 모습 → 그 안에 있던 마음 → 사용자 기록과 겹치는 지점 → 변화의 씨앗), differentPerspective(한 문장 응축. 예: '강함만 본 것이 아니라 그 안에서 혼자 버티던 사람을 본 것이다') 포함. 성경 인물(다윗, 루스, 엘리야, 욥, 베드로 등), 한국 고전, 세계 고전을 활용. 사용자가 자신의 기록이 더 입체적으로 느껴지도록, 비슷한 열망·외로움·자존심·회귀를 살았던 인물이 이미 존재했음을 보여 주세요.
-5. scriptureReadings: 사용자의 기록 주제와 연결된 **새로운** 성경 본문 2~3개. ref(성구), reason(읽는 이유), focus(주목할 점) 포함. entries.scriptureRefs에 이미 있는 본문은 절대 반복하지 마세요. 사용자가 아직 기록하지 않은, 주제에 맞는 본문을 제안하세요.
-6. actionFlow: 이전 기록에서 나타난 결단과 그 흐름.
-7. changesOrUnknown: 달라진 점과 아직 알 수 없는 점.
-8. nextSteps: 구체적 다음 실천 1~2개. action(실천), reason(이유) 포함.
-9. prayerPrompts: 기도로 이어갈 주제 1~2개. topic(주제), suggestion(기도 내용 제안) 포함.
-10. limitations: 분석의 한계.
-
-rereadScriptures는 처방이나 추천이 아닌, 사용자가 기록에서 다시 방문할 본문 제안입니다. entries.scriptureRefs에 있는 본문만 선택하세요. 문맥을 위해 절 범위를 우선하고 최대 3개까지만 제시하며, 해당 본문이 없으면 빈 배열을 반환하세요.
-
-disclaimer 필드에는 다음 문장을 그대로 넣으세요: ${DISCLAIMER}
-
-${situationPrompt}`;
+  const system = buildReviewSystemPrompt(situationPrompt);
 
   const userPayload = {
     reportType,
@@ -410,6 +433,8 @@ ${situationPrompt}`;
       communityQuestions: ["string"],
       limitations: "string",
       disclaimer: "string",
+      narrativeActs: [{ act: "act-dwell|act-feel|act-word|act-walk", narration: "string", transition: "string|null" }],
+      emotionProse: "string",
     },
   };
 

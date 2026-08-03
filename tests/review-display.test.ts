@@ -6,6 +6,7 @@ import {
   reviewLimitationsText,
   toSimpleReviewView,
 } from "@/lib/review-display";
+import { buildReviewSystemPrompt } from "@/lib/mimo";
 import type { StructuredReview } from "@/lib/mimo";
 
 function baseReview(overrides: Partial<StructuredReview> = {}): StructuredReview {
@@ -124,7 +125,7 @@ describe("reviewLimitationsText", () => {
 });
 
 describe("toSimpleReviewView", () => {
-  it("folds themes/emotions/questions into one summary prose", () => {
+  it("prologueSentence는 oneSentence를 1인칭 프레임으로 닮는다", () => {
     const display = normalizeReviewForDisplay(
       baseReview({
         oneSentence: "기다림 가운데 머문 한 달",
@@ -158,10 +159,8 @@ describe("toSimpleReviewView", () => {
       }),
     );
     const simple = toSimpleReviewView(display);
+    expect(simple.prologueSentence).toBe("기다림 가운데 머문 한 달");
     expect(simple.headline).toBe("기다림 가운데 머문 한 달");
-    expect(simple.summary).toContain("기다림");
-    expect(simple.summary).toContain("불안");
-    expect(simple.summary).toContain("언제까지 기다려야 하나");
   });
 
   it("keeps at most three stories and scriptures", () => {
@@ -220,5 +219,94 @@ describe("toSimpleReviewView", () => {
     const simple = toSimpleReviewView(display);
     expect(simple.companions.some((c) => c.role.includes("멘토"))).toBe(true);
     expect(simple.companions.some((c) => c.role.includes("운동"))).toBe(false);
+  });
+});
+
+
+describe("Mirror Narrative — AI 서사 계약 (S3)", () => {
+  it("시스템 프롬프트에 1인칭 단정 금지 가드가 포함된다 (I1)", () => {
+    const prompt = buildReviewSystemPrompt();
+    expect(prompt).toContain("1인칭");
+    expect(prompt).toContain("단정하지 마세요");
+    expect(prompt).toContain("기록이 가리키는 방향");
+  });
+
+  it("시스템 프롬프트에 narrativeActs·emotionProse 서사 계약이 포함된다", () => {
+    const prompt = buildReviewSystemPrompt();
+    expect(prompt).toContain("narrativeActs");
+    expect(prompt).toContain("emotionProse");
+    expect(prompt).toContain("act-dwell");
+    expect(prompt).toContain("act-walk");
+  });
+
+  it("AI 골격이 있으면 막 내레이션·전환을 골격에서 우선 가져온다", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        themes: [
+          {
+            key: "t1",
+            title: "인도하심",
+            body: "기록에서 반복된 결",
+            confidence: "high",
+            evidence: [
+              { entryId: "e1", date: "2026-07-20", excerpt: "두려움보다 인도하심을 믿고 싶습니다." },
+            ],
+          },
+        ],
+        narrativeActs: [
+          {
+            act: "act-dwell",
+            narration: "AI가 꿰어준 머물던 자리 내레이션",
+            transition: "AI가 잇는 전환 문장",
+          },
+        ],
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    const dwell = simple.acts.find((a) => a.id === "act-dwell");
+    expect(dwell?.narration).toBe("AI가 꿰어준 머물던 자리 내레이션");
+    expect(dwell?.transition).toBe("AI가 잇는 전환 문장");
+    // 인용구는 사용자 원문 evidence에서 채워진다 (I1)
+    expect(dwell?.quotes[0]?.text).toBe("두려움보다 인도하심을 믿고 싶습니다.");
+  });
+
+  it("AI 골격이 없으면 관측 필드로 막을 재조립한다 (I8)", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        themes: [
+          {
+            key: "t1",
+            title: "인도하심",
+            body: "기록에서 반복된 결",
+            confidence: "high",
+            evidence: [],
+          },
+        ],
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    const dwell = simple.acts.find((a) => a.id === "act-dwell");
+    expect(dwell).toBeDefined();
+    expect(dwell?.narration).toContain("인도하심");
+    expect(dwell?.transition).toBeTruthy();
+  });
+
+  it("emotionProse가 있으면 마음의 날씨 산문에 우선 반영된다", () => {
+    const display = normalizeReviewForDisplay(
+      baseReview({
+        emotions: [
+          {
+            key: "e1",
+            title: "불안",
+            body: "목록용 본문",
+            confidence: "medium",
+            evidence: [],
+          },
+        ],
+        emotionProse: "AI가 쓴 한 단락 감정 산문",
+      }),
+    );
+    const simple = toSimpleReviewView(display);
+    expect(simple.weather?.prose).toBe("AI가 쓴 한 단락 감정 산문");
   });
 });
