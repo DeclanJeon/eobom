@@ -2,9 +2,12 @@ import Link from "next/link";
 import { ContactForm } from "@/components/contact-form";
 import { getOptionalUser } from "@/lib/session";
 
-export const metadata = { title: "문의" };
+export const metadata = {
+  title: "제안하기",
+  description: "이어봄에 넣고 싶은 기능, 개편, 개선점을 제안해 주세요.",
+};
 
-export default async function ContactPage() {
+export default async function SuggestPage() {
   const user = await getOptionalUser();
 
   return (
@@ -17,19 +20,22 @@ export default async function ContactPage() {
           >
             이어봄
           </Link>
-          <h1 className="mt-6 text-display-lg text-primary">문의</h1>
-          <p className="mt-3 text-body-md text-text-muted">
-            도움이 필요할 때 남겨 주세요.
+          <h1 className="mt-6 text-display-lg text-primary">제안하기</h1>
+          <p className="mt-3 text-body-md leading-relaxed text-text-muted">
+            기능 추가, 화면 개편, 거슬리는 점 개선…
+            <br />
+            이어봄을 함께 다듬고 싶은 이야기를 남겨 주세요.
           </p>
         </div>
         <ContactForm
+          kind="suggest"
           defaultName={user?.displayName || user?.name || ""}
           defaultEmail={user?.email || ""}
         />
         <p className="mt-6 text-center text-label-sm text-text-muted">
-          기능·개선 아이디어가 있으신가요?{" "}
-          <Link href="/suggest" className="text-leaf underline-offset-2 hover:underline">
-            제안하기
+          도움이 필요하신가요?{" "}
+          <Link href="/contact" className="text-leaf underline-offset-2 hover:underline">
+            문의하기
           </Link>
         </p>
       </div>

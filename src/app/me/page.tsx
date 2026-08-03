@@ -32,7 +32,7 @@ export default async function MePage() {
         </div>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {[
           {
             href: "/me/qr",
@@ -42,6 +42,11 @@ export default async function MePage() {
           { href: "/me/settings", label: "설정", desc: "이름, AI 동의, 번역" },
           { href: "/me/export", label: "내보내기", desc: "JSON · Markdown" },
           { href: "/contact", label: "문의", desc: "도움이 필요할 때" },
+          {
+            href: "/suggest",
+            label: "제안하기",
+            desc: "기능 추가 · 개편 · 개선",
+          },
         ].map((item) => (
           <Link key={item.href} href={item.href}>
             <SurfaceCard className="h-full transition hover:border-accent-gold/30">

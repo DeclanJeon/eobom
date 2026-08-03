@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/login", "/contact", "/j/"],
+        allow: ["/", "/login", "/contact", "/suggest", "/j/"],
         disallow: [
           "/api/",
           "/admin/",
@@ -24,20 +24,20 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: "GPTBot",
-        allow: ["/", "/contact", "/llms.txt"],
+        allow: ["/", "/contact", "/suggest", "/llms.txt"],
         disallow: ["/api/", "/admin/", "/today", "/entries", "/me"],
       },
       {
         userAgent: "ChatGPT-User",
-        allow: ["/", "/contact", "/llms.txt"],
+        allow: ["/", "/contact", "/suggest", "/llms.txt"],
       },
       {
         userAgent: "Google-Extended",
-        allow: ["/", "/contact", "/llms.txt"],
+        allow: ["/", "/contact", "/suggest", "/llms.txt"],
       },
       {
         userAgent: "PerplexityBot",
-        allow: ["/", "/contact", "/llms.txt"],
+        allow: ["/", "/contact", "/suggest", "/llms.txt"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

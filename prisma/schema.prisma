@@ -270,6 +270,8 @@ model ConsentRecord {
 model ContactInquiry {
   id        String    @id @default(cuid())
   userId    String?
+  kind      String    @default("contact") // contact | suggest
+  category  String? // feature | redesign | improve | other (suggest)
   name      String
   email     String
   subject   String
@@ -281,6 +283,7 @@ model ContactInquiry {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
+  @@index([kind, createdAt])
 }
 
 model JournalSeat {

@@ -70,6 +70,8 @@ export const contactSchema = z.object({
   email: z.string(),
   subject: z.string(),
   message: z.string(),
+  kind: z.enum(["contact", "suggest"]).optional(),
+  category: z.enum(["feature", "redesign", "improve", "other"]).optional(),
 });
 
 export const actionPatchSchema = z.object({

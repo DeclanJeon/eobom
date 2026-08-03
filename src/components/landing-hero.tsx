@@ -119,6 +119,12 @@ export function LandingHero({
           </Link>
           <nav className="flex items-center gap-2 text-label-md">
             <Link
+              href="/suggest"
+              className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
+            >
+              제안하기
+            </Link>
+            <Link
               href="/contact"
               className="inline-flex min-h-11 items-center rounded-full px-3 py-2 text-text-muted transition hover:text-primary"
             >
