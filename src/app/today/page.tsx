@@ -3,15 +3,11 @@ import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { EntryRow, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { listOpenActionSteps } from "@/lib/actions";
-import { getPassageByInput, getPassageBySlug } from "@/lib/bible";
+import { selectRandomScripture, toKstParts } from "@/lib/daily-scripture";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import { pastTodayDateRanges } from "@/lib/past-today";
-import {
-  isReviewStaleForHome,
-  selectHomeRereadScriptures,
-} from "@/lib/reread-scriptures";
 import { getUserPreferenceFlags } from "@/lib/user-preferences";
 
 export const metadata = { title: "오늘" };
@@ -39,61 +35,16 @@ export default async function TodayPage() {
   const primaryAction = openActions[0] ?? null;
   const moreActionsCount = Math.max(0, openActions.length - 1);
 
-  let allowedRefs: string[] = [];
-  if (latestReview && !isReviewStaleForHome(latestReview)) {
-    const includedEntryIds = parseJsonArray(latestReview.includedEntryIds);
-    if (includedEntryIds.length) {
-      allowedRefs = (
-        await db.reflectionEntry.findMany({
-          where: {
-            id: { in: includedEntryIds },
-            userId: user.id,
-            deletedAt: null,
-          },
-          select: { scriptureRefs: true },
-        })
-      ).flatMap((entry) => parseJsonArray(entry.scriptureRefs));
-    }
-  }
-
-  const fallbackEntries = entryPool.map((entry) => ({
-    id: entry.id,
-    entryDate: entry.entryDate,
-    title: entry.title,
-    scriptureRefs: parseJsonArray(entry.scriptureRefs),
-  }));
-
-  // 오늘 홈 성구 표면은 1개만.
-  const homeSelection = selectHomeRereadScriptures({
-    report: latestReview,
-    allowedRefs,
-    fallbackEntries,
-    max: 1,
+  // 오늘 붙들 말씀 — 매일 하나, 사용자·KST 날짜 시드로 결정적 랜덤 (AI 호출 없음).
+  const kst = toKstParts(now);
+  const dailyScripture = selectRandomScripture({
+    seed: `${user.id}:${kst.dateKey}`,
   });
-  const heroItem = homeSelection.items[0] ?? null;
-  const heroRef =
-    heroItem && "ref" in heroItem && heroItem.ref ? heroItem.ref : "";
-  const heroDisplay =
-    heroItem && "display" in heroItem && heroItem.display
-      ? heroItem.display
-      : heroRef;
-  const heroReason =
-    heroItem && "reason" in heroItem && heroItem.reason?.trim()
-      ? heroItem.reason.trim()
-      : null;
-  const heroSourceLabel =
-    homeSelection.source === "review"
-      ? "지난 회고에서 이어진 말씀"
-      : homeSelection.source === "fallback"
-        ? "지난 기록에서 이어진 말씀"
-        : null;
-
-  const passage = heroItem
-    ? ("slug" in heroItem && heroItem.slug
-        ? getPassageBySlug(heroItem.slug)
-        : null) || (heroRef ? getPassageByInput(heroRef) : null)
-    : null;
-  const passageText = passage?.binding.excerpt?.trim() || "";
+  const heroRef = dailyScripture.display;
+  const heroDisplay = dailyScripture.display;
+  const heroReason = dailyScripture.background?.trim() || null;
+  const heroSourceLabel = "오늘 하루 함께할 말씀입니다.";
+  const passageText = dailyScripture.text;
 
   let pastToday: (typeof entryPool)[number] | null = null;
   if (flags.pastTodayEnabled) {

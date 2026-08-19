@@ -80,6 +80,20 @@ describe("daily-scripture", () => {
     }
   });
 
+  test("same user+date seed is stable (오늘 붙들 말씀), date/user change it", () => {
+    resetDailyScriptureCaches();
+    const today = selectRandomScripture({ seed: "u1:2026-08-20" });
+    const again = selectRandomScripture({ seed: "u1:2026-08-20" });
+    const tomorrow = selectRandomScripture({ seed: "u1:2026-08-21" });
+    const otherUser = selectRandomScripture({ seed: "u2:2026-08-20" });
+
+    expect(again.slug).toBe(today.slug);
+    expect(again.display).toBe(today.display);
+    expect(again.text).toBe(today.text);
+    expect(tomorrow.slug).not.toBe(today.slug);
+    expect(otherUser.slug).not.toBe(today.slug);
+  });
+
   test("toKstParts uses Asia/Seoul calendar day", () => {
     const monday = new Date("2026-08-03T12:00:00+09:00");
     const kst = toKstParts(monday);
