@@ -62,6 +62,7 @@ function parseBlock(block: string): SseData | null {
 export function StoryMirrorRag({
   consented,
   initialRun,
+  initialList,
   seedInput,
   seedLabel,
   storyConnections,
@@ -73,6 +74,7 @@ export function StoryMirrorRag({
     summary: string;
     connections: Connection[];
   } | null;
+  initialList?: RagRunListItem[] | null;
   seedInput?: string | null;
   seedLabel?: string | null;
   storyConnections?: StoryConnection[] | null;
@@ -86,7 +88,7 @@ export function StoryMirrorRag({
   const [errorMsg, setErrorMsg] = useState("");
   const [viewingPast, setViewingPast] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [history, setHistory] = useState<RagRunListItem[] | null>(null);
+  const [history, setHistory] = useState<RagRunListItem[] | null>(initialList ?? null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -510,3 +512,4 @@ export function StoryMirrorRag({
     </div>
   );
 }
+export default StoryMirrorRag;

@@ -10,12 +10,13 @@
 
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
-import { Breadcrumb, EmptyState, PageIntro } from "@/components/ui-blocks";
+import { Breadcrumb, EmptyState, PageIntro, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { StoryNarrativeCard } from "@/components/story-narrative-card";
 import { StoryVisual } from "@/components/StoryVisual";
 import { requireUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import {
+  getLatestRagRun,
   getLatestReviewStoryMirror,
   getReviewScopedStoryItems,
 } from "@/lib/story-mirror/db";
@@ -24,7 +25,10 @@ export const metadata = { title: "돌아보기 · 이야기" };
 
 export default async function StoryMirrorPage() {
   const user = await requireUser();
-  const reviewMirror = await getLatestReviewStoryMirror(user.id);
+  const [reviewMirror, latestRagRun] = await Promise.all([
+    getLatestReviewStoryMirror(user.id),
+    getLatestRagRun(user.id),
+  ]);
   const stories = await getReviewScopedStoryItems({
     userId: user.id,
     storyConnections: reviewMirror?.storyConnections,
@@ -57,6 +61,18 @@ export default async function StoryMirrorPage() {
         ariaLabel="돌아보기 이동"
         className="mb-6"
       />
+
+      {latestRagRun && (
+        <SurfaceCard className="mb-6">
+          <div className="flex items-start justify-between gap-3">
+            <p className="line-clamp-3 flex-1 text-body-md text-primary">{latestRagRun.summary ?? "최근 거울 연결"}</p>
+            <SoftBadge>연결 {latestRagRun.matches.length}건</SoftBadge>
+          </div>
+          <Link href="/story-mirror/reflect" className="mt-3 inline-flex text-label-sm text-leaf hover:underline">
+            연결 탭에서 더 보기 →
+          </Link>
+        </SurfaceCard>
+      )}
 
       {stories.length > 0 ? (
         <div className="space-y-4">
