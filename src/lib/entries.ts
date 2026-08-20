@@ -8,6 +8,138 @@ import {
 } from "@/lib/entry-share";
 import { parseJsonArray, toJsonArray } from "@/lib/utils";
 
+// ReflectionEntry FTS5 — ensure + search
+let entryFtsEnsured = false;
+
+function normalizeFtsQuery(query: string): string {
+  return query.replace(/[^0-9a-zA-Z가-힣\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function buildEntryMatchExpr(normalized: string): string {
+  const terms = normalized.split(" ").filter((t) => t.length > 0);
+  if (terms.length === 0) return "";
+  return terms.map((t) => `"${t.replace(/"/g, "")}"`).join(" OR ");
+}
+
+export async function ensureEntryFts5(): Promise<void> {
+  if (entryFtsEnsured) return;
+  try {
+    const existing = await db.$queryRaw<Array<{ name: string }>>`
+      SELECT name FROM sqlite_master WHERE type='table' AND name='ReflectionEntryFts'
+    `;
+    if (existing.length > 0) {
+      entryFtsEnsured = true;
+      return;
+    }
+  } catch {
+    // ignore and try to create
+  }
+  // CREATE VIRTUAL TABLE + triggers — best-effort, fallback to plain unicode61 if diacritics unavailable (bun:sqlite 3.53)
+  const diac = "remove_" + "diacritics 2";
+  const createSql = `
+    CREATE VIRTUAL TABLE IF NOT EXISTS ReflectionEntryFts USING fts5(
+      entryId UNINDEXED,
+      title,
+      reflectionBody,
+      gratitude,
+      prayer,
+      tokenize = 'unicode61 "${diac}"'
+    );
+  `;
+  const triggers = [
+    `CREATE TRIGGER IF NOT EXISTS reflection_entry_ai AFTER INSERT ON ReflectionEntry BEGIN
+      INSERT INTO ReflectionEntryFts (entryId, title, reflectionBody, gratitude, prayer)
+      VALUES (new.id, new.title, new.reflectionBody, new.gratitude, new.prayer);
+    END;`,
+    `CREATE TRIGGER IF NOT EXISTS reflection_entry_ad AFTER DELETE ON ReflectionEntry BEGIN
+      DELETE FROM ReflectionEntryFts WHERE entryId = old.id;
+    END;`,
+    `CREATE TRIGGER IF NOT EXISTS reflection_entry_au AFTER UPDATE ON ReflectionEntry BEGIN
+      DELETE FROM ReflectionEntryFts WHERE entryId = old.id;
+      INSERT INTO ReflectionEntryFts (entryId, title, reflectionBody, gratitude, prayer)
+      VALUES (new.id, new.title, new.reflectionBody, new.gratitude, new.prayer);
+    END;`,
+  ];
+  const backfill = `
+    INSERT INTO ReflectionEntryFts (entryId, title, reflectionBody, gratitude, prayer)
+    SELECT id, title, reflectionBody, gratitude, prayer FROM ReflectionEntry WHERE deletedAt IS NULL
+    AND id NOT IN (SELECT entryId FROM ReflectionEntryFts);
+  `;
+  const tryExec = async (sql: string) => {
+    await (db as unknown as { $executeRawUnsafe: (s: string) => Promise<unknown> }).$executeRawUnsafe(sql);
+  };
+  try {
+    await tryExec(createSql);
+  } catch {
+    const fallback = createSql.replace(`tokenize = 'unicode61 "${diac}"'`, `tokenize = 'unicode61'`).replace(`tokenize='unicode61 "${diac}"'`, `tokenize='unicode61'`);
+    await tryExec(fallback);
+  }
+  for (const t of triggers) {
+    try { await tryExec(t); } catch {}
+  }
+  try { await tryExec(backfill); } catch {}
+  entryFtsEnsured = true;
+}
+
+export async function searchEntriesFts(
+  userId: string,
+  query: string,
+  opts: { limit?: number } = {},
+): Promise<ReturnType<typeof serializeEntry>[]> {
+  const normalized = normalizeFtsQuery(query);
+  const matchExpr = buildEntryMatchExpr(normalized);
+  if (!matchExpr) return [];
+  await ensureEntryFts5();
+  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
+  // Escape single quotes in matchExpr for raw SQL
+  const safeMatch = matchExpr.replace(/'/g, "''");
+  const safeUserId = userId.replace(/'/g, "''");
+  const sql = `
+    SELECT e.id, e.userId, e.entryDate, e.title, e.scriptureRefs, e.scriptureExcerpt, e.scriptureBindings,
+           e.reflectionBody, e.gratitude, e.question, e.prayer, e.actionStep, e.emotions, e.tags,
+           e.templateType, e.privateNote, e.cellShareSummary, e.shareVisibility,
+           e.createdAt, e.updatedAt, e.deletedAt,
+           bm25(ReflectionEntryFts) as rank
+    FROM ReflectionEntryFts
+    JOIN ReflectionEntry e ON e.id = ReflectionEntryFts.entryId
+    WHERE ReflectionEntryFts MATCH '${safeMatch}'
+      AND e.userId = '${safeUserId}'
+      AND e.deletedAt IS NULL
+    ORDER BY rank
+    LIMIT ${limit}
+  `;
+  try {
+    const rows = await (db as unknown as { $queryRawUnsafe: (s: string) => Promise<Record<string, unknown>[]> }).$queryRawUnsafe(sql);
+    // Map to Prisma shape
+    return rows.map((r) =>
+      serializeEntry({
+        id: String(r.id),
+        userId: String(r.userId),
+        entryDate: r.entryDate instanceof Date ? r.entryDate : new Date(String(r.entryDate)),
+        title: r.title ? String(r.title) : null,
+        scriptureRefs: String(r.scriptureRefs ?? "[]"),
+        scriptureExcerpt: r.scriptureExcerpt ? String(r.scriptureExcerpt) : null,
+        scriptureBindings: r.scriptureBindings ? String(r.scriptureBindings) : null,
+        reflectionBody: String(r.reflectionBody),
+        gratitude: r.gratitude ? String(r.gratitude) : null,
+        question: r.question ? String(r.question) : null,
+        prayer: r.prayer ? String(r.prayer) : null,
+        actionStep: r.actionStep ? String(r.actionStep) : null,
+        emotions: String(r.emotions ?? "[]"),
+        tags: String(r.tags ?? "[]"),
+        templateType: String(r.templateType ?? "free"),
+        privateNote: r.privateNote ? String(r.privateNote) : null,
+        cellShareSummary: r.cellShareSummary ? String(r.cellShareSummary) : null,
+        shareVisibility: r.shareVisibility ? String(r.shareVisibility) : null,
+        createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(String(r.createdAt)),
+        updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(String(r.updatedAt)),
+        deletedAt: r.deletedAt ? (r.deletedAt instanceof Date ? r.deletedAt : new Date(String(r.deletedAt))) : null,
+      }),
+    );
+  } catch {
+    return [];
+  }
+}
 export type EntryInput = {
   entryDate?: string;
   title?: string | null;
@@ -267,6 +399,23 @@ export async function listEntries(
   opts: { q?: string; limit?: number; cursor?: string; filter?: "actions" } = {},
 ) {
   const limit = opts.limit ?? 50;
+  // q 검색: FTS5 우선, 실패 시 LIKE fallback (cursor 없는 경우만 FTS로 정렬, cursor 있으면 LIKE로 페이지네이션 유지)
+  if (opts.q && opts.q.trim().length > 0 && !opts.cursor) {
+    try {
+      const fts = await searchEntriesFts(userId, opts.q, { limit });
+      if (fts.length > 0) {
+        if (opts.filter === "actions") {
+          const filtered = fts.filter((e) => Boolean(e.actionStep));
+          if (filtered.length > 0) return filtered;
+        } else {
+          return fts;
+        }
+      }
+      // 빈 결과이면 LIKE로 재시도 (FTS tokenizer 차이 대비)
+    } catch {
+      // fallthrough to LIKE
+    }
+  }
   const entries = await db.reflectionEntry.findMany({
     where: {
       userId,
