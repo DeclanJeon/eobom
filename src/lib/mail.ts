@@ -480,6 +480,62 @@ export async function sendDailyScriptureEmail(input: {
   });
 }
 
+// ─── Prayer Reminder ─────────────────────────────────────────────────────────
+// weekly_digest와 동일 패턴 — 기도 제목을 주기적으로 알림
+
+export async function sendPrayerReminder(input: {
+  userId: string;
+  email: string;
+  name: string;
+  prayerTitle: string;
+  prayerBody?: string | null;
+  prayerCount?: number;
+}) {
+  const transporter = createTransport();
+  const from = getFromAddress();
+  const baseUrl = getBaseUrl();
+  const token = generateUnsubscribeToken(input.userId);
+  const displayName = input.name || "이어봄 사람";
+  const prayersUrl = `${baseUrl}/me/prayers`;
+  const countLine =
+    input.prayerCount != null && input.prayerCount > 1
+      ? `현재 ${input.prayerCount}개의 기도 제목이 계속 기도 중입니다.`
+      : "";
+
+  const bodyLine = input.prayerBody
+    ? `<p style="font-size:15px;color:#2d2d2d;font-style:italic;border-left:3px solid #c5a059;padding-left:12px">“${escapeHtml(input.prayerBody.slice(0, 300))}”</p>`
+    : "";
+
+  await transporter.sendMail({
+    from,
+    to: input.email,
+    subject: `기도 알림 — ${input.prayerTitle}`,
+    text: [
+      `안녕하세요, ${displayName}님.`,
+      "",
+      `기도 제목: ${input.prayerTitle}`,
+      input.prayerBody ? input.prayerBody.slice(0, 300) : "",
+      countLine,
+      "",
+      `기도하러 가기: ${prayersUrl}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+    html: `
+      <div style="font-family:sans-serif;line-height:1.8;max-width:480px;margin:0 auto;padding:32px 16px">
+        <h2 style="font-size:20px;color:#061b0e;margin-bottom:16px">기도 알림</h2>
+        <p style="font-size:15px;color:#2d2d2d">안녕하세요, <strong>${escapeHtml(displayName)}</strong>님.</p>
+        <p style="font-size:15px;color:#2d2d2d">계속 기도 중인 제목을 알려드립니다.</p>
+        <p style="font-size:16px;color:#061b0e;font-weight:600;margin:20px 0 8px">${escapeHtml(input.prayerTitle)}</p>
+        ${bodyLine}
+        ${countLine ? `<p style="font-size:13px;color:#5c574f;margin-top:12px">${escapeHtml(countLine)}</p>` : ""}
+        <a href="${prayersUrl}" style="display:inline-block;margin:20px 0;padding:14px 28px;background:#061b0e;color:#fbf9f6;text-decoration:none;border-radius:12px;font-size:15px;font-weight:600">기도 제목 보기</a>
+        ${emailFooter(token)}
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")

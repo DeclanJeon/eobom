@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { SignOutButton } from "@/components/sign-out-button";
 import { requireUser } from "@/lib/session";
+import { db } from "@/lib/db";
 import { appUrl } from "@/lib/utils";
 import { appVersionLabel } from "@/lib/version";
 
@@ -11,6 +12,9 @@ export const metadata = { title: "내 정보" };
 export default async function MePage() {
   const user = await requireUser();
   const journalUrl = appUrl(`/j/${user.personalSlug}`);
+  const prayerCount = await db.prayerTopic.count({
+    where: { userId: user.id, status: "continuing" },
+  });
 
   return (
     <AppShell wide bare>
@@ -57,6 +61,13 @@ export default async function MePage() {
           </Link>
         ))}
       </div>
+
+      <Link href="/me/prayers" className="mt-3 block">
+        <SurfaceCard className="transition hover:border-accent-gold/30">
+          <p className="text-label-md text-primary">기도 제목 {prayerCount} →</p>
+          <p className="mt-1 text-label-sm text-text-muted">묵상에서 이어지는 기도</p>
+        </SurfaceCard>
+      </Link>
 
       <div className="mt-8 max-w-sm space-y-3">
         <SignOutButton />
