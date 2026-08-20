@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const limited = checkRateLimit(
+    const limited = await checkRateLimit(
       `storyVisualGenerate:${session.user.id}`,
       RATE_LIMITS.visualizationGenerate,
     );

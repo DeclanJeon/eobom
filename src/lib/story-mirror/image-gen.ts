@@ -176,6 +176,8 @@ export function driveUploadCommand(
   filename: string,
   folder: string = process.env.STORY_MIRROR_DRIVE_FOLDER || DRIVE_FOLDER_DEFAULT,
 ): DriveUploadCommand {
+  if (!/^[a-zA-Z0-9/_\-]{1,64}$/.test(folder) || folder.includes("..") || folder.startsWith("/"))
+    throw new Error("invalid drive folder");
   const dest = `${DRIVE_REMOTE}${folder}`;
   const logFile = join(VISUALIZATION_OUTPUT_DIR, `rclone-${filename}.log`);
   return {

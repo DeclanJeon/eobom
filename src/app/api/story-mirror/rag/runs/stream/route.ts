@@ -30,6 +30,7 @@ const MAX_CANDIDATES = 6;
 const bodySchema = z.object({
   input: z.string().min(1).max(4000),
   locale: z.string().optional(),
+  entryIds: z.array(z.string().min(1)).max(20).optional(),
 });
 
 type SseEvent = { event: string; data: unknown };
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   }
 
-  const limited = checkRateLimit(
+  const limited = await checkRateLimit(
     `rag:stream:${auth.user.id}`,
     RATE_LIMITS.ragStream,
   );
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
             policyVersion: POLICY_VERSION,
             consentSnapshot,
             status: "insufficient_evidence",
+            expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
           },
         });
         send({
@@ -142,6 +144,7 @@ export async function POST(request: Request) {
           policyVersion: POLICY_VERSION,
           consentSnapshot,
           status: "pending",
+          expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
           matches: {
             create: candidates.map((c) => ({
               chunkId: c.id,
@@ -167,6 +170,52 @@ export async function POST(request: Request) {
           })),
         },
       });
+
+      // StoryRagEvidence 생성 — entryIds가 있으면 각 chunk×entry에 대해 생성
+      // themes 교집합으로 relevance 결정, 없으면 빈 Evidence
+      if (parsed.entryIds && parsed.entryIds.length > 0) {
+        try {
+          const entries = await db.reflectionEntry.findMany({
+            where: { id: { in: parsed.entryIds }, userId: user.id },
+          });
+          if (entries.length > 0) {
+            const matches = await db.storyRagMatch.findMany({
+              where: { runId: run.id },
+              select: { id: true, chunkId: true },
+            });
+            const evidenceData: Array<{
+              matchId: string;
+              entryId: string;
+              role: string;
+              excerpt: string;
+              relevance: string;
+            }> = [];
+            for (const m of matches) {
+              const chunk = candidates.find((c) => c.id === m.chunkId);
+              if (!chunk) continue;
+              const chunkThemes = (chunk.themes ?? []).map((t) => t.toLowerCase());
+              for (const entry of entries) {
+                const entryText = `${entry.reflectionBody ?? ""} ${entry.gratitude ?? ""} ${entry.prayer ?? ""} ${entry.title ?? ""}`.toLowerCase();
+                const hasOverlap = chunkThemes.length > 0 && chunkThemes.some((t) => t && entryText.includes(t));
+                const relevance = hasOverlap ? "high" : "medium";
+                const excerpt = (entry.reflectionBody ?? "").slice(0, 200);
+                evidenceData.push({
+                  matchId: m.id,
+                  entryId: entry.id,
+                  role: "supporting",
+                  excerpt,
+                  relevance,
+                });
+              }
+            }
+            if (evidenceData.length > 0) {
+              await db.storyRagEvidence.createMany({ data: evidenceData });
+            }
+          }
+        } catch {
+          // evidence 생성 실패는 스트리밍에 영향을 주지 않음
+        }
+      }
 
       // 4) MiMo 스트리밍 생성 (요청당 최대 1회)
       try {

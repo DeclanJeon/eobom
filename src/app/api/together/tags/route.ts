@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const limited = checkRateLimit(
+  const limited = await checkRateLimit(
     `together:tags:${user.id}`,
     RATE_LIMITS.togetherTags,
   );

@@ -11,21 +11,78 @@ export const RATE_LIMITED = "RATE_LIMITED" as const;
 export const RATE_LIMITED_MESSAGE =
   "요청이 잠시 많았습니다. 잠시 후 다시 시도해 주세요.";
 
+/* ── Redis optional ─────────────────────────────────────────── */
+type RedisLike = {
+  pipeline(): {
+    incr(key: string): unknown;
+    pexpire(key: string, ms: number, mode?: string): unknown;
+    exec(): Promise<Array<[Error | null, unknown]> | null>;
+  };
+  pttl(key: string): Promise<number>;
+  incr(key: string): Promise<number>;
+  pexpire(key: string, ms: number, mode?: string): Promise<number>;
+  flushall?(): Promise<unknown>;
+};
+
+let redis: RedisLike | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const IORedis = require("ioredis");
+  const RedisCtor: unknown =
+    (IORedis as unknown as { default?: unknown }).default ?? IORedis;
+  const url = process.env.REDIS_URL;
+  if (url && typeof RedisCtor === "function") {
+    redis = new (RedisCtor as new (url: string) => RedisLike)(url);
+  }
+} catch {
+  redis = null;
+}
+
+export function getRedisClient(): RedisLike | null {
+  return redis;
+}
+
 /**
- * In-process sliding-window rate limit.
- * Suitable for single-instance deploy; resets on process restart.
+ * In-process sliding-window rate limit with Redis distributed fallback.
+ * - If REDIS_URL env and ioredis available → Redis fixed-window via INCR+PEXPIRE(NX)+PTTL
+ * - Else fallback to in-memory Map sliding window (single instance)
+ * Resets on process restart when in-memory.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   opts: { limit: number; windowMs: number; now?: number },
-): RateLimitResult {
-  const now = opts.now ?? Date.now();
+): Promise<RateLimitResult> {
   const windowMs = opts.windowMs;
   const limit = opts.limit;
   if (limit <= 0 || windowMs <= 0) {
     return { ok: true, remaining: 0 };
   }
 
+  // ── Redis path ─────────────────────────────────────────────
+  if (redis) {
+    const redisKey = `ratelimit:${key}`;
+    try {
+      const pipe = redis.pipeline();
+      pipe.incr(redisKey);
+      // NX: only set expiry on first creation, keeps fixed window
+      pipe.pexpire(redisKey, windowMs, "NX");
+      const res = await pipe.exec();
+      // res: [[null, count], [null, pexpireResult]]
+      const count = (res?.[0]?.[1] as number) ?? 0;
+      if (count > limit) {
+        const ttlMs = await redis.pttl(redisKey);
+        const retryAfterSec =
+          ttlMs > 0 ? Math.max(1, Math.ceil(ttlMs / 1000)) : Math.max(1, Math.ceil(windowMs / 1000));
+        return { ok: false, retryAfterSec };
+      }
+      return { ok: true, remaining: Math.max(0, limit - count) };
+    } catch {
+      // Redis failure → fallback to memory
+    }
+  }
+
+  // ── In-memory sliding window fallback ──────────────────────
+  const now = opts.now ?? Date.now();
   const cutoff = now - windowMs;
   const prev = buckets.get(key) ?? [];
   const active = prev.filter((t) => t > cutoff);
@@ -44,6 +101,11 @@ export function checkRateLimit(
 
 export function resetRateLimitForTests() {
   buckets.clear();
+  // best-effort flush redis keys for tests when REDIS_URL present
+  // fire-and-forget; ignore errors
+  if (redis?.flushall) {
+    void redis.flushall().catch(() => {});
+  }
 }
 
 export function rateLimitedBody(retryAfterSec: number) {
@@ -56,13 +118,14 @@ export function rateLimitedBody(retryAfterSec: number) {
 
 /** Common window: 1 hour */
 export const HOUR_MS = 60 * 60 * 1000;
+export const MINUTE_MS = 60 * 1000;
 
 export const RATE_LIMITS = {
-  reviewsCreate: { limit: 5, windowMs: HOUR_MS },
-  togetherCreate: { limit: 20, windowMs: HOUR_MS },
-  togetherTags: { limit: 30, windowMs: HOUR_MS },
-  uploads: { limit: 40, windowMs: HOUR_MS },
-  contact: { limit: 10, windowMs: HOUR_MS },
-  visualizationGenerate: { limit: 10, windowMs: HOUR_MS },
-  ragStream: { limit: 30, windowMs: HOUR_MS },
+  reviewsCreate: { limit: 5, windowMs: MINUTE_MS },
+  togetherCreate: { limit: 20, windowMs: MINUTE_MS },
+  togetherTags: { limit: 30, windowMs: MINUTE_MS },
+  uploads: { limit: 40, windowMs: MINUTE_MS },
+  contact: { limit: 10, windowMs: MINUTE_MS },
+  visualizationGenerate: { limit: 10, windowMs: MINUTE_MS },
+  ragStream: { limit: 30, windowMs: MINUTE_MS },
 } as const;

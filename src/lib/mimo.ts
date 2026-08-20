@@ -360,7 +360,7 @@ export async function generateReviewWithMimo(
       apiKey: mimoKey,
       baseURL: (process.env.MIMO_BASE_URL || "https://api.xiaomimimo.com/v1").replace(/\/$/, ""),
       model: process.env.MIMO_MODEL || "mimo-v2.5",
-      timeoutMs: 90_000,
+      timeoutMs: 30_000,
       retries: 1,
     });
   }
@@ -372,7 +372,7 @@ export async function generateReviewWithMimo(
       apiKey: deepseekKey,
       baseURL: (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, ""),
       model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
-      timeoutMs: 90_000,
+      timeoutMs: 30_000,
       retries: 1,
     });
   }
@@ -406,7 +406,7 @@ export async function generateReviewWithMimo(
           { role: "user", content: buildClassificationPrompt(entries) },
         ],
       }),
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(30_000),
     });
 
     if (classificationRes.ok) {

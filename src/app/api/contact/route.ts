@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const rateKey = session?.user?.id
       ? `contact:user:${session.user.id}`
       : `contact:ip:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"}`;
-    const limited = checkRateLimit(rateKey, RATE_LIMITS.contact);
+    const limited = await checkRateLimit(rateKey, RATE_LIMITS.contact);
     if (!limited.ok) {
       return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
         status: 429,

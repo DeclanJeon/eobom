@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     return NextResponse.json(consentCommunityDeniedBody(), { status: 403 });
   }
 
-  const limited = checkRateLimit(
+  const limited = await checkRateLimit(
     `together:create:${user.id}`,
     RATE_LIMITS.togetherCreate,
   );

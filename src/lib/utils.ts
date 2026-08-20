@@ -66,8 +66,11 @@ export function appUrl(path = ""): string {
  */
 export function safeCallbackUrl(raw: string | undefined | null, fallback = "/today"): string {
   if (!raw) return fallback;
-  if (raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")) {
-    return raw;
-  }
-  return fallback;
+  if (!/^\/(?!\/)[^\s]*$/.test(raw)) return fallback;
+  if (raw.includes("\\") || raw.includes("//")) return fallback;
+  try {
+    const d = decodeURIComponent(raw);
+    if (d.startsWith("//") || d.includes("\\")) return fallback;
+  } catch {}
+  return raw;
 }

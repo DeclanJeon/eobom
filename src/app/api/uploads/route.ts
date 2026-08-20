@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
   const user = auth.user;
 
-  const limited = checkRateLimit(`uploads:${user.id}`, RATE_LIMITS.uploads);
+  const limited = await checkRateLimit(`uploads:${user.id}`, RATE_LIMITS.uploads);
   if (!limited.ok) {
     return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
       status: 429,

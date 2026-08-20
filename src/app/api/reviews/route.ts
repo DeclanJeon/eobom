@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json(consentAiDeniedBody(), { status: 403 });
   }
 
-  const limited = checkRateLimit(`reviews:create:${user.id}`, RATE_LIMITS.reviewsCreate);
+  const limited = await checkRateLimit(`reviews:create:${user.id}`, RATE_LIMITS.reviewsCreate);
   if (!limited.ok) {
     return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
       status: 429,

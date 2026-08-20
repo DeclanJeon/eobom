@@ -17,7 +17,7 @@ import {
   rateLimitedBody,
 } from "@/lib/rate-limit";
 import {
-  generateImage,
+  generateImageAsync,
   buildVisualizationPrompt,
   VISUALIZATION_OUTPUT_DIR,
 } from "@/lib/story-mirror/image-gen";
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const kind = body.kind ?? "summary";
   const force = Boolean(body.force);
 
-  const limited = checkRateLimit(
+  const limited = await checkRateLimit(
     `visualize:generate:${auth.user.id}`,
     RATE_LIMITS.visualizationGenerate,
   );
@@ -132,26 +132,18 @@ export async function POST(request: Request) {
   );
 
   const filename = `${kind}-${currentFingerprint}.png`;
-  const result = generateImage(prompt, filename);
-  if (!result.success) {
-    return NextResponse.json(
-      { error: result.error || "이미지 생성 실패" },
-      { status: 500 },
-    );
-  }
-
   const dataJson = JSON.stringify(dataPayload);
 
+  // 비동기 큐: 먼저 generating 상태로 생성/갱신하고, 이미지 생성은 백그라운드에서 수행
   const vis = existing
     ? await db.userVisualization.update({
         where: { id: existing.id },
         data: {
           periodEnd: now,
-          imageUrl: result.localPath,
+          imageUrl: null,
           imagePrompt: prompt,
           dataJson,
-          status: "complete",
-          completedAt: new Date(),
+          status: "generating",
           errorMsg: null,
         },
       })
@@ -161,25 +153,68 @@ export async function POST(request: Request) {
           kind,
           periodStart,
           periodEnd: now,
-          imageUrl: result.localPath,
+          imageUrl: null,
           imagePrompt: prompt,
           dataJson,
           corpusVersion: "v1.0",
-          status: "complete",
-          completedAt: new Date(),
+          status: "generating",
         },
       });
 
-  return NextResponse.json({
-    id: vis.id,
-    status: "complete",
-    imageUrl: result.localPath,
-    dataJson: vis.dataJson,
-    cached: false,
-    freshness: "fresh",
-    contentFingerprint: currentFingerprint,
-    currentFingerprint,
+  // 이벤트 루프 블로킹 0 — generateImageAsync는 비동기로 실행, 타임아웃 30s 유지
+  const visId = vis.id;
+  const timeoutMs = 30_000;
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error("timeout 30s")), timeoutMs);
   });
+
+  Promise.race([generateImageAsync(prompt, filename), timeoutPromise])
+    .then((result) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      if (result.success) {
+        return db.userVisualization
+          .update({
+            where: { id: visId },
+            data: {
+              status: "complete",
+              imageUrl: result.localPath,
+              completedAt: new Date(),
+              errorMsg: null,
+            },
+          })
+          .catch(() => {});
+      } else {
+        return db.userVisualization
+          .update({
+            where: { id: visId },
+            data: { status: "failed", errorMsg: result.error || "이미지 생성 실패" },
+          })
+          .catch(() => {});
+      }
+    })
+    .catch((err: unknown) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      const msg = err instanceof Error ? err.message : String(err);
+      db.userVisualization
+        .update({
+          where: { id: visId },
+          data: { status: "failed", errorMsg: msg },
+        })
+        .catch(() => {});
+    });
+
+  return NextResponse.json(
+    {
+      id: vis.id,
+      status: "generating",
+      cached: false,
+      freshness: "fresh",
+      contentFingerprint: currentFingerprint,
+      currentFingerprint,
+    },
+    { status: 202 },
+  );
 }
 
 export async function GET(request: Request) {
