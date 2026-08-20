@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CORPUS_VERSION = "v4.2-seed-1";
+const CORPUS_VERSION = "v4.3-corpus-expand";
 
 // FTS5 virtual table + 동기화 트리거를 멱등적으로 보장한다.
 // (CREATE TRIGGER ... BEGIN/END; 는 단일 문으로 실행해야 하므로 prisma db execute 사용)
