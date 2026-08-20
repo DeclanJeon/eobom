@@ -32,7 +32,8 @@ fi
 bunx prisma generate
 echo "DROP TRIGGER IF EXISTS story_chunk_ai; DROP TRIGGER IF EXISTS story_chunk_ad; DROP TRIGGER IF EXISTS story_chunk_au; DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;" | bunx prisma db execute --stdin --schema prisma/schema.prisma
 bunx prisma db push
-bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
+# remove_diacritics 2 requires SQLite >=3.53; fallback to plain unicode61 on older (3.46)
+bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma || bunx prisma db execute --file prisma/fts5-setup-fallback.sql --schema prisma/schema.prisma
 bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
@@ -66,7 +67,8 @@ fi
 bunx prisma generate
 echo "DROP TRIGGER IF EXISTS story_chunk_ai; DROP TRIGGER IF EXISTS story_chunk_ad; DROP TRIGGER IF EXISTS story_chunk_au; DROP TABLE IF EXISTS StoryChunkFts; DROP TABLE IF EXISTS StoryChunkFts_config; DROP TABLE IF EXISTS StoryChunkFts_content; DROP TABLE IF EXISTS StoryChunkFts_data; DROP TABLE IF EXISTS StoryChunkFts_docsize; DROP TABLE IF EXISTS StoryChunkFts_idx;" | bunx prisma db execute --stdin --schema prisma/schema.prisma
 bunx prisma db push
-bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma
+# remove_diacritics 2 requires SQLite >=3.53; fallback to plain unicode61 on older (3.46)
+bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prisma || bunx prisma db execute --file prisma/fts5-setup-fallback.sql --schema prisma/schema.prisma
 bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
