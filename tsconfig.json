@@ -47,6 +47,8 @@
     "node_modules",
     "tool-results",
     "ui_reference",
-    "upload"
+    "upload",
+    "playwright.config.ts",
+    "tests/e2e"
   ]
 }
