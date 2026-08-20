@@ -1,4 +1,4 @@
--- Story Mirror RAG v4.2 — SQLite FTS5 local search index
+-- Story Mirror RAG v4.3 — SQLite FTS5 local search index
 -- 임베딩 없이 한국어/영어 텍스트를 전문 검색한다.
 -- 토크나이저: unicode61 (한글은 음절 블록 단위 토큰 → 2음절 단어도 정확 매칭).
 -- 인라인(standalone) FTS5 테이블: chunkId를 FK로 두고 StoryChunk와 트리거로 동기화한다.
@@ -15,7 +15,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS StoryChunkFts USING fts5(
   summary,
   title,
   themes,
-  tokenize = 'unicode61'
+  tokenize = 'unicode61 "remove_diacritics 2"'
 );
 
 -- StoryChunk 삽입/수정/삭제 시 FTS5 인덱스를 자동 동기화한다.

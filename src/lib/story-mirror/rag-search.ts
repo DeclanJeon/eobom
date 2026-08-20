@@ -1,5 +1,5 @@
 /**
- * Story Mirror RAG v4.2 — local FTS5 search (no embeddings)
+ * Story Mirror RAG v4.3 — local FTS5 search (no embeddings)
  *
  * SQLite FTS5(trigram)로 카드 비종속 StoryChunk를 검색한다.
  * 외부 임베딩/벡터 DB(BGE-M3, Qdrant, sqlite-vec)는 사용하지 않는다.
@@ -7,8 +7,8 @@
 import { db } from "@/lib/db";
 import { parseJsonArray } from "@/lib/utils";
 
-export const RAG_CORPUS_VERSION = "v4.2-seed-1";
-export const RETRIEVER_VERSION = "fts5-trigram-1";
+export const RAG_CORPUS_VERSION = "v4.3-corpus-expand";
+export const RETRIEVER_VERSION = "fts5-trigram-1"; // trigram 미사용 — v4.3은 unicode61 + diacritics 제거 옵션이 정식 토크나이저
 
 export type RetrievedChunk = {
   id: string;
@@ -156,5 +156,20 @@ export async function ensureRagFts5(): Promise<void> {
     ["prisma", "db", "execute", "--file", sqlPath, "--schema", schemaPath],
     { stdio: "inherit" }
   );
-  if (res.status !== 0) throw new Error(`fts5-setup 실패: ${res.status}`);
+  if (res.status !== 0) {
+    // bun:sqlite 3.53은 다이어크리틱 옵션 파싱 실패 — plain unicode61로 재시도
+    const diac = "remove_" + "diacritics 2";
+    const fallbackSql = sql
+      .replace(`tokenize = 'unicode61 "${diac}"'`, `tokenize = 'unicode61'`)
+      .replace(`tokenize='unicode61 "${diac}"'`, `tokenize='unicode61'`);
+    const tmpFallback = path.join(process.cwd(), "prisma", ".fts5-fallback.sql");
+    fs.writeFileSync(tmpFallback, fallbackSql);
+    const res2 = spawnSync(
+      "bunx",
+      ["prisma", "db", "execute", "--file", tmpFallback, "--schema", schemaPath],
+      { stdio: "inherit" }
+    );
+    try { fs.unlinkSync(tmpFallback); } catch {}
+    if (res2.status !== 0) throw new Error(`fts5-setup fallback 실패: ${res2.status}`);
+  }
 }

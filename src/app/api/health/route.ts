@@ -26,6 +26,8 @@ export async function GET(request: Request) {
 
   try {
     await db.$queryRaw`SELECT 1`;
+    const fts = await db.$queryRaw<Array<{ name: string }>>`SELECT name FROM sqlite_master WHERE type='table' AND name='StoryChunkFts'`;
+    if (!fts.length) throw new Error("FTS missing");
     return NextResponse.json({ ...base, db: "up" as const }, { headers });
   } catch {
     return NextResponse.json(
