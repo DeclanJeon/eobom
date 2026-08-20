@@ -21,13 +21,22 @@ const CORPUS_VERSION = "v4.3-corpus-expand";
 async function ensureFts5() {
   const schemaPath = join(__dirname, "../../prisma/schema.prisma");
   const sqlPath = join(__dirname, "../../prisma/fts5-setup.sql");
+  const fallbackPath = join(__dirname, "../../prisma/fts5-setup-fallback.sql");
   const res = spawnSync(
     "bunx",
     ["prisma", "db", "execute", "--file", sqlPath, "--schema", schemaPath],
     { stdio: "inherit" }
   );
   if (res.status !== 0) {
-    throw new Error(`prisma db execute failed (fts5-setup): ${res.status}`);
+    console.warn("fts5-setup with remove_diacritics failed, falling back to plain unicode61");
+    const fallbackRes = spawnSync(
+      "bunx",
+      ["prisma", "db", "execute", "--file", fallbackPath, "--schema", schemaPath],
+      { stdio: "inherit" }
+    );
+    if (fallbackRes.status !== 0) {
+      throw new Error(`prisma db execute failed (fts5-setup fallback): ${fallbackRes.status}`);
+    }
   }
 }
 
