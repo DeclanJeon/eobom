@@ -167,13 +167,16 @@ export function TodayCard({
         ) : content.kind === "scripture" ? (
           <>
             {content.verses && content.verses.length > 0 ? (
-              <div className="mt-4 space-y-3" aria-label="성경 본문 절별 읽기">
+              <div
+                className="writing-margin mt-4 space-y-4 md:space-y-3"
+                aria-label="성경 본문 절별 읽기"
+              >
                 {content.verses.map((v) => (
-                  <div key={v.verse} className="flex gap-3">
-                    <span className="mt-1 min-w-6 shrink-0 text-right font-mono text-label-xs text-text-muted/60">
+                  <div key={v.verse} className="flex gap-2.5 md:gap-3">
+                    <span className="mt-1 min-w-5 shrink-0 text-right font-mono text-[11px] leading-5 text-text-muted/55 md:min-w-6 md:text-label-xs">
                       {v.verse}
                     </span>
-                    <p className="flex-1 font-journal text-body-lg leading-relaxed text-primary">
+                    <p className="flex-1 font-journal text-body-md leading-[1.85] text-primary md:text-body-lg">
                       {v.text}
                     </p>
                   </div>
@@ -185,25 +188,20 @@ export function TodayCard({
               </p>
             ) : null}
             {content.chapterBg ? (
-              <div className="mt-5 border-t border-border/40 pt-4">
-                <p className="text-label-xs uppercase tracking-widest text-text-muted">이 장을 둘러싼 배경</p>
-                <p className="mt-2 text-body-sm leading-relaxed text-text-muted">
-                  {content.chapterBg.overview}
-                </p>
-                {(content.chapterBg.historical ||
-                  content.chapterBg.literary ||
-                  content.chapterBg.theological) && (
-                  <details className="group mt-3">
-                    <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-label-xs text-leaf hover:text-primary">
-                      배경 더 보기
-                      <span aria-hidden className="group-open:hidden">
-                        ▾
-                      </span>
-                      <span aria-hidden className="hidden group-open:inline">
-                        ▴
-                      </span>
-                    </summary>
-                    <div className="mt-3 space-y-2 text-body-sm leading-relaxed text-text-muted">
+              <details className="group mt-5 rounded-xl border border-border/30 bg-card/40 px-3 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                  <span className="text-label-sm font-medium text-primary">이 장 둘러보기</span>
+                  <span className="shrink-0 text-label-xs text-text-muted group-open:hidden">펼치기 ▾</span>
+                  <span className="hidden shrink-0 text-label-xs text-text-muted group-open:inline">접기 ▴</span>
+                </summary>
+                <div className="mt-3 space-y-3">
+                  <p className="text-body-sm leading-relaxed text-text-muted">
+                    {content.chapterBg.overview}
+                  </p>
+                  {(content.chapterBg.historical ||
+                    content.chapterBg.literary ||
+                    content.chapterBg.theological) && (
+                    <div className="space-y-2 border-t border-border/20 pt-3 text-body-sm leading-relaxed text-text-muted">
                       {content.chapterBg.historical ? (
                         <p>
                           <span className="font-semibold text-primary">역사</span> — {content.chapterBg.historical}
@@ -220,33 +218,42 @@ export function TodayCard({
                         </p>
                       ) : null}
                     </div>
-                  </details>
-                )}
-                {content.chapterBg.keyVerses.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {content.chapterBg.keyVerses.map((kv) => (
-                      <span key={kv.reference} className="chip-gold px-2 py-1 text-xs">
-                        {kv.reference}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-                {content.chapterBg.cautions.length > 0 ? (
-                  <p className="mt-2 text-label-xs leading-relaxed text-text-muted">
-                    주의: {content.chapterBg.cautions.join(" · ")}
-                  </p>
-                ) : null}
-              </div>
+                  )}
+                  {content.chapterBg.keyVerses.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {content.chapterBg.keyVerses.map((kv) => (
+                        <span key={kv.reference} className="chip-gold px-2 py-1 text-xs">
+                          {kv.reference}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  {content.chapterBg.cautions.length > 0 ? (
+                    <p className="text-label-xs leading-relaxed text-text-muted">
+                      주의: {content.chapterBg.cautions.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
+              </details>
             ) : content.background ? (
               <p className="mt-3 text-body-md leading-relaxed text-text-muted">{content.background}</p>
             ) : null}
             {content.ref ? (
-              <PassageAnnotationList
-                code={content.ref.code}
-                chapter={content.ref.chapter}
-                startVerse={content.ref.startVerse}
-                endVerse={content.ref.endVerse}
-              />
+              <details className="group mt-3 rounded-xl border border-border/20 bg-card/40 px-3 py-3">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                  <span className="text-label-sm font-medium text-primary">연결된 성구</span>
+                  <span className="shrink-0 text-label-xs text-text-muted group-open:hidden">펼치기 ▾</span>
+                  <span className="hidden shrink-0 text-label-xs text-text-muted group-open:inline">접기 ▴</span>
+                </summary>
+                <div className="mt-3">
+                  <PassageAnnotationList
+                    code={content.ref.code}
+                    chapter={content.ref.chapter}
+                    startVerse={content.ref.startVerse}
+                    endVerse={content.ref.endVerse}
+                  />
+                </div>
+              </details>
             ) : null}
           </>
         ) : content.kind === "prompt" ? (
