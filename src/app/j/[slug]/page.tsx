@@ -4,8 +4,16 @@ import { cookies } from "next/headers";
 import { LoginButton } from "@/components/login-button";
 import { KeyringClaimPrompt } from "@/components/keyring-claim-prompt";
 import { OwnerLoginPrompt } from "@/components/owner-login-prompt";
+import { GlobalScriptureCard } from "@/components/today/global-scripture-card";
+import { TodayCard } from "@/components/today/today-card";
+import { GlobalCardImpression } from "@/components/today/global-card-impression";
+import { KeyringLandingSeen } from "@/components/j/landing-seen";
 import { db } from "@/lib/db";
 import { getOptionalUser } from "@/lib/session";
+import { getCheckin } from "@/lib/checkin";
+import { toKstDateKey } from "@/lib/kst";
+import { selectGlobalScripture } from "@/lib/daily-scripture";
+import { selectCardPolicy } from "@/lib/select-card";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import {
   claimErrorMessage,
@@ -17,6 +25,15 @@ import {
   type ClaimErrorCode,
 } from "@/lib/seats";
 import { decideKeyringAccess } from "@/lib/keyring-access";
+import { eventMessageForSeat } from "@/lib/retreat-event";
+import { pastTodayDateRanges } from "@/lib/past-today";
+import {
+  elapsedDaysKst,
+  findTimeCapsuleCandidates,
+  timeCapsuleLabel,
+} from "@/lib/time-capsule";
+import { recentlyExposedEntryIds } from "@/lib/memory-exposure";
+import { getUserPreferenceFlags } from "@/lib/user-preferences";
 
 export async function generateMetadata({
   params,
@@ -68,8 +85,9 @@ export default async function PersonalJournalPage({
       break;
     }
     case "revoked": {
+      // 폐기된 키링은 사용할 수 없는 상태이므로 전역 카드·impression을 의도적으로 표시하지 않는다.
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
           <h1 className="text-display-lg text-primary">사용할 수 없는 키링</h1>
           <p className="mt-3 text-body-md text-text-muted">
             {claimErrorMessage("revoked")}
@@ -96,7 +114,8 @@ export default async function PersonalJournalPage({
     }
     case "claim_prompt": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
           <KeyringClaimPrompt slug={slug} />
           <p className="mt-6 text-label-sm text-text-muted">
@@ -107,7 +126,8 @@ export default async function PersonalJournalPage({
     }
     case "blocked_other": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <h1 className="text-display-lg text-primary">
             다른 사람의 키링입니다
           </h1>
@@ -131,7 +151,8 @@ export default async function PersonalJournalPage({
     }
     case "blocked_legacy_other": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <h1 className="text-display-lg text-primary">다른 사람의 키링입니다</h1>
           <Link href="/today" className="cta-primary mt-8 inline-flex">
             내 홈으로
@@ -141,14 +162,16 @@ export default async function PersonalJournalPage({
     }
     case "owner_login_prompt": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <OwnerLoginPrompt slug={slug} />
         </Shell>
       );
     }
     case "private_page": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <p className="text-label-sm text-text-muted">키링 {slug}</p>
           <h1 className="mt-2 text-display-lg text-primary">
             이 주소는
@@ -166,7 +189,8 @@ export default async function PersonalJournalPage({
     }
     case "first_register": {
       return (
-        <Shell isAuthenticated={Boolean(viewer)}>
+        <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+          <GuestKeyringCard now={new Date()} />
           <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
           <h1 className="mt-2 text-display-lg text-primary">
             나의
@@ -195,6 +219,14 @@ export default async function PersonalJournalPage({
   }
 }
 
+function GuestKeyringCard({ now }: { now: Date }) {
+  return (
+    <div className="mb-6 text-left">
+      <GlobalCardImpression dateKey={toKstDateKey(now)} surface="keyring_guest" />
+      <GlobalScriptureCard now={now} />
+    </div>
+  );
+}
 function renderClaimQueryError(code?: string) {
   if (!code || code === "1") return null;
   const known: ClaimErrorCode[] = [
@@ -216,9 +248,11 @@ function renderClaimQueryError(code?: string) {
 function Shell({
   children,
   isAuthenticated,
+  slug,
 }: {
   children: React.ReactNode;
   isAuthenticated: boolean;
+  slug: string;
 }) {
   return (
     <div className="relative flex min-h-dvh items-center justify-center px-5 py-10">
@@ -234,6 +268,8 @@ function Shell({
         </div>
         {children}
       </div>
+      {/* 키링 랜딩 계측 — 서버 렌더 금지, 클라이언트 세션당 1회 (B4·B2) */}
+      <KeyringLandingSeen slug={slug} />
     </div>
   );
 }
@@ -247,14 +283,157 @@ async function OwnerView({
   userId: string;
   display: string;
 }) {
-  const recent = await db.reflectionEntry.findMany({
-    where: { userId, deletedAt: null },
-    orderBy: { entryDate: "desc" },
-    take: 5,
+  const now = new Date();
+  const dateKey = toKstDateKey(now);
+  const flags = await getUserPreferenceFlags(userId);
+  // pastTodayEnabled is a user privacy/feature preference; honor it on keyring too.
+  // 수련회 이벤트 DAY 30/90 메시지 (G013) — 있으면 그 카드가 최우선
+  const eventMessage = await eventMessageForSeat(slug, now);
+  const [recent, timeCapsule, pastToday, lastWeek, reactionChecks] = await Promise.all([
+    db.reflectionEntry.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { entryDate: "desc" },
+      take: 3,
+    }),
+    findTimeCapsuleCandidates(userId, now),
+    flags.pastTodayEnabled
+      ? (async () => {
+          const ranges = pastTodayDateRanges(now, 8);
+          if (!ranges.length) return null;
+          return db.reflectionEntry.findFirst({
+            where: {
+              userId,
+              deletedAt: null,
+              OR: ranges.map((r) => ({ entryDate: { gte: r.gte, lte: r.lte } })),
+            },
+            orderBy: { entryDate: "desc" },
+          });
+        })()
+      : Promise.resolve(null),
+    db.reflectionEntry.findFirst({
+      where: {
+        userId,
+        deletedAt: null,
+        entryDate: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+      },
+      orderBy: { entryDate: "desc" },
+    }),
+    db.dailyCheckIn.findMany({
+      where: { userId, reaction: { not: null } },
+      orderBy: { updatedAt: "desc" },
+      select: { cardKey: true },
+    }),
+  ]);
+
+  const exposed = await recentlyExposedEntryIds(userId, { now });
+  const reactionEntryIds = reactionChecks
+    .map((r) => r.cardKey.startsWith("memory:") ? r.cardKey.slice("memory:".length) : null)
+    .filter((id): id is string => id !== null && !exposed.has(id));
+  const reactionEntries = reactionEntryIds.length
+    ? await db.reflectionEntry.findMany({
+        where: { id: { in: reactionEntryIds }, userId, deletedAt: null },
+        orderBy: { updatedAt: "desc" },
+      })
+    : [];
+
+  // 키링 경로 = Memory 우선 (G3): 타임캡슐 → 과거의 오늘 → 지난주 → 리액션 → 말씀.
+  // 모든 fallback 후보도 MemoryExposure 14일 필터를 통과해야 한다 (architecture gate).
+  const pastCandidate = pastToday && !exposed.has(pastToday.id) ? pastToday : null;
+  const lastWeekCandidate = lastWeek && !exposed.has(lastWeek.id) ? lastWeek : null;
+  const selection = selectCardPolicy({
+    surface: "keyring",
+    dateKey,
+    timeCapsule,
+    pastToday: pastCandidate
+      ? [
+          {
+            sourceType: "entry",
+            sourceId: pastCandidate.id,
+            entryId: pastCandidate.id,
+            entryDate: pastCandidate.entryDate,
+            display:
+              pastCandidate.title ||
+              parseJsonArray(pastCandidate.scriptureRefs)[0] ||
+              "그날의 기록",
+            excerpt: excerpt(pastCandidate.reflectionBody, 90),
+          },
+        ]
+      : [],
+    lastWeek: lastWeekCandidate
+      ? [
+          {
+            sourceType: "entry",
+            sourceId: lastWeekCandidate.id,
+            entryId: lastWeekCandidate.id,
+            entryDate: lastWeekCandidate.entryDate,
+            display:
+              lastWeekCandidate.title ||
+              parseJsonArray(lastWeekCandidate.scriptureRefs)[0] ||
+              "최근 기록",
+            excerpt: excerpt(lastWeekCandidate.reflectionBody, 90),
+          },
+        ]
+      : [],
+    reactions: reactionEntries.map((entry) => ({
+      sourceType: "reaction" as const,
+      sourceId: entry.id,
+      entryId: entry.id,
+      entryDate: entry.entryDate,
+      display:
+        entry.title ||
+        parseJsonArray(entry.scriptureRefs)[0] ||
+        "다시 읽은 기록",
+      excerpt: excerpt(entry.reflectionBody, 90),
+    })),
   });
 
+  let cardContent;
+  let heroCardKey = "";
+  if (eventMessage) {
+    // 이벤트 DAY 카드 (G013) — 공용 메시지 (기획 작성), 기록 아님 → prompt 종류
+    cardContent = {
+      kind: "prompt" as const,
+      display: eventMessage.message,
+      hint: eventMessage.label,
+    };
+    heroCardKey = `event:${eventMessage.eventId ?? slug}:${eventMessage.day}`;
+  } else if (selection.kind === "memory" && selection.candidate) {
+    const c = selection.candidate;
+    cardContent = {
+      kind: "memory" as const,
+      label: c.anchorDays
+        ? timeCapsuleLabel(c.anchorDays, elapsedDaysKst(now, c.entryDate!))
+        : pastCandidate?.id === c.entryId
+          ? "과거의 오늘"
+          : "지난주 내 한 문장",
+      display: c.display,
+      excerpt: c.excerpt,
+      entryId: c.entryId!,
+    };
+    heroCardKey = selection.cardKey;
+  } else {
+    const scripture = selectGlobalScripture(now);
+    cardContent = {
+      kind: "scripture" as const,
+      display: scripture.display,
+      text: scripture.text,
+      background: scripture.background,
+      sourceLabel: "오늘 함께 읽을 말씀",
+    };
+    heroCardKey = `scripture:${dateKey}`;
+  }
+
+  const cardWriteHref =
+    cardContent?.kind === "memory"
+      ? `/entries/${cardContent.entryId}/edit`
+      : "/entries/new";
+
+  const existingCheckin = cardContent
+    ? await getCheckin(userId, dateKey, heroCardKey)
+    : null;
+
   return (
-    <Shell isAuthenticated>
+    <Shell isAuthenticated slug={slug}>
       <p className="text-label-sm text-text-muted">/j/{slug}</p>
       <h1 className="mt-2 text-display-lg text-primary">
         {display}의
@@ -262,11 +441,23 @@ async function OwnerView({
         묵상기록지
       </h1>
       <p className="mt-3 text-body-md text-text-muted">나만의 입구입니다.</p>
-      <Link href="/entries/new" className="cta-primary mt-10 inline-flex w-full py-4">
-        기록하기
-      </Link>
+
+      <div className="mt-8 text-left">
+        <TodayCard
+          cardKey={heroCardKey}
+          surface="keyring"
+          dateKey={dateKey}
+          identityKey={userId}
+          content={cardContent}
+          initialReaction={existingCheckin?.reaction ?? null}
+          initialOneLine={existingCheckin?.oneLine ?? null}
+          initialEntryId={existingCheckin?.entryId ?? null}
+          writeHref={cardWriteHref}
+        />
+      </div>
+
       {recent.length > 0 ? (
-        <section className="mt-10 space-y-2 text-left">
+        <section className="mt-8 space-y-2 text-left">
           <h2 className="text-headline-sm text-primary">최근</h2>
           {recent.map((entry) => (
             <Link

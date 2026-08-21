@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
+import { GuestTodayView } from "@/components/today/guest-view";
+import { TodayCard } from "@/components/today/today-card";
 import { EntryRow, PageIntro, SurfaceCard } from "@/components/ui-blocks";
 import { listOpenActionSteps } from "@/lib/actions";
-import { selectRandomScripture, toKstParts } from "@/lib/daily-scripture";
-import { requireUser } from "@/lib/session";
+import { selectRandomScripture } from "@/lib/daily-scripture";
+import { getOptionalUser, type ApiUser } from "@/lib/session";
+import { getCheckin } from "@/lib/checkin";
+import { kstDaysAgoStart, toKstDateKey, toKstParts } from "@/lib/kst";
+import { weekdayContentKey, selectPrompt } from "@/lib/weekday-rhythm";
+import {
+  elapsedDaysKst,
+  selectTimeCapsuleCard,
+  timeCapsuleLabel,
+} from "@/lib/time-capsule";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import { pastTodayDateRanges } from "@/lib/past-today";
@@ -13,8 +23,20 @@ import { getUserPreferenceFlags } from "@/lib/user-preferences";
 export const metadata = { title: "오늘" };
 
 export default async function TodayPage() {
-  const user = await requireUser();
+  const user = await getOptionalUser();
   const now = new Date();
+  // GATE-2: 게스트는 전역 말씀만 (개인 기록·타임캡슐·회고·개인 seed 조회 금지)
+  if (!user) return <GuestTodayView now={now} />;
+  return <MemberTodayView user={user} now={now} />;
+}
+
+async function MemberTodayView({
+  user,
+  now,
+}: {
+  user: ApiUser;
+  now: Date;
+}) {
 
   const [flags, entryPool, openActions, latestReview] = await Promise.all([
     getUserPreferenceFlags(user.id),
@@ -36,9 +58,8 @@ export default async function TodayPage() {
   const moreActionsCount = Math.max(0, openActions.length - 1);
 
   // 오늘 붙들 말씀 — 매일 하나, 사용자·KST 날짜 시드로 결정적 랜덤 (AI 호출 없음).
-  const kst = toKstParts(now);
   const dailyScripture = selectRandomScripture({
-    seed: `${user.id}:${kst.dateKey}`,
+    seed: `${user.id}:${toKstDateKey(now)}`,
   });
   const heroRef = dailyScripture.display;
   const heroDisplay = dailyScripture.display;
@@ -62,74 +83,139 @@ export default async function TodayPage() {
   }
 
   const greeting = user.displayName || user.name || "순례자";
-  const writeHref = heroRef
+  const dateKey = toKstDateKey(now);
+
+  // Phase 3 rhythm은 실험 flag로만 활성화. 기본은 v1.3 scripture-first 계약 유지.
+  const weekdayEnabled = process.env.ENABLE_WEEKDAY_RHYTHM === "1";
+  const contentKey = weekdayEnabled ? weekdayContentKey(now) : "scripture";
+
+  const lastWeekEntry =
+    contentKey === "last_week"
+      ? await db.reflectionEntry.findFirst({
+          where: {
+            userId: user.id,
+            deletedAt: null,
+            entryDate: { gte: kstDaysAgoStart(now, 7) },
+          },
+          orderBy: { entryDate: "desc" },
+        })
+      : null;
+
+  const timeCapsuleCard =
+    contentKey === "time_capsule" ? await selectTimeCapsuleCard(user.id, now) : null;
+
+  const gratitudeItems =
+    contentKey === "gratitude"
+      ? await db.reflectionEntry.findMany({
+          where: {
+            userId: user.id,
+            deletedAt: null,
+            gratitude: { not: null },
+            entryDate: { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) },
+          },
+          orderBy: { entryDate: "desc" },
+          take: 6,
+          select: { gratitude: true },
+        })
+      : [];
+
+  // 카드 콘텐츠 조립 — 데이터 없으면 오늘의 말씀으로 폴백 (빈 섹션 숨김)
+  let cardContent;
+  let heroCardKey = `scripture:${dateKey}`;
+  let writeHref = heroRef
     ? `/entries/new?scripture=${encodeURIComponent(heroDisplay || heroRef)}`
     : "/entries/new";
-  const writeLabel = heroRef
-    ? "이 본문으로 기록하기"
-    : hasEntries
-      ? "묵상 기록하기"
-      : "첫 묵상 남기기";
+
+  const scriptureContent = {
+    kind: "scripture" as const,
+    display: heroDisplay || heroRef,
+    text: passageText,
+    background: heroReason ?? undefined,
+    sourceLabel: heroSourceLabel,
+  };
+
+  if (contentKey === "prompt") {
+    const question = await selectPrompt(dateKey);
+    cardContent = { kind: "prompt" as const, display: question };
+    heroCardKey = `prompt:${dateKey}`;
+    writeHref = "/entries/new";
+  } else if (contentKey === "last_week" && lastWeekEntry) {
+    cardContent = {
+      kind: "memory" as const,
+      label: "지난주 내 한 문장",
+      display:
+        lastWeekEntry.title ||
+        parseJsonArray(lastWeekEntry.scriptureRefs)[0] ||
+        "지난주 기록",
+      excerpt: excerpt(lastWeekEntry.reflectionBody, 90),
+      entryId: lastWeekEntry.id,
+    };
+    heroCardKey = `memory:${lastWeekEntry.id}`;
+    writeHref = `/entries/${lastWeekEntry.id}/edit`;
+  } else if (contentKey === "action" && primaryAction) {
+    cardContent = {
+      kind: "prompt" as const,
+      display: primaryAction.body,
+      hint: "오늘 살아낼 작은 실천으로 붙들어 보세요.",
+    };
+    heroCardKey = `action:${primaryAction.id}`;
+    writeHref = "/entries/new";
+  } else if (contentKey === "time_capsule" && timeCapsuleCard) {
+    cardContent = {
+      kind: "memory" as const,
+      label: timeCapsuleLabel(
+        timeCapsuleCard.anchorDays ?? 30,
+        elapsedDaysKst(now, timeCapsuleCard.entryDate!),
+      ),
+      display: timeCapsuleCard.display,
+      excerpt: timeCapsuleCard.excerpt,
+      entryId: timeCapsuleCard.entryId!,
+    };
+    heroCardKey = `memory:${timeCapsuleCard.entryId}`;
+    writeHref = `/entries/${timeCapsuleCard.entryId}/edit`;
+  } else if (contentKey === "review" && latestReview) {
+    cardContent = {
+      kind: "review" as const,
+      display: "이번 주 돌아보기",
+      href: `/lookback/${latestReview.id}`,
+    };
+    heroCardKey = `review:${latestReview.id}`;
+    writeHref = `/lookback/${latestReview.id}`;
+  } else if (contentKey === "gratitude" && gratitudeItems.length > 0) {
+    cardContent = {
+      kind: "gratitude" as const,
+      display: "이번 주 감사",
+      items: gratitudeItems
+        .map((e) => e.gratitude?.trim())
+        .filter((g): g is string => Boolean(g))
+        .slice(0, 5),
+    };
+    heroCardKey = `gratitude:${dateKey}`;
+    writeHref = "/entries";
+  } else {
+    cardContent = scriptureContent;
+  }
+
+  const existingCheckin = await getCheckin(user.id, dateKey, heroCardKey);
 
   return (
     <AppShell wide bare>
-      {/* 1. 지배적 장면 — 성구 1개 + CTA 1개 */}
-      <section className="mb-10 rounded-2xl border border-border/70 bg-secondary/30 px-5 py-8 md:mb-12 md:px-10 md:py-12">
-        <PageIntro
-          className="mb-0"
-          eyebrow={formatDateKo(now)}
-          title={
-            <>
-              {greeting}님,
-              <span className="mt-1 block">
-                {heroRef
-                  ? "오늘 붙들 말씀"
-                  : hasEntries
-                    ? "오늘 한 줄을 남겨 보세요"
-                    : "첫 묵상을 남겨 보세요"}
-              </span>
-            </>
-          }
-          titleClassName="md:text-4xl lg:text-[2.75rem]"
-        />
+      <p className="mb-4 text-eyebrow">
+        {greeting}님 · {formatDateKo(now)}
+      </p>
 
-        {heroRef ? (
-          <div className="mt-6 max-w-2xl">
-            {heroSourceLabel ? (
-              <p className="mb-2 text-label-sm text-accent-gold-ink">
-                {heroSourceLabel}
-              </p>
-            ) : null}
-            <p className="chip-gold inline-flex">{heroDisplay || heroRef}</p>
-            {passageText ? (
-              <p className="mt-4 font-journal text-xl leading-relaxed text-primary md:text-2xl">
-                {passageText}
-              </p>
-            ) : (
-              <p className="mt-4 font-journal text-xl leading-relaxed text-primary md:text-2xl">
-                {heroDisplay || heroRef}
-              </p>
-            )}
-            {heroReason ? (
-              <p className="mt-3 text-body-md text-text-muted line-clamp-2">
-                {heroReason}
-              </p>
-            ) : null}
-          </div>
-        ) : (
-          <p className="mt-4 max-w-xl text-body-md text-text-muted">
-            {hasEntries
-              ? "오늘 머문 말씀을 한 줄만 남겨도, 내일의 내가 다시 만납니다."
-              : "아직 남긴 기록이 없어요. 첫 묵상을 남기면 그 말씀이 여기에 이어집니다."}
-          </p>
-        )}
-
-        <div className="mt-8">
-          <Link href={writeHref} className="cta-primary min-h-11 px-6 py-3">
-            {writeLabel}
-          </Link>
-        </div>
-      </section>
+      {/* 1. 지배적 장면 — 오늘의 카드 (Receive, B1) */}
+      <TodayCard
+        cardKey={heroCardKey}
+        surface="today"
+        dateKey={dateKey}
+        identityKey={user.id}
+        content={cardContent}
+        initialReaction={existingCheckin?.reaction ?? null}
+        initialOneLine={existingCheckin?.oneLine ?? null}
+        initialEntryId={existingCheckin?.entryId ?? null}
+        writeHref={writeHref}
+      />
 
       {/* 2. 보조 행동: 열린 결단 0~1 */}
       {primaryAction ? (
@@ -188,8 +274,7 @@ export default async function TodayPage() {
             <Link href={`/entries/${pastToday.id}`} className="block">
               <SurfaceCard className="transition hover:border-accent-gold/30">
                 <p className="text-label-sm text-accent-terracotta">
-                  과거의 오늘 ·{" "}
-                  {now.getFullYear() - pastToday.entryDate.getFullYear()}년 전
+                  {toKstParts(now).year - toKstParts(pastToday.entryDate).year}년 전
                 </p>
                 <p className="mt-1 text-label-md text-primary">
                   {pastToday.title ||

@@ -223,6 +223,15 @@ export function selectRandomScripture(opts: {
   return buildResult("random", ref);
 }
 
+/**
+ * 전역 오늘의 말씀 — (KST dateKey)만으로 결정되는 모두 동일한 카드 (C2·GATE-2).
+ * 게스트/비소유자 노출용. 사용자 seed 사용 금지 (개인화·운세적 해석 차단).
+ */
+export function selectGlobalScripture(now: Date): DailyScriptureResult {
+  const kst = toKstParts(now);
+  return selectRandomScripture({ seed: kst.dateKey });
+}
+
 function buildResult(
   path: DailyScripturePath,
   ref: BibleReference,

@@ -7,9 +7,10 @@ import { getToken } from "next-auth/jwt";
  * - If a next-auth session cookie is missing, redirect pages to /login.
  * - Real authorization still happens in server components / API routes via getServerSession.
  * This avoids login <-> protected-page redirect loops with strategy: "database".
+ * - /today is NOT protected since v1.3 GATE-2: guests see the global scripture card
+ *   (page renders GuestTodayView without personal data).
  */
 const PROTECTED_PAGE_PREFIXES = [
-  "/today",
   "/entries",
   "/together",
   "/me",
@@ -61,7 +62,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/today/:path*",
     "/entries/:path*",
     "/reviews/:path*",
     "/together/:path*",
