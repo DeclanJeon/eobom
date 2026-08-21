@@ -16,7 +16,7 @@ import {
   selectDailyScripture,
   toKstParts,
 } from "../src/lib/daily-scripture";
-import { sendDailyScriptureEmail } from "../src/lib/mail";
+import { sendDailyScriptureEmail, type DailyEmailMetaNote } from "../src/lib/mail";
 
 const GMAIL_DAILY_LIMIT = 500;
 const SMTP_FAIL_BREAK = 3;
@@ -129,9 +129,23 @@ async function processUser(opts: {
   const recipient = toOverride || user.email;
   const name = user.displayName || user.name || "";
 
+  // GATE-4: 개인 요소는 메타 카피만 (원문·excerpt 금지). 카드가 실제로 기록을
+  // 사용하는 AI 경로에서만 부착 — 랜덤 경로는 기록과 무관하므로 주장하지 않는다 (QA-1).
+  const recentEntry = entries.find(
+    (e) => e.entryDate.getTime() >= now.getTime() - 2 * 24 * 60 * 60 * 1000,
+  );
+  const metaNote: DailyEmailMetaNote | undefined =
+    selected.path === "ai"
+      ? recentEntry
+        ? "최근 남긴 기록이 오늘 카드로 이어졌습니다."
+        : entries.length > 0
+          ? "남긴 기록이 오늘의 카드에 이어집니다."
+          : undefined
+      : undefined;
+
   if (dryRun) {
     console.log(
-      `  [dry-run] ${user.email} → ${selected.path} ${selected.display} (${selected.slug})`,
+      `  [dry-run] ${user.email} → ${selected.path} ${selected.display} (${selected.slug})${metaNote ? " +meta" : ""}`,
     );
     return "sent";
   }
@@ -161,6 +175,7 @@ async function processUser(opts: {
       background: selected.background,
       why: selected.why,
       theme: selected.theme,
+      metaNote,
     });
     console.log(
       `  → ${recipient} (${selected.path}) ${selected.display}${skipLog ? " [smoke]" : ""}`,

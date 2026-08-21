@@ -95,8 +95,8 @@ function getFromAddress(): string {
 
 // ─── Email Footer (공통) ────────────────────────────────────────────────────
 
-function emailFooter(unsubscribeToken: string): string {
-  const url = getBaseUrl();
+function emailFooter(unsubscribeToken: string, baseUrl = getBaseUrl()): string {
+  const url = baseUrl;
   const unsubUrl = `${url}/api/email/unsubscribe?token=${unsubscribeToken}`;
   return `
     <hr style="margin:24px 0;border:none;border-top:1px solid #e0ddd7" />
@@ -390,7 +390,12 @@ export async function sendContactEmail(input: {
 
 // ─── Daily Scripture Email ──────────────────────────────────────────────────
 
-export async function sendDailyScriptureEmail(input: {
+// GATE-4: 메타 카피 리터럴만 허용 — 원문·excerpt·임의 문자열 할당은 컴파일 차단 (QA-2)
+export type DailyEmailMetaNote =
+  | "최근 남긴 기록이 오늘 카드로 이어졌습니다."
+  | "남긴 기록이 오늘의 카드에 이어집니다.";
+
+export type DailyScriptureEmailInput = {
   userId: string;
   email: string;
   name: string;
@@ -400,13 +405,19 @@ export async function sendDailyScriptureEmail(input: {
   background: string;
   why?: string;
   theme?: string;
-}) {
-  const transporter = createTransport();
-  const from = getFromAddress();
-  const baseUrl = getBaseUrl();
-  const token = generateUnsubscribeToken(input.userId);
+  /** 개인 요소 메타 카피 — 리터럴 유니온으로 원문 유입 차단 (GATE-4). */
+  metaNote?: DailyEmailMetaNote;
+};
+
+/** 이메일 본문·제목 구성 (순수) — GATE-4 계약: 원문 미포함, CTA=/today. */
+export function buildDailyScriptureEmailContent(
+  input: DailyScriptureEmailInput,
+  baseUrl: string,
+  token: string,
+): { subject: string; text: string; html: string } {
   const displayName = input.name || "이어봄 사람";
-  const writeUrl = `${baseUrl}/entries/new?scripture=${encodeURIComponent(input.display)}`;
+  // GATE-4/C6: CTA는 오늘의 카드(/today) — 인증 0회로 말씀을 다시 만나고, 원하면 기록
+  const cardUrl = `${baseUrl}/today`;
   const isAi = input.path === "ai";
 
   const subject = isAi
@@ -423,11 +434,13 @@ export async function sendDailyScriptureEmail(input: {
       ? ["", "— 왜 이 본문인지 —", input.why]
       : [];
 
-  const ctaHint = isAi
-    ? "이 본문은 처방이 아니라 머무를 자리입니다."
-    : "기록을 남기기 시작하면, 당신의 기록에 맞는 본문을 골라 드립니다.";
+  const metaBlock = input.metaNote ? ["", input.metaNote] : [];
 
-  const textBody = [
+  const ctaHint = isAi
+    ? "카드에서 이 말씀을 만나고, 원하면 기록할 수 있습니다."
+    : "기록을 남기면 내일부터 이 카드가 당신을 위해 달라집니다.";
+
+  const text = [
     `안녕하세요, ${displayName}님.`,
     "",
     themeLine,
@@ -438,8 +451,9 @@ export async function sendDailyScriptureEmail(input: {
     "— 배경 —",
     input.background,
     ...whyBlock,
+    ...metaBlock,
     "",
-    `이 본문으로 기록하기: ${writeUrl}`,
+    `오늘의 카드에서 만나기: ${cardUrl}`,
     "",
     ctaHint,
     "",
@@ -452,31 +466,48 @@ export async function sendDailyScriptureEmail(input: {
         <p style="font-size:15px;color:#2d2d2d">${escapeHtml(input.why)}</p>`
       : "";
 
+  const metaHtml = input.metaNote
+    ? `<p style="font-size:13px;color:#7a5a24;margin:16px 0 0">${escapeHtml(input.metaNote)}</p>`
+    : "";
+
   const themeHtml = isAi && input.theme
     ? `<p style="font-size:15px;color:#2d2d2d">최근 기록에서 ‘${escapeHtml(input.theme)}’의 결이 자주 보였습니다.<br />그래서 오늘 이 본문을 권합니다.</p>`
     : `<p style="font-size:15px;color:#2d2d2d">오늘 머무를 말씀입니다.</p>`;
+
+  const html = `
+    <div style="font-family:sans-serif;line-height:1.8;max-width:480px;margin:0 auto;padding:32px 16px">
+      <h2 style="font-size:20px;color:#061b0e;margin-bottom:16px">${escapeHtml(subject)}</h2>
+      <p style="font-size:15px;color:#2d2d2d">안녕하세요, <strong>${escapeHtml(displayName)}</strong>님.</p>
+      ${themeHtml}
+      <p style="font-size:16px;color:#061b0e;font-weight:600;margin:24px 0 8px">${escapeHtml(input.display)}</p>
+      <p style="font-size:15px;color:#2d2d2d;font-style:italic;border-left:3px solid #c5a059;padding-left:12px">“${escapeHtml(input.text)}”</p>
+      <p style="font-size:13px;color:#5c574f;margin:20px 0 4px">— 배경 —</p>
+      <p style="font-size:15px;color:#2d2d2d">${escapeHtml(input.background)}</p>
+      ${whyHtml}
+      ${metaHtml}
+      <a href="${cardUrl}" style="display:inline-block;margin:24px 0;padding:14px 28px;background:#061b0e;color:#fbf9f6;text-decoration:none;border-radius:12px;font-size:15px;font-weight:600">오늘의 카드에서 만나기</a>
+      <p style="font-size:13px;color:#5c574f">${escapeHtml(ctaHint)}</p>
+      <p style="font-size:12px;color:#5c574f;margin-top:16px">이 이메일은 묵상 자료이며, 성경의 최종 해석을 대신하지 않습니다.</p>
+      ${emailFooter(token, baseUrl)}
+    </div>
+  `;
+
+  return { subject, text, html };
+}
+
+export async function sendDailyScriptureEmail(input: DailyScriptureEmailInput) {
+  const transporter = createTransport();
+  const from = getFromAddress();
+  const baseUrl = getBaseUrl();
+  const token = generateUnsubscribeToken(input.userId);
+  const { subject, text, html } = buildDailyScriptureEmailContent(input, baseUrl, token);
 
   await transporter.sendMail({
     from,
     to: input.email,
     subject,
-    text: textBody,
-    html: `
-      <div style="font-family:sans-serif;line-height:1.8;max-width:480px;margin:0 auto;padding:32px 16px">
-        <h2 style="font-size:20px;color:#061b0e;margin-bottom:16px">${escapeHtml(subject)}</h2>
-        <p style="font-size:15px;color:#2d2d2d">안녕하세요, <strong>${escapeHtml(displayName)}</strong>님.</p>
-        ${themeHtml}
-        <p style="font-size:16px;color:#061b0e;font-weight:600;margin:24px 0 8px">${escapeHtml(input.display)}</p>
-        <p style="font-size:15px;color:#2d2d2d;font-style:italic;border-left:3px solid #c5a059;padding-left:12px">“${escapeHtml(input.text)}”</p>
-        <p style="font-size:13px;color:#5c574f;margin:20px 0 4px">— 배경 —</p>
-        <p style="font-size:15px;color:#2d2d2d">${escapeHtml(input.background)}</p>
-        ${whyHtml}
-        <a href="${writeUrl}" style="display:inline-block;margin:24px 0;padding:14px 28px;background:#061b0e;color:#fbf9f6;text-decoration:none;border-radius:12px;font-size:15px;font-weight:600">이 본문으로 기록하기</a>
-        <p style="font-size:13px;color:#5c574f">${escapeHtml(ctaHint)}</p>
-        <p style="font-size:12px;color:#5c574f;margin-top:16px">이 이메일은 묵상 자료이며, 성경의 최종 해석을 대신하지 않습니다.</p>
-        ${emailFooter(token)}
-      </div>
-    `,
+    text,
+    html,
   });
 }
 
