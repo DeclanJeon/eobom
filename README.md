@@ -158,13 +158,14 @@ bun run dev
 ```
 /                  랜딩 — 이어봄 소개
 /login             Google 로그인
-/today             오늘 홈 — 묵상 시작
+/today             오늘 홈 — 지배적 말씀 카드 + 보조 결단 + 최근 기록
 /entries           기록함 — 지난 묵상 검색
-/entries/new       새 묵상 기록
-/reviews           AI 회고 — 기간별 성찰
-/reviews/[id]      회고 상세 — 근거·주제·다음 단계
-/together          함께 — 익명 나눔
-/story-mirror      이야기 거울 — 고전·성경 연결
+/entries/new       새 묵상 기록 (기본 비공개, 원문 미노출 고지)
+/lookback          돌아보기 — AI 회고(4막 서사)·이야기·시각화를 한 흐름으로
+/lookback/[id]     회고 상세 — 이 기간의 나 · 4막 · 만남과 말씀 · 지금의 모습
+/reviews/new       회고 생성
+/together          함께 — 익명 한 문장 나눔
+/story-mirror      이야기 거울 — 고전·성경 연결 (돌아보기에서도 진입)
 /me                내 정보 · QR 키링 · 내보내기
 /j/[slug]          개인 키링 입구
 /contact           문의
