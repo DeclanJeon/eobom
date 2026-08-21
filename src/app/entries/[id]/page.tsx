@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Breadcrumb, SoftBadge, SurfaceCard } from "@/components/ui-blocks";
 import { DeleteEntryButton } from "@/components/delete-entry-button";
+import { ChapterBackgroundCard } from "@/components/scripture/chapter-background-card";
+import { ScripturePassageCard } from "@/components/scripture/scripture-passage-card";
 import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
+import { getChapterBackground } from "@/lib/bible/chapter-background";
 import { formatDateKo } from "@/lib/utils";
 
 export async function generateMetadata() {
@@ -59,27 +62,24 @@ export default async function EntryDetailPage({
         </div>
 
         {entry.scriptureBindings?.length
-          ? entry.scriptureBindings.map((b) => (
-              <SurfaceCard key={b.slug} className="writing-margin border-l-0">
-                <p className="text-label-md text-gold-ink">{b.display}</p>
-                {b.excerpt ? (
-                  <p className="mt-2 text-body-lg text-text-main">“{b.excerpt}”</p>
-                ) : null}
-                <p className="mt-2 text-label-sm text-text-muted">
-                  {b.translation === "ko-open-bible"
-                    ? "한국어 성경 (Open Bibles) · 개역개정 아님"
-                    : b.translation === "user-typed"
-                      ? "사용자 입력 인용"
-                      : b.translation}
-                </p>
-              </SurfaceCard>
-            ))
+          ? (() => {
+              const first = entry.scriptureBindings[0];
+              const chapterBg = first ? getChapterBackground({ code: first.code, chapter: first.chapter, locale: "ko" }) : null;
+              return (
+                <>
+                  {chapterBg ? <ChapterBackgroundCard background={chapterBg} /> : null}
+                  {entry.scriptureBindings.map((b) => (
+                    <SurfaceCard key={b.slug} className="writing-margin border-l-0">
+                      <ScripturePassageCard code={b.code} chapter={b.chapter} startVerse={b.startVerse} endVerse={b.endVerse} display={b.display} translation={b.translation} />
+                    </SurfaceCard>
+                  ))}
+                </>
+              );
+            })()
           : entry.scriptureExcerpt
             ? (
               <SurfaceCard className="writing-margin border-l-0">
-                <p className="text-body-lg text-text-main">
-                  “{entry.scriptureExcerpt}”
-                </p>
+                <p className="text-body-lg text-text-main">“{entry.scriptureExcerpt}”</p>
               </SurfaceCard>
             )
             : null}

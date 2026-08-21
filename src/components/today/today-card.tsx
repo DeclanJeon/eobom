@@ -190,7 +190,7 @@ export function TodayCard({
             {content.chapterBg ? (
               <details className="group mt-5 rounded-xl border border-border/30 bg-card/40 px-3 py-3">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                  <span className="text-label-sm font-medium text-primary">이 장 둘러보기</span>
+                  <span className="text-label-sm font-medium text-primary">이 장의 문맥</span>
                   <span className="shrink-0 text-label-xs text-text-muted group-open:hidden">펼치기 ▾</span>
                   <span className="hidden shrink-0 text-label-xs text-text-muted group-open:inline">접기 ▴</span>
                 </summary>
