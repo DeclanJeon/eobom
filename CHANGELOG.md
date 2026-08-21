@@ -12,7 +12,9 @@
 
 - Release the Receive-first redesign
 - Open safe email and retreat operations
-- Turn keyring visits into a receive-first loop
+- Turn keyring visits into a receive-first release.
+- EventLog 90일 retention systemd timer와 공개 Receive smoke 시나리오를 추가한다.
+- ioredis bundling·middleware convention 경고를 제거하고 migration 전환 기준을 문서화한다.
 
 ## v1.5.0 — 2026-08-21
 
