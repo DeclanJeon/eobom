@@ -1,10 +1,10 @@
 {
   "name": "eobom",
-  "version": "1.5.5",
+  "version": "1.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/",
+    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/ && mkdir -p .next/standalone/data/reference && cp -r data/reference/* .next/standalone/data/reference/ 2>/dev/null || true",
     "start": "HOSTNAME=0.0.0.0 PORT=3100 NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
     "db:push": "prisma db push",
@@ -18,7 +18,9 @@
     "test:seats": "bun run pretest && DATABASE_URL_TEST=file:./db/eobom-test.db bun test tests/seats.test.ts",
     "version:show": "node -p \"require('./package.json').version\"",
     "release:note": "bun scripts/release-note.ts",
-    "cleanup:expired": "bun scripts/cleanup-expired-runs.ts"
+    "cleanup:expired": "bun scripts/cleanup-expired-runs.ts",
+    "sync:reference": "node scripts/sync-reference-data.mjs",
+    "build:reference-db": "node scripts/build-reference-sqlite.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

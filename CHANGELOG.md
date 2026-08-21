@@ -2,6 +2,31 @@
 
 이 파일은 CI가 main 푸시마다 자동으로 갱신합니다. 상세 개발노트는 `docs/dev-notes/`를 보세요.
 
+## v1.6.0 — 2026-08-21
+
+### 기능
+
+- 위계 복원 — 보조 결단 1개와 최근 기록 목록, h1 추가
+- design: Mirror Narrative와 계층 원칙을 DESIGN.md에 반영, clay·mist 토큰과 light-only 추가
+
+### 개선
+
+- Make quick records private and traceable
+
+### 기타
+
+- 회고 상세 기본 접힘과 clay/mist 적용
+- 작성기 기본값을 비공개로 전환하고 고지 카피 정합
+- Keep first screens focused on one received card
+- Simplify the receive-first home surface
+- Install dependencies in remote deploys
+- Release operational hardening
+- Harden operational observability
+- Release the Receive-first redesign
+- Open safe email and retreat operations
+- Turn keyring visits into a receive-first loop
+- 보고서: 100% 배포 완료 보고서(커밋·푸시·배포·DB 무손실)를 보관한다
+
 ## v1.5.5 — 2026-08-21
 
 ### 기타
