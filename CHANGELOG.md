@@ -2,6 +2,12 @@
 
 이 파일은 CI가 main 푸시마다 자동으로 갱신합니다. 상세 개발노트는 `docs/dev-notes/`를 보세요.
 
+## v1.5.3 — 2026-08-21
+
+### 기타
+
+- Install dependencies in remote deploys
+
 ## v1.5.2 — 2026-08-21
 
 ### 수정
