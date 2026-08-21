@@ -4,6 +4,10 @@
 
 ## v1.5.3 — 2026-08-21
 
+### 개선
+
+- Receive-first 화면을 TodayCard 중심으로 축소하고 후속 기능 카드를 목적지 화면으로 이동한다.
+
 ### 기타
 
 - Install dependencies in remote deploys
