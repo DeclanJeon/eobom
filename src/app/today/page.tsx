@@ -14,6 +14,8 @@ import {
   selectTimeCapsuleCard,
   timeCapsuleLabel,
 } from "@/lib/time-capsule";
+import { getChapterBackground } from "@/lib/bible/chapter-background";
+import { getPassageFromRef } from "@/lib/bible/corpus";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
 
@@ -61,6 +63,13 @@ async function MemberTodayView({
   const heroReason = dailyScripture.background?.trim() || null;
   const heroSourceLabel = "오늘 하루 함께할 말씀입니다.";
   const passageText = dailyScripture.text;
+  const passage = getPassageFromRef(dailyScripture.ref);
+  const verseRows = passage?.verses?.map((v) => ({ verse: v.verse, text: v.text })) ?? [];
+  const chapterBg = getChapterBackground({
+    code: dailyScripture.ref.code,
+    chapter: dailyScripture.ref.chapter,
+    locale: "ko",
+  });
 
 
   const greeting = user.displayName || user.name || "순례자";
@@ -111,6 +120,9 @@ async function MemberTodayView({
     kind: "scripture" as const,
     display: heroDisplay || heroRef,
     text: passageText,
+    verses: verseRows,
+    chapterBg,
+    ref: dailyScripture.ref,
     background: heroReason ?? undefined,
     sourceLabel: heroSourceLabel,
   };

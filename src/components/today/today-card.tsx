@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CHECKIN_REACTIONS, type CheckinReaction } from "@/lib/checkin";
+import type { ChapterBackground } from "@/lib/bible/chapter-background";
+import type { BibleReference } from "@/lib/bible/types";
+import { PassageAnnotationList } from "@/components/scripture/passage-annotation-list";
 
 export type TodayCardContent =
   | {
       kind: "scripture";
       display: string;
       text?: string;
+      verses?: Array<{ verse: number; text: string }>;
+      ref?: BibleReference;
+      chapterBg?: ChapterBackground | null;
       background?: string;
       sourceLabel?: string;
     }
@@ -160,15 +166,87 @@ export function TodayCard({
           </>
         ) : content.kind === "scripture" ? (
           <>
-            {content.text ? (
+            {content.verses && content.verses.length > 0 ? (
+              <div className="mt-4 space-y-3" aria-label="성경 본문 절별 읽기">
+                {content.verses.map((v) => (
+                  <div key={v.verse} className="flex gap-3">
+                    <span className="mt-1 min-w-6 shrink-0 text-right font-mono text-label-xs text-text-muted/60">
+                      {v.verse}
+                    </span>
+                    <p className="flex-1 font-journal text-body-lg leading-relaxed text-primary">
+                      {v.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : content.text ? (
               <p className="font-journal text-xl leading-relaxed text-primary md:text-2xl">
                 {content.text}
               </p>
             ) : null}
-            {content.background ? (
-              <p className="mt-3 text-body-md text-text-muted line-clamp-2">
-                {content.background}
-              </p>
+            {content.chapterBg ? (
+              <div className="mt-5 border-t border-border/40 pt-4">
+                <p className="text-label-xs uppercase tracking-widest text-text-muted">이 장을 둘러싼 배경</p>
+                <p className="mt-2 text-body-sm leading-relaxed text-text-muted">
+                  {content.chapterBg.overview}
+                </p>
+                {(content.chapterBg.historical ||
+                  content.chapterBg.literary ||
+                  content.chapterBg.theological) && (
+                  <details className="group mt-3">
+                    <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-label-xs text-leaf hover:text-primary">
+                      배경 더 보기
+                      <span aria-hidden className="group-open:hidden">
+                        ▾
+                      </span>
+                      <span aria-hidden className="hidden group-open:inline">
+                        ▴
+                      </span>
+                    </summary>
+                    <div className="mt-3 space-y-2 text-body-sm leading-relaxed text-text-muted">
+                      {content.chapterBg.historical ? (
+                        <p>
+                          <span className="font-semibold text-primary">역사</span> — {content.chapterBg.historical}
+                        </p>
+                      ) : null}
+                      {content.chapterBg.literary ? (
+                        <p>
+                          <span className="font-semibold text-primary">문학</span> — {content.chapterBg.literary}
+                        </p>
+                      ) : null}
+                      {content.chapterBg.theological ? (
+                        <p>
+                          <span className="font-semibold text-primary">신학</span> — {content.chapterBg.theological}
+                        </p>
+                      ) : null}
+                    </div>
+                  </details>
+                )}
+                {content.chapterBg.keyVerses.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {content.chapterBg.keyVerses.map((kv) => (
+                      <span key={kv.reference} className="chip-gold px-2 py-1 text-xs">
+                        {kv.reference}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {content.chapterBg.cautions.length > 0 ? (
+                  <p className="mt-2 text-label-xs leading-relaxed text-text-muted">
+                    주의: {content.chapterBg.cautions.join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            ) : content.background ? (
+              <p className="mt-3 text-body-md leading-relaxed text-text-muted">{content.background}</p>
+            ) : null}
+            {content.ref ? (
+              <PassageAnnotationList
+                code={content.ref.code}
+                chapter={content.ref.chapter}
+                startVerse={content.ref.startVerse}
+                endVerse={content.ref.endVerse}
+              />
             ) : null}
           </>
         ) : content.kind === "prompt" ? (
