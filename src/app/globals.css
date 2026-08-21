@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Light-only product: linen/paper reading surface. There is no dark mode.
+   Inert dark scaffolding (next-themes, tailwind `darkMode:"class"`) is accepted debt — see DESIGN.md. */
 
 /* Quiet Reflection — Stitch design system */
 @theme inline {
@@ -424,6 +425,33 @@
   }
   .text-leaf {
     color: var(--leaf);
+  }
+
+  /* clay — 기도·결단·"삶으로의 한 걸음" 영역의 온기 */
+  .chip-clay {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, var(--accent-terracotta) 30%, #e0ddd7);
+    background: color-mix(in oklab, var(--accent-terracotta) 9%, white);
+    padding: 0.25rem 0.625rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    color: color-mix(in oklab, var(--accent-terracotta) 80%, var(--text-main));
+  }
+
+  .writing-margin-clay {
+    border-left: 2px solid color-mix(in oklab, var(--accent-terracotta) 45%, transparent);
+    padding-left: 1rem;
+  }
+
+  /* mist — AI가 비춘 결과 영역(회고 요약·시각화 해설)의 배경 */
+  .surface-ai {
+    background-color: var(--surface-shared);
+    border: 1px solid color-mix(in oklab, var(--surface-shared) 70%, var(--border));
+    border-radius: 1rem;
   }
 
   .nav-active-mark {
