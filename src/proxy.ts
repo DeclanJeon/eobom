@@ -25,7 +25,7 @@ function hasSessionCookie(req: NextRequest): boolean {
   return names.some((name) => Boolean(req.cookies.get(name)?.value));
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Never intercept auth/api internals

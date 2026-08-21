@@ -38,8 +38,11 @@ bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
 sudo cp deploy/eobom.service /etc/systemd/system/eobom.service
+sudo cp deploy/eobom-events-cleanup.service /etc/systemd/system/eobom-events-cleanup.service
+sudo cp deploy/eobom-events-cleanup.timer /etc/systemd/system/eobom-events-cleanup.timer
 sudo systemctl daemon-reload
 sudo systemctl enable eobom
+sudo systemctl enable --now eobom-events-cleanup.timer
 sudo systemctl reset-failed eobom || true
 sudo systemctl restart eobom
 sleep 3
@@ -72,11 +75,12 @@ bunx prisma db execute --file prisma/fts5-setup.sql --schema prisma/schema.prism
 bun run build
 bun run scripts/story-mirror/ingest-chunks.ts
 mkdir -p db .next/standalone/db
-cp -f .env .next/standalone/.env 2>/dev/null || true
-
 sudo cp deploy/eobom.service /etc/systemd/system/eobom.service
+sudo cp deploy/eobom-events-cleanup.service /etc/systemd/system/eobom-events-cleanup.service
+sudo cp deploy/eobom-events-cleanup.timer /etc/systemd/system/eobom-events-cleanup.timer
 sudo systemctl daemon-reload
 sudo systemctl enable eobom
+sudo systemctl enable --now eobom-events-cleanup.timer
 sudo systemctl reset-failed eobom || true
 sudo systemctl restart eobom
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Eobom analytics event retention cleanup
+After=network.target
+
+[Service]
+Type=oneshot
+User=declan
+Group=declan
+WorkingDirectory=/home/declan/apps/eobom
+Environment=NODE_ENV=production
+Environment=PATH=/home/declan/.bun/bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/home/declan/apps/eobom/.env
+ExecStart=/home/declan/.bun/bin/bun /home/declan/apps/eobom/scripts/cleanup-events.ts
