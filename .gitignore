@@ -56,6 +56,10 @@ data/story-mirror/*.json
 *.db
 *.db-journal
 
+# reference sqlite temp files
+data/reference/*.sqlite-shm
+data/reference/*.sqlite-wal
+
 # skills / local
 /skills/
 ui_reference/
@@ -70,3 +74,6 @@ ui_reference/
 db/
 artifacts/screenshots/*.png
 artifacts/
+data/reference/*.json
+data/reference/*.csv
+data/reference/*.sqlite

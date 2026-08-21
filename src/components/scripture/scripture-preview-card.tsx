@@ -1,5 +1,3 @@
-"use client";
-
 import type { ScriptureBinding } from "@/lib/bible";
 
 export function ScripturePreviewCard({
