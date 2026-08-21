@@ -26,6 +26,7 @@ if [[ "${1:-}" == "--remote" || ! -d "$APP_DIR" ]]; then
 set -euo pipefail
 export PATH="\$HOME/.bun/bin:/usr/local/bin:/usr/bin:/bin"
 cd "${APP_DIR}"
+bun install --frozen-lockfile || bun install
 if [[ -f db/eobom.db ]]; then
   cp -a db/eobom.db "db/eobom.db.pre-schema-\$(date +%Y%m%d-%H%M%S)"
 fi

@@ -4,6 +4,10 @@
 
 ## v1.5.2 — 2026-08-21
 
+### 수정
+
+- rsync 운영 배포 경로에서도 frozen dependency install을 실행해 선택적 Redis 모듈이 누락되지 않게 한다.
+
 ### 기타
 
 - Release operational hardening
