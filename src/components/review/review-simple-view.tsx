@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { SurfaceCard } from "@/components/ui-blocks";
 import { Reveal } from "@/components/review/reveal";
+import { CollapseDisclosure } from "@/components/review/collapse-disclosure";
 import { EvidenceDrawer } from "@/components/review/evidence-drawer";
 import { ReviewSectionNav, type SpineItem } from "@/components/review/review-section-nav";
 import type {
   NarrativeAct,
   NarrativeQuote,
+  SimpleReviewCompanion,
+  SimpleReviewScripture,
+  SimpleReviewStory,
   SimpleReviewView,
 } from "@/lib/review-display";
 import { formatDateShort } from "@/lib/utils";
@@ -63,18 +67,24 @@ export function ReviewSimpleView({
               {view.weather.prose}
             </p>
             {view.weather.tones.length > 0 ? (
-              <ul className="mt-4 space-y-2">
-                {view.weather.tones.map((t) => (
-                  <li key={t.label} className="flex items-center gap-3">
-                    <span className="w-16 shrink-0 text-label-sm text-on-dark-muted">
-                      {t.label}
-                    </span>
-                    <span className="tone-bar w-28" aria-hidden>
-                      <span style={{ width: `${(t.weight / 3) * 100}%` }} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <CollapseDisclosure
+                label="마음의 날씨 자세히 보기"
+                openLabel="마음의 날씨 접기"
+                buttonClassName="text-on-dark-muted hover:text-on-dark"
+              >
+                <ul className="space-y-2">
+                  {view.weather.tones.map((t) => (
+                    <li key={t.label} className="flex items-center gap-3">
+                      <span className="w-16 shrink-0 text-label-sm text-on-dark-muted">
+                        {t.label}
+                      </span>
+                      <span className="tone-bar w-28" aria-hidden>
+                        <span style={{ width: `${(t.weight / 3) * 100}%` }} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CollapseDisclosure>
             ) : null}
           </div>
         ) : null}
@@ -171,7 +181,12 @@ function ForwardPanel({ view }: { view: SimpleReviewView }) {
   if (!hasAny) return null;
 
   return (
-    <div className="mt-7 space-y-7">
+    <div className="writing-margin-clay mt-7">
+      <CollapseDisclosure
+        label="이번 주, 삶으로 이어가기"
+        openLabel="이번 주, 삶으로 이어가기 접기"
+      >
+        <div className="space-y-7">
       {nextSteps.length > 0 ? (
         <div>
           <p className="text-label-md text-primary">이번 주, 하나만 해본다면</p>
@@ -246,6 +261,8 @@ function ForwardPanel({ view }: { view: SimpleReviewView }) {
           </p>
         </div>
       ) : null}
+        </div>
+      </CollapseDisclosure>
     </div>
   );
 }
@@ -273,32 +290,20 @@ function MeetSection({
           <SurfaceCard>
             <h3 className="text-label-md text-primary">닮은 마음을 살았던 이야기</h3>
             <ul className="mt-3 space-y-4">
-              {view.stories.map((story, idx) => {
-                const body = (
-                  <>
-                    <p className="text-label-md text-primary">{story.title}</p>
-                    {story.source ? (
-                      <p className="mt-0.5 text-label-xs text-text-muted">{story.source}</p>
-                    ) : null}
-                    <p className="mt-1 text-body-sm leading-relaxed text-text-muted">
-                      {story.line}
-                    </p>
-                  </>
-                );
-                return (
-                  <li key={`${story.title}-${idx}`}>
-                    {story.href ? (
-                      <Link href={story.href} className="block rounded-xl transition hover:bg-surface-low/80">
-                        {body}
-                        <span className="mt-2 inline-block text-label-xs text-leaf">이야기 더 읽기 →</span>
-                      </Link>
-                    ) : (
-                      body
-                    )}
-                  </li>
-                );
-              })}
+              <StoryItem story={view.stories[0]} />
             </ul>
+            {view.stories.length > 1 ? (
+              <CollapseDisclosure
+                label={`이야기 ${view.stories.length - 1}개 더 보기`}
+                openLabel="이야기 접기"
+              >
+                <ul className="mt-3 space-y-4">
+                  {view.stories.slice(1).map((story, idx) => (
+                    <StoryItem key={`${story.title}-${idx}`} story={story} />
+                  ))}
+                </ul>
+              </CollapseDisclosure>
+            ) : null}
           </SurfaceCard>
         ) : null}
 
@@ -307,13 +312,20 @@ function MeetSection({
             <h3 className="text-label-md text-primary">주제와 연결된 새 말씀</h3>
             <p className="mt-1 text-label-sm text-text-muted">아직 기록하지 않은, 주제에 맞는 본문</p>
             <ul className="mt-3 space-y-4">
-              {view.scriptures.map((s) => (
-                <li key={s.ref}>
-                  <span className="chip-gold">{s.ref}</span>
-                  <p className="mt-2 text-body-sm leading-relaxed text-text-muted">{s.why}</p>
-                </li>
-              ))}
+              <ScriptureItem s={view.scriptures[0]} />
             </ul>
+            {view.scriptures.length > 1 ? (
+              <CollapseDisclosure
+                label={`성구 ${view.scriptures.length - 1}개 더 보기`}
+                openLabel="성구 접기"
+              >
+                <ul className="mt-3 space-y-4">
+                  {view.scriptures.slice(1).map((s) => (
+                    <ScriptureItem key={s.ref} s={s} />
+                  ))}
+                </ul>
+              </CollapseDisclosure>
+            ) : null}
           </SurfaceCard>
         ) : null}
 
@@ -321,13 +333,20 @@ function MeetSection({
           <SurfaceCard>
             <h3 className="text-label-md text-primary">함께하면 좋은 사람</h3>
             <ul className="mt-3 space-y-4">
-              {view.companions.map((c, idx) => (
-                <li key={`${c.role}-${idx}`}>
-                  <p className="text-label-md text-primary">{c.role}</p>
-                  <p className="mt-1 text-body-sm leading-relaxed text-text-muted">{c.why}</p>
-                </li>
-              ))}
+              <CompanionItem c={view.companions[0]} />
             </ul>
+            {view.companions.length > 1 ? (
+              <CollapseDisclosure
+                label={`사람 ${view.companions.length - 1}명 더 보기`}
+                openLabel="사람 접기"
+              >
+                <ul className="mt-3 space-y-4">
+                  {view.companions.slice(1).map((c, idx) => (
+                    <CompanionItem key={`${c.role}-${idx}`} c={c} />
+                  ))}
+                </ul>
+              </CollapseDisclosure>
+            ) : null}
           </SurfaceCard>
         ) : null}
 
@@ -336,16 +355,67 @@ function MeetSection({
             <h3 className="text-label-md text-primary">다시 머물면 좋은 본문</h3>
             <p className="mt-1 text-label-sm text-text-muted">지난 기록에서 이어진 말씀</p>
             <ul className="mt-3 space-y-4">
-              {view.rereadScriptures.map((s) => (
-                <li key={s.ref}>
-                  <span className="chip-gold">{s.ref}</span>
-                  <p className="mt-2 text-body-sm leading-relaxed text-text-muted">{s.why}</p>
-                </li>
-              ))}
+              <ScriptureItem s={view.rereadScriptures[0]} />
             </ul>
+            {view.rereadScriptures.length > 1 ? (
+              <CollapseDisclosure
+                label={`본문 ${view.rereadScriptures.length - 1}개 더 보기`}
+                openLabel="본문 접기"
+              >
+                <ul className="mt-3 space-y-4">
+                  {view.rereadScriptures.slice(1).map((s) => (
+                    <ScriptureItem key={s.ref} s={s} />
+                  ))}
+                </ul>
+              </CollapseDisclosure>
+            ) : null}
           </SurfaceCard>
         ) : null}
       </div>
     </Reveal>
+  );
+}
+
+function StoryItem({ story }: { story: SimpleReviewStory }) {
+  const body = (
+    <>
+      <p className="text-label-md text-primary">{story.title}</p>
+      {story.source ? (
+        <p className="mt-0.5 text-label-xs text-text-muted">{story.source}</p>
+      ) : null}
+      <p className="mt-1 text-body-sm leading-relaxed text-text-muted">
+        {story.line}
+      </p>
+    </>
+  );
+  return (
+    <li>
+      {story.href ? (
+        <Link href={story.href} className="block rounded-xl transition hover:bg-surface-low/80">
+          {body}
+          <span className="mt-2 inline-block text-label-xs text-leaf">이야기 더 읽기 →</span>
+        </Link>
+      ) : (
+        body
+      )}
+    </li>
+  );
+}
+
+function ScriptureItem({ s }: { s: SimpleReviewScripture }) {
+  return (
+    <li>
+      <span className="chip-gold">{s.ref}</span>
+      <p className="mt-2 text-body-sm leading-relaxed text-text-muted">{s.why}</p>
+    </li>
+  );
+}
+
+function CompanionItem({ c }: { c: SimpleReviewCompanion }) {
+  return (
+    <li>
+      <p className="text-label-md text-primary">{c.role}</p>
+      <p className="mt-1 text-body-sm leading-relaxed text-text-muted">{c.why}</p>
+    </li>
   );
 }
