@@ -2,6 +2,18 @@
 
 이 파일은 CI가 main 푸시마다 자동으로 갱신합니다. 상세 개발노트는 `docs/dev-notes/`를 보세요.
 
+## v1.5.1 — 2026-08-21
+
+### 개선
+
+- Make quick records private and traceable
+
+### 기타
+
+- Release the Receive-first redesign
+- Open safe email and retreat operations
+- Turn keyring visits into a receive-first loop
+
 ## v1.5.0 — 2026-08-21
 
 ### 기능
