@@ -289,12 +289,7 @@ async function OwnerView({
   // pastTodayEnabled is a user privacy/feature preference; honor it on keyring too.
   // 수련회 이벤트 DAY 30/90 메시지 (G013) — 있으면 그 카드가 최우선
   const eventMessage = await eventMessageForSeat(slug, now);
-  const [recent, timeCapsule, pastToday, lastWeek, reactionChecks] = await Promise.all([
-    db.reflectionEntry.findMany({
-      where: { userId, deletedAt: null },
-      orderBy: { entryDate: "desc" },
-      take: 3,
-    }),
+  const [timeCapsule, pastToday, lastWeek, reactionChecks] = await Promise.all([
     findTimeCapsuleCandidates(userId, now),
     flags.pastTodayEnabled
       ? (async () => {
@@ -456,30 +451,8 @@ async function OwnerView({
         />
       </div>
 
-      {recent.length > 0 ? (
-        <section className="mt-8 space-y-2 text-left">
-          <h2 className="text-headline-sm text-primary">최근</h2>
-          {recent.map((entry) => (
-            <Link
-              key={entry.id}
-              href={`/entries/${entry.id}`}
-              className="paper-card mb-2 block p-4"
-            >
-              <p className="text-label-sm text-text-muted">
-                {formatDateKo(entry.entryDate)}
-              </p>
-              <h3 className="mt-1 text-headline-sm text-primary">
-                {entry.title ||
-                  parseJsonArray(entry.scriptureRefs)[0] ||
-                  "제목 없음"}
-              </h3>
-              <p className="mt-1 text-body-md text-text-muted">
-                {excerpt(entry.reflectionBody, 80)}
-              </p>
-            </Link>
-          ))}
-        </section>
-      ) : null}
+      {/* Receive-first 화면 축소(v1.0): 최근 기록 목록은 기록함으로 이동.
+          키링 첫 화면은 TodayCard 하나만 유지한다. */}
     </Shell>
   );
 }

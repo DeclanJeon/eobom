@@ -4,6 +4,11 @@
 
 ## v1.5.4 — 2026-08-21
 
+### 개선
+
+- `/j`와 `/today`의 첫 화면을 TodayCard 하나 중심으로 단순화한다.
+- 최근 기록·결단·회고는 삭제하지 않고 목적지 화면으로 이동한다.
+
 ### 기타
 
 - Simplify the receive-first home surface
