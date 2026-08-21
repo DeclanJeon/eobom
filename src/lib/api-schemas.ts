@@ -79,6 +79,14 @@ export const actionPatchSchema = z.object({
   reflectionOnResult: z.string().nullable().optional(),
 });
 
+/** 카드 한 줄 → quick 기록 (GATE-1). shareVisibility는 서버에서 private 강제되므로 스키마에 없음. */
+export const quickEntrySchema = z.object({
+  body: z.string().min(1, "한 줄 본문을 입력해 주세요.").max(500, "한 줄 본문은 500자 이내로 입력해 주세요."),
+  scriptureRefs: z.array(z.string()).max(5).optional(),
+  scriptureBindings: z.array(scriptureBindingSchema).max(5).optional(),
+  scriptureExcerpt: z.string().max(500).nullable().optional(),
+});
+
 export const reactionSchema = z.object({
   reactionType: z.enum(["empathize", "pray", "same_scripture", "bookmark"]),
 });

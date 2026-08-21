@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { logEvent } from "@/lib/events";
 import type { ScriptureBinding } from "@/lib/bible";
 import {
   normalizeShareVisibility,
@@ -318,6 +319,18 @@ export async function createEntry(userId: string, input: EntryInput) {
     data: { lastRecordedAt: new Date() },
   });
 
+  // 계측 — 기록 생성 확정 후 await 로깅 (B4: 사용자 액션 이벤트는 확정)
+  // 계측 실패가 이미 저장된 기록의 API 응답/재시도를 깨지 않게 흡수한다.
+  await logEvent({
+    userId,
+    eventType: "entry_created",
+    meta: {
+      entryId: entry.id,
+      quick: input.templateType === "quick" ? 1 : 0,
+    },
+    fireAndForget: true,
+  });
+
   return serializeEntry(entry);
 }
 
@@ -354,6 +367,89 @@ export async function updateEntry(userId: string, id: string, input: EntryInput)
 
   await syncActionStepForEntry(userId, entry.id, input.actionStep);
   await syncEntryShare(userId, entry.id);
+
+  return serializeEntry(entry);
+}
+
+export type QuickEntryInput = {
+  body: string;
+  scriptureRefs?: string[];
+  scriptureBindings?: ScriptureBinding[];
+  scriptureExcerpt?: string | null;
+};
+
+/** 본문 앞 40자에서 제목 생성 (markdown 제거). quick 저장 자동 제목용. */
+export function titleFromBody(body: string): string {
+  const plain = body
+    .replace(/[#>*_`~\-\[\]()!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!plain) return "오늘의 묵상";
+  return plain.slice(0, 40) + (plain.length > 40 ? "…" : "");
+}
+
+/**
+ * quick 기록 행 생성 (트랜잭션 클라이언트 호환) — 이벤트 로깅 없음.
+ * GATE-1: shareVisibility="private" 서버 강제, syncEntryShare 미호출.
+ */
+export async function createQuickEntryRecord(
+  client: Pick<typeof db, "reflectionEntry" | "user">,
+  userId: string,
+  input: QuickEntryInput,
+) {
+  const body = input.body?.trim();
+  if (!body) throw new Error("한 줄 본문을 입력해 주세요.");
+  if (body.length > 500) throw new Error("한 줄 본문은 500자 이내로 입력해 주세요.");
+  const scripture = scriptureFields({
+    reflectionBody: body,
+    scriptureRefs: input.scriptureRefs,
+    scriptureBindings: input.scriptureBindings,
+    scriptureExcerpt: input.scriptureExcerpt,
+  } as EntryInput);
+
+  const entry = await client.reflectionEntry.create({
+    data: {
+      userId,
+      entryDate: new Date(),
+      title: titleFromBody(body),
+      ...scripture,
+      reflectionBody: body,
+      templateType: "quick",
+      shareVisibility: "private", // GATE-1: 서버 강제
+    },
+  });
+
+  await client.user.update({
+    where: { id: userId },
+    data: { lastRecordedAt: new Date() },
+  });
+
+  return entry;
+}
+
+/**
+ * 카드 한 줄 → quick 기록 승격 (GATE-1).
+ * - shareVisibility="private" 서버 강제 (클라이언트 값 무시) — 명시적 공개 전 비공개.
+ * - syncEntryShare 미호출 — quick 저장만으로는 Together에 절대 게시되지 않는다.
+ * - 성구 선택적 (Memory 카드에 성구가 없을 수 있음), 제목은 본문에서 자동 생성.
+ * - one_line_saved + entry_created 이벤트 기록 (await 확정).
+ */
+export async function createQuickEntry(userId: string, input: QuickEntryInput) {
+  const entry = await createQuickEntryRecord(db, userId, input);
+
+  // 분석 로그 실패가 이미 저장된 quick 기록을 4xx로 바꾸지 않게 흡수한다.
+  await logEvent({
+    userId,
+    eventType: "one_line_saved",
+    meta: { entryId: entry.id, quick: 1 },
+    fireAndForget: true,
+  });
+  await logEvent({
+    userId,
+    eventType: "entry_created",
+    meta: { entryId: entry.id, quick: 1 },
+    fireAndForget: true,
+  });
 
   return serializeEntry(entry);
 }
