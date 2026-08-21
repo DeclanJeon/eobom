@@ -1,6 +1,8 @@
 import { AppShell } from "@/components/app-shell";
+import { OpenActionCard } from "@/components/open-action-card";
 import { GuestTodayView } from "@/components/today/guest-view";
 import { TodayCard } from "@/components/today/today-card";
+import { EntryRow } from "@/components/ui-blocks";
 import { listOpenActionSteps } from "@/lib/actions";
 import { selectRandomScripture } from "@/lib/daily-scripture";
 import { getOptionalUser, type ApiUser } from "@/lib/session";
@@ -13,7 +15,7 @@ import {
   timeCapsuleLabel,
 } from "@/lib/time-capsule";
 import { db } from "@/lib/db";
-import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
+import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
 
 export const metadata = { title: "오늘" };
 
@@ -42,6 +44,13 @@ async function MemberTodayView({
   ]);
 
   const primaryAction = openActions[0] ?? null;
+
+  const recentEntries = await db.reflectionEntry.findMany({
+    where: { userId: user.id, deletedAt: null },
+    orderBy: { entryDate: "desc" },
+    take: 3,
+    select: { id: true, title: true, entryDate: true, reflectionBody: true },
+  });
 
   // 오늘 붙들 말씀 — 매일 하나, 사용자·KST 날짜 시드로 결정적 랜덤 (AI 호출 없음).
   const dailyScripture = selectRandomScripture({
@@ -172,6 +181,7 @@ async function MemberTodayView({
 
   return (
     <AppShell wide bare>
+      <h1 className="text-headline-sm text-primary">오늘의 묵상</h1>
       <p className="mb-4 text-eyebrow">
         {greeting}님 · {formatDateKo(now)}
       </p>
@@ -189,10 +199,30 @@ async function MemberTodayView({
         writeHref={writeHref}
       />
 
-      {/* Receive-first 화면 축소(v1.0):
-          열린 결단·최근 기록·과거의 오늘·최근 회고는 삭제하지 않고
-          /entries·/lookback·Memory 선택기로 이동시켰다.
-          첫 화면은 TodayCard 하나만 유지한다. */}
+      {/* 2. 보조 행동 — 열린 결단 하나 */}
+      {primaryAction ? (
+        <div className="mt-6">
+          <OpenActionCard item={primaryAction} />
+        </div>
+      ) : null}
+
+      {/* 3. 조용한 목록 — 최근 기록 */}
+      {recentEntries.length > 0 ? (
+        <section className="mt-8">
+          <h2 className="text-label-sm font-medium text-text-muted">최근 기록</h2>
+          <div className="mt-1">
+            {recentEntries.map((e) => (
+              <EntryRow
+                key={e.id}
+                href={`/entries/${e.id}`}
+                date={formatDateShort(e.entryDate)}
+                title={e.title || "무제"}
+                excerpt={excerpt(e.reflectionBody, 90)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </AppShell>
   );
 }
