@@ -51,6 +51,12 @@ systemctl is-active eobom
 curl -sS -o /dev/null -w 'home:%{http_code}\\n' http://127.0.0.1:3120/ || true
 curl -sS -o /dev/null -w 'together:%{http_code}\\n' http://127.0.0.1:3120/together || true
 echo "Deployed eobom on port 3120"
+if [[ -f deploy/nginx-eobom.conf ]]; then
+  sudo cp deploy/nginx-eobom.conf /etc/nginx/sites-available/eobom.ponslink.com
+  sudo ln -sfn /etc/nginx/sites-available/eobom.ponslink.com /etc/nginx/sites-enabled/eobom.ponslink.com
+  sudo nginx -t
+  sudo systemctl reload nginx
+fi
 EOF
   exit 0
 fi
