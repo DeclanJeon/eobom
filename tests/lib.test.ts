@@ -56,16 +56,23 @@ describe("mimo timeout configuration", () => {
     }
   });
 
-  test("accepts a bounded provider-specific override", () => {
-    const previous = process.env.MIMO_TIMEOUT_MS;
+  test("accepts bounded provider-specific overrides", () => {
+    const previousMimo = process.env.MIMO_TIMEOUT_MS;
+    const previousDeepSeek = process.env.DEEPSEEK_TIMEOUT_MS;
     process.env.MIMO_TIMEOUT_MS = "120000";
+    process.env.DEEPSEEK_TIMEOUT_MS = "60000";
     try {
       expect(getLlmTimeoutMs("mimo")).toBe(120_000);
-      process.env.MIMO_TIMEOUT_MS = "999";
+      expect(getLlmTimeoutMs("deepseek")).toBe(60_000);
+      process.env.MIMO_TIMEOUT_MS = "180000";
+      process.env.DEEPSEEK_TIMEOUT_MS = "90000";
       expect(getLlmTimeoutMs("mimo")).toBe(120_000);
+      expect(getLlmTimeoutMs("deepseek")).toBe(30_000);
     } finally {
-      if (previous === undefined) delete process.env.MIMO_TIMEOUT_MS;
-      else process.env.MIMO_TIMEOUT_MS = previous;
+      if (previousMimo === undefined) delete process.env.MIMO_TIMEOUT_MS;
+      else process.env.MIMO_TIMEOUT_MS = previousMimo;
+      if (previousDeepSeek === undefined) delete process.env.DEEPSEEK_TIMEOUT_MS;
+      else process.env.DEEPSEEK_TIMEOUT_MS = previousDeepSeek;
     }
   });
 });

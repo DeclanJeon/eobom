@@ -13,11 +13,12 @@ import {
 const DEFAULT_MIMO_TIMEOUT_MS = 120_000;
 const DEFAULT_DEEPSEEK_TIMEOUT_MS = 30_000;
 const MIN_LLM_TIMEOUT_MS = 5_000;
-const MAX_LLM_TIMEOUT_MS = 300_000;
+const MAX_MIMO_TIMEOUT_MS = 120_000;
+const MAX_DEEPSEEK_TIMEOUT_MS = 60_000;
 
-function readLlmTimeoutMs(name: string, fallback: number): number {
+function readLlmTimeoutMs(name: string, fallback: number, maximum: number): number {
   const value = Number(process.env[name]);
-  if (!Number.isInteger(value) || value < MIN_LLM_TIMEOUT_MS || value > MAX_LLM_TIMEOUT_MS) {
+  if (!Number.isInteger(value) || value < MIN_LLM_TIMEOUT_MS || value > maximum) {
     return fallback;
   }
   return value;
@@ -25,8 +26,8 @@ function readLlmTimeoutMs(name: string, fallback: number): number {
 
 export function getLlmTimeoutMs(provider: "mimo" | "deepseek"): number {
   return provider === "mimo"
-    ? readLlmTimeoutMs("MIMO_TIMEOUT_MS", DEFAULT_MIMO_TIMEOUT_MS)
-    : readLlmTimeoutMs("DEEPSEEK_TIMEOUT_MS", DEFAULT_DEEPSEEK_TIMEOUT_MS);
+    ? readLlmTimeoutMs("MIMO_TIMEOUT_MS", DEFAULT_MIMO_TIMEOUT_MS, MAX_MIMO_TIMEOUT_MS)
+    : readLlmTimeoutMs("DEEPSEEK_TIMEOUT_MS", DEFAULT_DEEPSEEK_TIMEOUT_MS, MAX_DEEPSEEK_TIMEOUT_MS);
 }
 
 const DISCLAIMER =
