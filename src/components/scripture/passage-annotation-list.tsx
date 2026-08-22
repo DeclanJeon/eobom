@@ -35,6 +35,7 @@ function CrossRefItem({ ref }: { ref: Ref }) {
   const [open, setOpen] = useState(false);
   const [passage, setPassage] = useState<Passage | null>(null);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const label = displayCrossRef(ref);
   const anchor = meaningfulAnchor(ref.anchorPhrase) ? ref.anchorPhrase : null;
   const votes = Number(ref.votes);
@@ -52,8 +53,8 @@ function CrossRefItem({ ref }: { ref: Ref }) {
     });
     fetch(`/api/bible/passage?${qs}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setPassage(data as Passage | null))
-      .catch(() => setPassage(null))
+      .then((data) => (data ? setPassage(data as Passage) : setFailed(true)))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }
 
@@ -101,7 +102,17 @@ function CrossRefItem({ ref }: { ref: Ref }) {
               </Link>
             </>
           ) : (
-            <p className="text-label-xs text-text-muted">본문을 불러오지 못했습니다.</p>
+            <>
+              <p className="text-label-xs text-text-muted">
+                {failed ? "이 성구의 본문은 이 한글본에 담겨 있지 않습니다." : "본문을 불러오는 중…"}
+              </p>
+              <Link
+                href={`/entries/new?scripture=${encodeURIComponent(label)}`}
+                className="mt-2 inline-flex min-h-9 items-center text-label-sm text-leaf hover:text-primary"
+              >
+                이 본문으로 기록하기 →
+              </Link>
+            </>
           )}
         </div>
       ) : null}
