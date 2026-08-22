@@ -46,7 +46,7 @@ describe("mimo timeout configuration", () => {
     delete process.env.MIMO_TIMEOUT_MS;
     delete process.env.DEEPSEEK_TIMEOUT_MS;
     try {
-      expect(getLlmTimeoutMs("mimo")).toBe(90_000);
+      expect(getLlmTimeoutMs("mimo")).toBe(120_000);
       expect(getLlmTimeoutMs("deepseek")).toBe(30_000);
     } finally {
       if (previousMimo === undefined) delete process.env.MIMO_TIMEOUT_MS;
@@ -62,7 +62,7 @@ describe("mimo timeout configuration", () => {
     try {
       expect(getLlmTimeoutMs("mimo")).toBe(120_000);
       process.env.MIMO_TIMEOUT_MS = "999";
-      expect(getLlmTimeoutMs("mimo")).toBe(90_000);
+      expect(getLlmTimeoutMs("mimo")).toBe(120_000);
     } finally {
       if (previous === undefined) delete process.env.MIMO_TIMEOUT_MS;
       else process.env.MIMO_TIMEOUT_MS = previous;

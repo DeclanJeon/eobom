@@ -10,7 +10,7 @@ import {
   parseBibleReferences,
 } from "@/lib/bible";
 
-const DEFAULT_MIMO_TIMEOUT_MS = 90_000;
+const DEFAULT_MIMO_TIMEOUT_MS = 120_000;
 const DEFAULT_DEEPSEEK_TIMEOUT_MS = 30_000;
 const MIN_LLM_TIMEOUT_MS = 5_000;
 const MAX_LLM_TIMEOUT_MS = 300_000;
@@ -417,8 +417,9 @@ export async function generateReviewWithMimo(
       body: JSON.stringify({
         model: primary.model,
         temperature: 0.2,
+        thinking: { type: "disabled" },
         ...(primary.name === "deepseek"
-          ? { max_tokens: 512, thinking: { type: "disabled" } }
+          ? { max_tokens: 512 }
           : { max_completion_tokens: 512 }),
         messages: [
           { role: "system", content: "너는 상황 분류기다. JSON만 응답하라." },
