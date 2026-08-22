@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { displayCrossRef } from "@/lib/bible/crossrefs";
+import { displayCrossRef } from "@/lib/bible/parse";
 
 type Ref = {
   sourceRef: string; targetRef: string; targetCode: string; targetChapter: number; targetStart: number; targetEnd: number;

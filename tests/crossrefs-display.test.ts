@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { displayCrossRef } from "../src/lib/bible/crossrefs";
+import { displayCrossRef } from "../src/lib/bible/parse";
 
 describe("displayCrossRef", () => {
   test("korean book name + chapter:verse", () => {

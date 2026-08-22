@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { openReadonlySqlite, type ReadonlyDb } from "@/lib/bible/sqlite-driver";
-import { getBookName, isValidBookCode } from "@/lib/bible/book-meta";
 
 export type VerseCrossRef = {
   sourceRef: string;
@@ -32,26 +31,6 @@ function openDb() {
 export function getCrossRefRuntimeStatus() {
   const d = openDb();
   return { dbAvailable: !!d, path: DB_PATH };
-}
-
-/**
- * 표시용 성구 — 한국어 책이름 + 장:절. 저장 데이터(코드)는 그대로 두고 표시만 재조립.
- * - targetCode가 책 메타에 없으면(드묾) 원래 targetRef로 폴백 → 빈 화면 방지.
- */
-export function displayCrossRef(r: {
-  targetCode: string;
-  targetChapter: number;
-  targetStart: number;
-  targetEnd: number;
-  targetRef: string;
-}): string {
-  if (!isValidBookCode(r.targetCode) || !Number.isInteger(r.targetChapter) || r.targetChapter < 1 || !Number.isInteger(r.targetStart) || r.targetStart < 1) {
-    return r.targetRef;
-  }
-  const name = getBookName(r.targetCode);
-  const base = `${name} ${r.targetChapter}:${r.targetStart}`;
-  if (Number.isInteger(r.targetEnd) && r.targetEnd > r.targetStart) return `${base}-${r.targetEnd}`;
-  return base;
 }
 
 function verseKey(code: string, chapter: number, verse: number) {

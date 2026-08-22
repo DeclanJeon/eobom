@@ -68,6 +68,10 @@ const BOOK_ALIASES: Array<{ code: string; aliases: string[] }> = [
   { code: "JUD", aliases: ["유다서", "유"] },
   { code: "REV", aliases: ["요한계시록", "계시록", "계"] },
 ];
+const KOREAN_BOOK_NAME_BY_CODE: Record<string, string> = Object.fromEntries(
+  BOOK_ALIASES.map((book) => [book.code, book.aliases[0]]),
+);
+
 
 const ALIAS_TO_CODE = new Map<string, string>();
 for (const book of BOOK_ALIASES) {
@@ -131,4 +135,21 @@ export function parseBibleReferences(input: string): BibleReference[] {
 
 export function formatBibleReferenceKey(reference: BibleReference) {
   return keyOf(reference);
+}
+
+export function displayCrossRef(ref: {
+  targetCode: string;
+  targetChapter: number;
+  targetStart: number;
+  targetEnd: number;
+  targetRef: string;
+}): string {
+  const name = KOREAN_BOOK_NAME_BY_CODE[ref.targetCode.toUpperCase()];
+  if (!name || !Number.isInteger(ref.targetChapter) || ref.targetChapter < 1 || !Number.isInteger(ref.targetStart) || ref.targetStart < 1) {
+    return ref.targetRef;
+  }
+  const base = `${name} ${ref.targetChapter}:${ref.targetStart}`;
+  return Number.isInteger(ref.targetEnd) && ref.targetEnd > ref.targetStart
+    ? `${base}-${ref.targetEnd}`
+    : base;
 }
