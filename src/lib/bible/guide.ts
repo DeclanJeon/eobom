@@ -32,7 +32,7 @@ function field(raw: string, key: string): string {
 function heads(md: string): Array<{ chapter: number; title: string; raw: string }> {
   const parts = md.split(/^###\s*(\d+)장\s*[-—–]\s*(.+)$/m);
   const out: Array<{ chapter: number; title: string; raw: string }> = [];
-  for (let i = 1; i + 1 < parts.length; i += 2) {
+  for (let i = 1; i + 2 < parts.length; i += 3) {
     out.push({ chapter: Number(parts[i]), title: parts[i + 1].trim(), raw: parts[i + 2] ?? "" });
   }
   return out;
@@ -55,9 +55,10 @@ export function parseBookGuide(md: string): GuideBook {
 
   const characters = (characterMatch ? characterMatch[1] : "").split("\n")
     .map((line) => line.trim())
-    .filter((line) => /^-\s*\*{2}[^*]+\*{2}/.test(line))
-    .map((line) => line.replace(/^-\s*\*{2}\s*/, "").replace(/\s*\*{2}\s*$/, "").trim())
-    .filter(Boolean);
+    .map((line) => line.match(/^(?:[-|]\s*)?\*\*([^*]+)\*\*\s*(?:[:：-]|\|)?\s*(.*)$/))
+    .filter((match): match is RegExpMatchArray => Boolean(match))
+    .map((match) => `${match[1].trim()} — ${match[2].trim()}`.replace(/\s+\|$/, ""))
+    .filter((line) => line.length > 3);
 
   return { code, name, intro: cleanField(introMatch?.[1] ?? ""), chapters, characters };
 }
