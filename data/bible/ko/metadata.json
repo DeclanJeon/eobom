@@ -144,8 +144,8 @@
       "code": "2CH",
       "name": "역대하",
       "testament": "구약",
-      "chapters": 20,
-      "verses": 429,
+      "chapters": 36,
+      "verses": 822,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -181,7 +181,7 @@
       "name": "욥기",
       "testament": "구약",
       "chapters": 42,
-      "verses": 1069,
+      "verses": 1070,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
