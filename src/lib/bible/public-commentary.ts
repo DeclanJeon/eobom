@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
+import { openReadonlySqlite, type ReadonlyDb } from "@/lib/bible/sqlite-driver";
 
 export type PublicCommentaryExcerpt = {
   source: "matthew-henry";
@@ -7,31 +8,21 @@ export type PublicCommentaryExcerpt = {
   text: string;
 };
 
-const ROOT = process.cwd();
-const COMMENTARY_DIR = path.join(ROOT, "data", "reference", "public-commentary", "mhc");
-const bookCache = new Map<string, string>();
+const DB_PATH = path.join(process.cwd(), "data", "reference", "public-commentary.sqlite");
+let db: ReadonlyDb | null | undefined;
 
-function getBookText(code: string): string | null {
-  const key = code.toUpperCase();
-  const cached = bookCache.get(key);
-  if (cached) return cached;
-  const file = path.join(COMMENTARY_DIR, `${key}.md`);
-  if (!existsSync(file)) return null;
-  const text = readFileSync(file, "utf8");
-  bookCache.set(key, text);
-  return text;
+function openDb(): ReadonlyDb | null {
+  if (db !== undefined) return db;
+  db = existsSync(DB_PATH) ? openReadonlySqlite(DB_PATH) : null;
+  return db;
 }
 
-/** 전체 MHC 원문은 corpus에 보존하고, UI에는 제한된 접힌 발췌만 전달한다. */
+/** Full commentary remains in the indexed corpus; runtime reads one chapter row only. */
 export function getPublicCommentaryExcerpt(code: string, chapter: number, maxChars = 1800): PublicCommentaryExcerpt | null {
-  const text = getBookText(code);
-  if (!text) return null;
-  const heading = new RegExp(`^## .* ${chapter}장 — Matthew Henry\\s*$`, "m");
-  const match = heading.exec(text);
-  if (!match || match.index === undefined) return null;
-  const start = match.index + match[0].length;
-  const next = text.slice(start).search(/^## /m);
-  const section = text.slice(start, next >= 0 ? start + next : undefined).trim();
-  if (!section) return null;
-  return { source: "matthew-henry", license: "Public Domain", text: section.slice(0, maxChars) };
+  const d = openDb();
+  if (!d) return null;
+  const row = d.prepare("SELECT body FROM commentary_chapters WHERE source_id=? AND code=? AND chapter=? LIMIT 1").get("mhc", code.toUpperCase(), chapter) as { body?: string } | undefined;
+  const body = row?.body?.trim();
+  if (!body) return null;
+  return { source: "matthew-henry", license: "Public Domain", text: body.slice(0, maxChars) };
 }

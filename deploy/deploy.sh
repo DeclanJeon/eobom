@@ -20,6 +20,7 @@ if [[ "${1:-}" == "--remote" || ! -d "$APP_DIR" ]]; then
     --exclude data/uploads \
     --exclude .data/uploads \
     --exclude public/story-mirror/vis \
+    --exclude data/reference/public-commentary/mhc \
     ./ "${REMOTE}:${APP_DIR}/"
 
   ssh -o BatchMode=yes "$REMOTE" "bash -s" <<EOF
