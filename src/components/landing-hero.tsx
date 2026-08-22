@@ -107,7 +107,7 @@ export function LandingHero({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease }}
         >
-          <Link href="/" className="group flex min-h-11 items-center gap-3">
+          <Link href="/today" className="group flex min-h-11 items-center gap-3">
             <img
               src="/logo.svg"
               alt="이어봄"
