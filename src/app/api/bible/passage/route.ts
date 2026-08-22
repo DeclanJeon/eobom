@@ -6,8 +6,11 @@ import {
   isValidBookCode,
   type PassageResult,
 } from "@/lib/bible";
+import { enforcePublicReferenceRateLimit } from "@/lib/bible-reference-rate-limit";
 
 export async function GET(request: Request) {
+  const rateLimited = await enforcePublicReferenceRateLimit(request);
+  if (rateLimited) return rateLimited;
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug") || "";
   const refText = searchParams.get("ref") || "";

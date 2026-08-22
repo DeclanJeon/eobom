@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { getCrossRefsForPassage, getCrossRefsForVerse, getCrossRefsGroupedForPassage } from "@/lib/bible/crossrefs";
 import { isValidBookCode } from "@/lib/bible/book-meta";
 import { parseSlug } from "@/lib/bible/format";
+import { enforcePublicReferenceRateLimit } from "@/lib/bible-reference-rate-limit";
 
 export async function GET(request: Request) {
+  const rateLimited = await enforcePublicReferenceRateLimit(request);
+  if (rateLimited) return rateLimited;
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("slug") || "";
   const code = (searchParams.get("code") || "").toUpperCase();

@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { getChapterBackground } from "@/lib/bible/chapter-background";
 import { isValidBookCode } from "@/lib/bible/book-meta";
+import { enforcePublicReferenceRateLimit } from "@/lib/bible-reference-rate-limit";
 
 export async function GET(request: Request) {
+  const rateLimited = await enforcePublicReferenceRateLimit(request);
+  if (rateLimited) return rateLimited;
   const { searchParams } = new URL(request.url);
   const code = (searchParams.get("code") || "").toUpperCase();
   const chapter = Number(searchParams.get("chapter"));

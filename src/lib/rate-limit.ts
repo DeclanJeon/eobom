@@ -122,6 +122,7 @@ export const MINUTE_MS = 60 * 1000;
 
 export const RATE_LIMITS = {
   reviewsCreate: { limit: 5, windowMs: MINUTE_MS },
+  bibleReference: { limit: 120, windowMs: MINUTE_MS },
   togetherCreate: { limit: 20, windowMs: MINUTE_MS },
   togetherTags: { limit: 30, windowMs: MINUTE_MS },
   uploads: { limit: 40, windowMs: MINUTE_MS },

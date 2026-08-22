@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach } from "bun:test";
 import {
   checkRateLimit,
   RATE_LIMITED_MESSAGE,
+  RATE_LIMITS,
   resetRateLimitForTests,
   rateLimitedBody,
 } from "../src/lib/rate-limit";
@@ -39,5 +40,10 @@ describe("checkRateLimit", () => {
     expect(body.code).toBe("RATE_LIMITED");
     expect(body.error).toBe(RATE_LIMITED_MESSAGE);
     expect(body.retryAfterSec).toBe(12);
+  });
+
+  test("bible reference limit is set", () => {
+    expect(RATE_LIMITS.bibleReference.limit).toBe(120);
+    expect(RATE_LIMITS.bibleReference.windowMs).toBe(60_000);
   });
 });
