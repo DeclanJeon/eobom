@@ -107,13 +107,13 @@ export default async function EntryDetailPage({
           </SurfaceCard>
         ) : null}
         {entry.prayer ? (
-          <SurfaceCard>
+          <SurfaceCard className="writing-margin-clay">
             <h2 className="text-headline-sm text-primary">기도</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">{entry.prayer}</p>
           </SurfaceCard>
         ) : null}
         {entry.actionStep ? (
-          <SurfaceCard>
+          <SurfaceCard className="writing-margin-clay">
             <h2 className="text-headline-sm text-primary">결단</h2>
             <p className="mt-2 whitespace-pre-wrap text-body-md">
               {entry.actionStep}
