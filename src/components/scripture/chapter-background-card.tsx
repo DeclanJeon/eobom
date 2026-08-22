@@ -26,10 +26,12 @@ export function ChapterBackgroundCard({ background }: { background: ChapterBackg
                 <p className="mt-1 text-body-sm leading-relaxed text-text-muted">{guide.content}</p>
               </div>
             ) : null}
-            {guide.observation ? (
+            {guide.observation.length ? (
               <div className="rounded-xl border border-border/30 px-4 py-3">
                 <p className="text-label-sm font-semibold text-primary">읽을 때 볼 점</p>
-                <p className="mt-1 text-body-sm leading-relaxed text-text-muted">{guide.observation}</p>
+                <ul className="mt-1 space-y-2 text-body-sm leading-relaxed text-text-muted">
+                  {guide.observation.map((item, index) => <li key={index} className="flex gap-2"><span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-accent-gold" />{item}</li>)}
+                </ul>
               </div>
             ) : null}
             {guide.characters.length ? (

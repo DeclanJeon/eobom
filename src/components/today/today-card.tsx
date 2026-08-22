@@ -204,8 +204,13 @@ export function TodayCard({
                       {content.chapterBg.guide.content ? (
                         <p className="rounded-xl bg-secondary/30 px-3 py-3 text-body-sm leading-relaxed text-text-muted"><span className="font-semibold text-primary">이 장의 내용</span> — {content.chapterBg.guide.content}</p>
                       ) : null}
-                      {content.chapterBg.guide.observation ? (
-                        <p className="text-body-sm leading-relaxed text-text-muted"><span className="font-semibold text-primary">읽을 때 볼 점</span> — {content.chapterBg.guide.observation}</p>
+                      {content.chapterBg.guide.observation.length ? (
+                        <>
+                          <p className="text-label-sm font-semibold text-primary">읽을 때 볼 점</p>
+                          <ul className="space-y-1.5 text-body-sm leading-relaxed text-text-muted">
+                            {content.chapterBg.guide.observation.map((item, index) => <li key={index} className="flex gap-2"><span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-accent-gold" />{item}</li>)}
+                          </ul>
+                        </>
                       ) : null}
                       {content.chapterBg.guide.characters.length ? (
                         <details className="rounded-xl border border-border/30 px-3 py-2">

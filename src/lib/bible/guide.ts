@@ -6,7 +6,7 @@ export type GuideChapter = {
   title: string;
   background: string;
   content: string;
-  observation: string;
+  observation: string[];
 };
 
 export type GuideBook = {
@@ -26,6 +26,35 @@ function cleanField(s: string): string {
 function field(raw: string, key: string): string {
   const m = new RegExp(`\\*\\*${key}\\*\\*\\s*[:：]\\s*([\\s\\S]*?)(?=\\n\\s*(?:-\\s*)?\\*\\*[가-힣A-Za-z]+\\*\\*\\s*[:：]|$)`).exec(raw);
   return cleanField(m ? m[1] : "");
+}
+
+/** 관찰 필드를 항목 배열로 분리. 불릿 목록이면 각 줄, 한 줄이면 첫째/둘째/셋째 분리. */
+function parseObservation(raw: string): string[] {
+  const text = cleanField(raw);
+  if (!text) return [];
+  // 1) 이미 볼릿(`- `) 줄로 분리되어 있으면 그 줄들을 사용
+  const bulletLines = text
+    .split("\n")
+    .map((line) => line
+      .trim()
+      .replace(/^[-•]\s*/, "")
+      .replace(/^(?:첫째|둘째|셋째|넷째)[,.]?\s*/, ""))
+    .filter(Boolean);
+  if (bulletLines.length > 1) return bulletLines;
+  // 2) 한 문단 안에 '첫째/둘째/셋째...' 가 나열된 경우 (한 줄에 있더라도 경계 분리)
+  const ordered = text
+    .split(/\s*(?=(?:첫째|둘째|셋째|넷째|첫 번째|둘 번째|셋 번째|넷 번째)[,.]\s*)/)
+    .map((s) => s.replace(/^(?:첫째|둘째|셋째|넷째|첫 번째|둘 번째|셋 번째|넷 번째)[,.]?\s*/g, "").trim())
+    .filter(Boolean);
+  if (ordered.length > 1) {
+    return ordered.map((item) => item
+      .replace(/^[-•]\s*/gm, "")
+      .replace(/^(?:첫째|둘째|셋째|넷째)[,.]?\s*/g, "")
+      .trim())
+      .filter(Boolean);
+  }
+  // 3) 그 외는 단일 문장 그대로
+  return [text];
 }
 
 /** `### 12장 — 제목` 헤더들을 챕터 번호·제목·나머지 텍스트로 나눈다. */
@@ -50,7 +79,7 @@ export function parseBookGuide(md: string): GuideBook {
     title: h.title,
     background: field(h.raw, "배경"),
     content: field(h.raw, "내용"),
-    observation: field(h.raw, "관찰"),
+    observation: parseObservation(field(h.raw, "관찰")),
   }));
 
   const characters = (characterMatch ? characterMatch[1] : "").split("\n")

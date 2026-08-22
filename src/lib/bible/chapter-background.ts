@@ -15,7 +15,8 @@ export type ChapterGuideContent = {
   title: string;
   background: string;
   content: string;
-  observation: string;
+  observation: string[];
+
   characters: string[];
 };
 

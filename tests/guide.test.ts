@@ -47,7 +47,8 @@ describe("bible guide corpus parser", () => {
       for (const chapter of guide.chapters) {
         chapters += 1;
         expect(chapter.title.length).toBeGreaterThan(0);
-        expect((chapter.background || chapter.content || chapter.observation).length).toBeGreaterThan(0);
+        expect(chapter.background || chapter.content).toBeTruthy();
+        expect(chapter.observation.length).toBeGreaterThan(0);
       }
     }
     expect(chapters).toBeGreaterThan(1100);
