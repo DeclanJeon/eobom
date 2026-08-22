@@ -36,13 +36,15 @@ for (const { from, to } of sources) {
 // 성경 66권 장·인물 해설 마크다운 — 디렉토리 통째 복사
 const GUIDE_SRC = path.join(BIBLE_ROOT, "data", "reference", "bible-guide");
 const GUIDE_DST = path.join(OUT_DIR, "bible-guide");
+let guideFileCount = 0;
 if (existsSync(GUIDE_SRC)) {
   mkdirSync(GUIDE_DST, { recursive: true });
   const guideFiles = readdirSync(GUIDE_SRC).filter((f) => f.endsWith(".md"));
+  guideFileCount = guideFiles.length;
   for (const f of guideFiles) {
     cpSync(path.join(GUIDE_SRC, f), path.join(GUIDE_DST, f));
   }
-  console.log(`bible-guide: ${guideFiles.length}개 복사`);
+  console.log(`bible-guide: ${guideFileCount}개 복사`);
 } else {
   console.warn("bible-guide 원본 없음");
 }
@@ -52,4 +54,4 @@ if (existsSync(path.join(OUT_DIR, "crossrefs.csv"))) {
   console.log(`\nhead crossrefs.csv:\n${head.slice(0, 400)}`);
 }
 
-console.log(`\ndone: ${copied} copied, ${missing} missing → ${path.relative(ROOT, OUT_DIR)} (bible-guide ${guideFiles.length}개)`);
+console.log(`\ndone: ${copied} copied, ${missing} missing → ${path.relative(ROOT, OUT_DIR)} (bible-guide ${guideFileCount}개)`);

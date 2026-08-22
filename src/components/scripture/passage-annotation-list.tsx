@@ -20,7 +20,13 @@ export function PassageAnnotationList({ code, chapter, startVerse, endVerse }: {
     const qs = isSingle
       ? `code=${code}&chapter=${chapter}&verse=${startVerse}&limit=8`
       : `code=${code}&chapter=${chapter}&verse=${startVerse}&endVerse=${endVerse}&grouped=1&limit=8`;
-    fetch(`/api/bible/crossrefs?${qs}`).then((r) => r.json()).then(setData).catch(() => {});
+    fetch(`/api/bible/crossrefs?${qs}`)
+      .then((response) => {
+        if (!response.ok) throw new Error(`crossrefs ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => setData(payload as Flat | Grouped))
+      .catch(() => setData(null));
   }, [code, chapter, startVerse, endVerse, isSingle]);
 
   if (!data || data.total === 0) return null;

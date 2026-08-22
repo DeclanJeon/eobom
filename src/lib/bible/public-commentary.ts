@@ -21,7 +21,7 @@ function openDb(): ReadonlyDb | null {
 export function getPublicCommentaryExcerpt(code: string, chapter: number, maxChars = 1800): PublicCommentaryExcerpt | null {
   const d = openDb();
   if (!d) return null;
-  const row = d.prepare("SELECT body FROM commentary_chapters WHERE source_id=? AND code=? AND chapter=? LIMIT 1").get("mhc", code.toUpperCase(), chapter) as { body?: string } | undefined;
+  const row = d.prepare("SELECT substr(body, 1, ?) AS body FROM commentary_chapters WHERE source_id=? AND code=? AND chapter=? LIMIT 1").get(maxChars, "mhc", code.toUpperCase(), chapter) as { body?: string } | undefined;
   const body = row?.body?.trim();
   if (!body) return null;
   return { source: "matthew-henry", license: "Public Domain", text: body.slice(0, maxChars) };

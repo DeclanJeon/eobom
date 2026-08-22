@@ -49,8 +49,8 @@ function rowToBg(row: Record<string, unknown>): ChapterBackground {
 export function getChapterBackground(params: { code: string; chapter: number; locale?: string }): ChapterBackground | null {
   const locale = params.locale === "en" ? "en" : "ko";
   const code = params.code.toUpperCase();
-  const guide = getChapterGuide(code, params.chapter);
-  const bookGuide = getBookGuide(code);
+  const guide = locale === "ko" ? getChapterGuide(code, params.chapter) : null;
+  const bookGuide = locale === "ko" ? getBookGuide(code) : null;
   const d = openDb();
   let row: Record<string, unknown> | undefined;
   if (d) {

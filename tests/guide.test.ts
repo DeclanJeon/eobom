@@ -34,6 +34,24 @@ describe("bible guide corpus parser", () => {
     expect(commentary?.text.length).toBeGreaterThan(100);
   });
 
+
+  test("all 66 guide books have non-empty chapter explanations", () => {
+    const fs = require("node:fs");
+    const books = JSON.parse(fs.readFileSync("data/bible/ko/metadata.json", "utf8")).books as Array<{ code: string }>;
+    let chapters = 0;
+    for (const book of books) {
+      const guide = getBookGuide(book.code);
+      expect(guide).not.toBeNull();
+      if (!guide) continue;
+      expect(guide.characters.length).toBeGreaterThan(0);
+      for (const chapter of guide.chapters) {
+        chapters += 1;
+        expect(chapter.title.length).toBeGreaterThan(0);
+        expect((chapter.background || chapter.content || chapter.observation).length).toBeGreaterThan(0);
+      }
+    }
+    expect(chapters).toBeGreaterThan(1100);
+  });
   test("없는 책은 null", () => {
     expect(getBookGuide("ZZZ")).toBeNull();
   });

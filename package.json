@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/ && mkdir -p .next/standalone/data/reference && cp -r data/reference/* .next/standalone/data/reference/ 2>/dev/null || true",
+    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs .next/standalone/data/reference && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/ && if [ -d data/reference/bible-guide ]; then cp -r data/reference/bible-guide .next/standalone/data/reference/; fi && for db in data/reference/*.sqlite; do if [ -f \"$db\" ]; then cp \"$db\" .next/standalone/data/reference/; fi; done",
     "start": "HOSTNAME=0.0.0.0 PORT=3100 NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
     "db:push": "prisma db push",
@@ -21,6 +21,7 @@
     "cleanup:expired": "bun scripts/cleanup-expired-runs.ts",
     "sync:reference": "node scripts/sync-reference-data.mjs",
     "build:reference-db": "node scripts/build-reference-sqlite.mjs",
+    "ingest:public-commentary": "node scripts/ingest-public-commentary.mjs",
     "build:public-commentary": "node scripts/build-public-commentary-sqlite.mjs"
   },
   "dependencies": {

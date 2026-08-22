@@ -44,16 +44,18 @@ async function main() {
     PRAGMA journal_mode=WAL;
     PRAGMA synchronous=NORMAL;
     CREATE TABLE metadata(key TEXT PRIMARY KEY, value TEXT);
-    CREATE TABLE crossref_edges(
-      source_code TEXT, source_chapter INTEGER, source_verse INTEGER, source_ref TEXT,
-      target_code TEXT, target_chapter INTEGER, target_start_verse INTEGER, target_end_verse INTEGER, target_ref TEXT,
-      votes TEXT, anchor_phrase TEXT, source TEXT, source_name TEXT, license TEXT
+    CREATE TABLE openbible_links(
+      from_key TEXT, to_code TEXT, to_chapter INTEGER, to_start_verse INTEGER, to_end_verse INTEGER, to_label TEXT, votes INTEGER, source TEXT
     );
-    CREATE INDEX idx_edges_source ON crossref_edges(source_code, source_chapter, source_verse);
-    CREATE INDEX idx_edges_target ON crossref_edges(target_code, target_chapter, target_start_verse, target_end_verse);
+    CREATE TABLE phrase_links(
+      from_key TEXT, to_code TEXT, to_chapter INTEGER, to_start_verse INTEGER, to_end_verse INTEGER, to_label TEXT, votes INTEGER, anchor_phrase TEXT, source TEXT
+    );
+    CREATE INDEX idx_open_source ON openbible_links(from_key);
+    CREATE INDEX idx_phrase_source ON phrase_links(from_key);
   `);
 
-  const insert = db.prepare(`INSERT INTO crossref_edges VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  const openInsert = db.prepare(`INSERT INTO openbible_links VALUES (?,?,?,?,?,?,?,?)`);
+  const phraseInsert = db.prepare(`INSERT INTO phrase_links VALUES (?,?,?,?,?,?,?,?,?)`);
   const meta = db.prepare(`INSERT INTO metadata VALUES (?,?)`);
   meta.run("built_at", new Date().toISOString());
   meta.run("source", "crossrefs.csv");
@@ -69,11 +71,20 @@ async function main() {
     if (header) { headers = parseCsvLine(line); header = false; continue; }
     const cols = parseCsvLine(line);
     const row = Object.fromEntries(headers.map((h, i) => [h, cols[i] ?? ""]));
-    insert.run(
-      row.source_code, Number(row.source_chapter) || 0, Number(row.source_verse) || 0, row.source_ref,
-      row.target_code, Number(row.target_chapter) || 0, Number(row.target_start_verse) || 0, Number(row.target_end_verse) || 0, row.target_ref,
-      row.votes, row.anchor_phrase, row.source, row.source_name, row.license
-    );
+    const values = [
+      row.source_ref,
+      row.target_code,
+      Number(row.target_chapter) || 0,
+      Number(row.target_start_verse) || 0,
+      Number(row.target_end_verse) || 0,
+      row.target_ref,
+      Number(row.votes) || 0,
+    ];
+    if (row.source === "openbible") {
+      openInsert.run(...values, row.source);
+    } else {
+      phraseInsert.run(...values, row.anchor_phrase, row.source);
+    }
     count++;
     if (count % 100000 === 0) {
       db.exec("COMMIT"); db.exec("BEGIN");

@@ -10,6 +10,18 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if [[ "${1:-}" == "--remote" || ! -d "$APP_DIR" ]]; then
+  echo "Preparing reference artifacts before rsync"
+  bun run sync:reference
+  bun run build:reference-db
+  if [[ -d data/reference/public-commentary/mhc ]]; then
+    bun run build:public-commentary
+  fi
+  for required in data/reference/chapter-background.sqlite data/reference/crossrefs.sqlite data/reference/public-commentary.sqlite; do
+    if [[ ! -s "$required" ]]; then
+      echo "missing required generated artifact: $required" >&2
+      exit 1
+    fi
+  done
   echo "Deploying via rsync to ${REMOTE}:${APP_DIR}"
   rsync -az --delete \
     --exclude .git \

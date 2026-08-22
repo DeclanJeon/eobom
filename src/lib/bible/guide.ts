@@ -24,7 +24,7 @@ function cleanField(s: string): string {
 }
 
 function field(raw: string, key: string): string {
-  const m = new RegExp(`\\*\\*${key}\\*\\*\\s*[:：]\\s*([\\s\\S]*?)(?=\\n\\s*-\\s*\\*\\*|\\n?-\\s|$)`).exec(raw);
+  const m = new RegExp(`\\*\\*${key}\\*\\*\\s*[:：]\\s*([\\s\\S]*?)(?=\\n\\s*(?:-\\s*)?\\*\\*[가-힣A-Za-z]+\\*\\*\\s*[:：]|$)`).exec(raw);
   return cleanField(m ? m[1] : "");
 }
 

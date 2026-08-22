@@ -5,7 +5,27 @@ export type RateLimitResult =
 type BucketState = number[];
 
 const buckets = new Map<string, BucketState>();
+let memoryOps = 0;
+const MAX_MEMORY_BUCKETS = 4096;
+const STALE_BUCKET_MS = 60 * 60 * 1000;
 
+function pruneMemoryBuckets(now: number): void {
+  memoryOps += 1;
+  if (memoryOps % 128 !== 0 && buckets.size <= MAX_MEMORY_BUCKETS) return;
+  const cutoff = now - STALE_BUCKET_MS;
+  for (const [key, state] of buckets) {
+    if (!state.some((timestamp) => timestamp > cutoff)) buckets.delete(key);
+  }
+  if (buckets.size > MAX_MEMORY_BUCKETS) {
+    const remove = buckets.size - MAX_MEMORY_BUCKETS;
+    let removed = 0;
+    for (const key of buckets.keys()) {
+      buckets.delete(key);
+      removed += 1;
+      if (removed >= remove) break;
+    }
+  }
+}
 export const RATE_LIMITED = "RATE_LIMITED" as const;
 
 export const RATE_LIMITED_MESSAGE =
@@ -83,6 +103,7 @@ export async function checkRateLimit(
 
   // ── In-memory sliding window fallback ──────────────────────
   const now = opts.now ?? Date.now();
+  pruneMemoryBuckets(now);
   const cutoff = now - windowMs;
   const prev = buckets.get(key) ?? [];
   const active = prev.filter((t) => t > cutoff);
