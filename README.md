@@ -67,6 +67,13 @@
 성경 본문을 선택하고(책·장·절) 오늘의 묵상을 기록합니다.
 감사의 제목, 하나님께 드리는 질문, 기도, 삶으로의 결단까지 — 하나의 기록지에 담습니다.
 
+
+### 📖 성경 문맥과 연관 성구
+성경 본문을 읽을 때 `이 장의 문맥`을 접어서 확인할 수 있습니다.
+- 66권 전체의 장별 초신자용 배경·내용·관찰·등장인물 안내
+- 연관 성구는 한국어 책이름으로 표시
+- Matthew Henry 공개 도메인 고전 주석은 필요할 때만 펼쳐 보는 보조 원문
+- 원문 주석은 장별 SQLite 인덱스로 읽어 전체 책을 메모리에 올리지 않음
 ### 📚 기록함
 지난 묵상을 날짜·성구·태그로 검색하고 다시 읽습니다.
 과거의 기록이 쌓일수록 당신의 성장이 보입니다.
@@ -103,6 +110,8 @@ AI 주제 태그가 자동으로 붙고, 같은 마음을 가진 기록을 발�
 | **UI** | React 19, Tailwind CSS v4, shadcn/ui |
 | **인증** | NextAuth.js (Google OAuth) |
 | **데이터** | Prisma + SQLite |
+| **성경 참조** | OpenBible/phrase crossrefs + 66권 guide Markdown |
+| **공개 주석** | Matthew Henry MHC (CCEL/CrossWire, Public Domain) → chapter-indexed SQLite |
 | **AI** | MiMo (`mimo-v2.5`) — 회고·주제 태그 |
 | **런타임** | Bun |
 | **배포** | systemd + nginx (Cloudflare) |
@@ -146,11 +155,31 @@ bun run dev
 | `bun run dev` | 개발 서버 (포트 3100) |
 | `bun run build` | 프로덕션 빌드 |
 | `bun run start` | 프로덕션 서버 실행 |
-| `bun run test` | 단위 테스트 (DB 불필요) |
+| `bun run test` | 전체 테스트 (격리 테스트 DB) |
 | `bun run db:push` | Prisma 스키마 반영 |
 | `bun run db:generate` | Prisma 클라이언트 생성 |
+| `bun run sync:reference` | bible 소스에서 성경 참조·guide 데이터 동기화 |
+| `bun run build:reference-db` | crossrefs CSV를 runtime SQLite로 빌드 |
+| `bun run ingest:public-commentary` | CrossWire MHC 공개 주석 수집 (diatheke/SWORD 필요) |
+| `bun run build:public-commentary` | 공개 주석 Markdown을 장별 SQLite로 빌드 |
 | `bun run lint` | ESLint 검사 |
 
+
+## 성경 참조 데이터
+
+`data/reference/`는 실행용으로 생성되는 데이터 영역이다.
+
+- `bible-guide/` — 66권 장별 한국어 배경·내용·관찰·인물 안내
+- `chapter-background.sqlite` — 장 문맥 fallback 데이터
+- `crossrefs.sqlite` — 연관 성구 runtime 인덱스
+- `public-commentary.sqlite` — Matthew Henry 공개 도메인 주석 장별 인덱스
+
+운영 runtime은 대형 Markdown/CSV 원문 전체를 읽지 않고 SQLite에서 `책 코드 + 장` 1행만 조회한다. 66권 guide Markdown은 앱의 편집 가능한 기준 데이터로 포함하고, 대형 MHC 원문·생성 SQLite/CSV는 Git에 넣지 않는다. `deploy/deploy.sh --remote`가 배포 전 reference artifact를 검증한다. 필요한 원문이 없으면 빈 기능으로 배포하지 않고 중단한다.
+
+공개 주석 출처:
+
+- [CrossWire MHC module](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=MHC)
+- [CCEL Matthew Henry Commentary](https://www.ccel.org/ccel/henry/mhc.html)
 ---
 
 ## 앱 구조
@@ -217,8 +246,10 @@ src/
 ### 운영 메모
 
 - **헬스체크** — `GET /api/health` (생존), `GET /api/health?db=1` (SQLite 연결 확인)
-- **Rate limit** — 프로세스 메모리 슬라이딩 윈도우 (단일 인스턴스)
-- **테스트** — `bun run test` (단위), DB 테스트는 별도
+- **Rate limit** — Redis 설정 시 분산 fixed window, 미설정 시 bounded in-memory fallback. 공개 성경 참조 조회는 분당 120회.
+- **LLM timeout** — MiMo 기본 120초, DeepSeek fallback 30초. `MIMO_TIMEOUT_MS`/`DEEPSEEK_TIMEOUT_MS`로 범위 내 조정.
+- **배포 preflight** — reference sync·crossrefs/commentary SQLite 빌드·필수 artifact 검증 후 rsync. artifact 누락 시 배포 중단.
+- **테스트** — `bun run test` 전체 테스트와 격리 테스트 DB를 사용.
 
 ---
 
