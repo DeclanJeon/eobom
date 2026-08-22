@@ -129,7 +129,7 @@
 - Tests cover summary mapping and empty-block omission.
 
 ## Accepted debt
-- [ ] Dark-mode scaffolding (`next-themes`, `darkMode:"class"`, `.dark` variant, sidebar dark tokens) is inert — light-only product. Remove or document as permanently light.
+- [ ] Dark-mode scaffolding removed (next-themes dependency + tailwind `darkMode:"class"` gone). Permanently light.
 - [ ] `clay`/`mist` tokens underused on main app surfaces — apply to 기도/결단 and AI result regions (v0.3 rollout).
 - [ ] `/today` reduced to a single dominant card — restore one secondary action + quiet recent-entries list.
 - [ ] Dedicated AI field for companions/mentors if derivation quality is weak.

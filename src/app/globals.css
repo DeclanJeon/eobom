@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 
 /* Light-only product: linen/paper reading surface. There is no dark mode.
-   Inert dark scaffolding (next-themes, tailwind `darkMode:"class"`) is accepted debt — see DESIGN.md. */
+   Dark scaffolding (next-themes dependency + tailwind `darkMode:"class"`) removed. */
 
 /* Quiet Reflection — Stitch design system */
 @theme inline {
