@@ -40,6 +40,13 @@ export function ChapterBackgroundCard({ background }: { background: ChapterBackg
                 </ul>
               </details>
             ) : null}
+            {background.publicCommentary?.text ? (
+              <details className="rounded-xl border border-border/30 px-4 py-3">
+                <summary className="cursor-pointer list-none text-label-sm font-semibold text-primary">공개 고전 주석 원문</summary>
+                <p className="mt-2 text-body-sm leading-relaxed text-text-muted">{background.publicCommentary.text}</p>
+                <p className="mt-2 text-label-xs text-text-muted">Matthew Henry · Public Domain · CCEL/CrossWire</p>
+              </details>
+            ) : null}
           </>
         ) : (
           <>

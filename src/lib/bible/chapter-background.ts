@@ -1,3 +1,4 @@
+import { getPublicCommentaryExcerpt, type PublicCommentaryExcerpt } from "@/lib/bible/public-commentary";
 import { getBookGuide, getChapterGuide } from "@/lib/bible/guide";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -7,7 +8,7 @@ export type ChapterBackground = {
   id: string; code: string; chapter: number; testament: string; locale: string;
   overview: string; historical: string; literary: string; theological: string;
   keyVerses: { reference: string; why: string }[]; cautions: string[]; sources: { id: string; title: string; url?: string; license?: string; retrievedAt: string; sourceTier: number }[];
-  version: string; generatedAt: string; guide?: ChapterGuideContent;
+  version: string; generatedAt: string; guide?: ChapterGuideContent; publicCommentary?: PublicCommentaryExcerpt;
 };
 export type ChapterGuideContent = {
   intro: string;
@@ -57,7 +58,8 @@ export function getChapterBackground(params: { code: string; chapter: number; lo
     if (!row && locale === "ko") row = d.prepare(`SELECT * FROM chapter_background WHERE code=? AND chapter=? AND locale='en' LIMIT 1`).get(code, params.chapter) as Record<string, unknown> | undefined;
   }
   const sqliteBackground = row ? rowToBg(row) : null;
-  if (!guide) return sqliteBackground;
+  const publicCommentary = getPublicCommentaryExcerpt(code, params.chapter);
+  if (!guide) return sqliteBackground ? { ...sqliteBackground, publicCommentary: publicCommentary ?? undefined } : null;
 
   const base = sqliteBackground ?? {
     id: `${code}-${params.chapter}`,
@@ -86,5 +88,6 @@ export function getChapterBackground(params: { code: string; chapter: number; lo
       observation: guide.observation,
       characters: bookGuide?.characters ?? [],
     },
+    publicCommentary: publicCommentary ?? undefined,
   };
 }
