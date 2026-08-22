@@ -15,15 +15,29 @@ type Flat = { total: number; refs: Ref[]; verseRef: string };
 type Passage = { binding: { display: string }; verses: Array<{ verse: number; text: string }> };
 
 /**
- * 연결 성구 항목 — 클릭하면 본문을 인라인으로 펼쳐 '읽기'를 제공하고,
- * 본문 아래에 '이 본문으로 기록하기' 명시적 액션을 둔다.
- * 탐색(읽기)과 기록(작성)을 분리한다.
+ * 연결 성구의 '왜 연결됐는지' 근거를 정직하게 표현한다.
+ * - 투표수(openbible): '연결 추천 N'으로 연결 신뢰도만 표시
+ * - 앵커 문구(phrase): 의미 있는 단어(고유명사 등)만 '연결 근거'로 표시, 영어 기능어는 숨김
+ * 억지로 해설을 만들지 않고, 본문 인라인 펼침으로 연결점을 읽게 한다.
  */
+const ANCHOR_STOPWORDS = new Set([
+  "for", "but", "that", "and", "they", "which", "thou", "in", "as", "if", "he", "all", "what", "who", "with", "this", "let", "when", "because", "behold", "the lord", "god", "i will", "i am", "shall", "of", "to", "is", "it", "a", "not", "have", "be", "we", "you", "his", "him", "her", "them", "there", "their", "by", "from", "so", "or", "was", "were", "are", "upon", "into", "out", "then", "thus", "also", "even", "will", "may", "now", "said", "one", "man", "every", "these", "those", "saying", "done", "made", "come", "went", "hath", "hast", "doth", "unto", "thee", "thy", "mine", "saith",
+]);
+
+function meaningfulAnchor(anchor: string): boolean {
+  const word = anchor.trim().toLowerCase();
+  if (!word) return false;
+  if (word.length < 4) return false;
+  return !ANCHOR_STOPWORDS.has(word);
+}
+
 function CrossRefItem({ ref }: { ref: Ref }) {
   const [open, setOpen] = useState(false);
   const [passage, setPassage] = useState<Passage | null>(null);
   const [loading, setLoading] = useState(false);
   const label = displayCrossRef(ref);
+  const anchor = meaningfulAnchor(ref.anchorPhrase) ? ref.anchorPhrase : null;
+  const votes = Number(ref.votes);
 
   function toggle() {
     if (open) { setOpen(false); return; }
@@ -55,10 +69,10 @@ function CrossRefItem({ ref }: { ref: Ref }) {
           {label} {open ? "▾" : "▸"}
         </button>
         <span className="text-label-xs text-text-muted">
-          {ref.votes ? `투표 ${ref.votes}` : ""}
-          {ref.votes && ref.anchorPhrase ? " · " : ""}
-          {ref.anchorPhrase ? `앵커 ${ref.anchorPhrase}` : ""}
-          {ref.votes || ref.anchorPhrase ? " · " : ""}{ref.license}
+          {votes > 0 ? `연결 추천 ${votes}` : ""}
+          {votes > 0 && anchor ? " · " : ""}
+          {anchor ? `연결 근거 ${anchor}` : ""}
+          {votes > 0 || anchor ? " · " : ""}{ref.license}
         </span>
       </div>
       {open ? (
@@ -76,6 +90,9 @@ function CrossRefItem({ ref }: { ref: Ref }) {
                   </p>
                 ))}
               </div>
+              <p className="mt-1 text-label-xs text-text-muted">
+                두 본문을 나란히 읽으며 연결점을 살펴보세요.
+              </p>
               <Link
                 href={`/entries/new?scripture=${encodeURIComponent(label)}`}
                 className="mt-2 inline-flex min-h-9 items-center text-label-sm text-leaf hover:text-primary"
