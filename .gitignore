@@ -77,5 +77,5 @@ artifacts/
 data/reference/*.json
 data/reference/*.csv
 # generated public-domain commentary corpus (rebuild with ingest-public-commentary.mjs)
-data/reference/public-commentary/mhc/*.md
+data/reference/public-commentary/mhc/
 data/reference/*.sqlite
