@@ -2,6 +2,16 @@
 
 이 파일은 CI가 main 푸시마다 자동으로 갱신합니다. 상세 개발노트는 `docs/dev-notes/`를 보세요.
 
+## v1.11.3 — 2026-08-22
+
+### 개선
+
+- guide 인물 목록 형식 변형과 장 분할 보정
+
+### 기타
+
+- reference API bounds, parser QA, and deploy artifact guards
+
 ## v1.11.2 — 2026-08-22
 
 ### 기타
