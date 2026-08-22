@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { excerpt, parseJsonArray, toJsonArray, formatDateShort } from "../src/lib/utils";
 import { validateEntryInput } from "../src/lib/entries";
-import { DISCLAIMER } from "../src/lib/mimo";
+import { DISCLAIMER, getLlmTimeoutMs } from "../src/lib/mimo";
 
 describe("utils", () => {
   test("parse and serialize json arrays", () => {
@@ -36,6 +36,37 @@ describe("entry validation", () => {
 describe("mimo safety", () => {
   test("disclaimer is present", () => {
     expect(DISCLAIMER.includes("하나님의 뜻")).toBe(true);
+  });
+});
+
+describe("mimo timeout configuration", () => {
+  test("uses the longer MiMo default and keeps DeepSeek fallback responsive", () => {
+    const previousMimo = process.env.MIMO_TIMEOUT_MS;
+    const previousDeepSeek = process.env.DEEPSEEK_TIMEOUT_MS;
+    delete process.env.MIMO_TIMEOUT_MS;
+    delete process.env.DEEPSEEK_TIMEOUT_MS;
+    try {
+      expect(getLlmTimeoutMs("mimo")).toBe(90_000);
+      expect(getLlmTimeoutMs("deepseek")).toBe(30_000);
+    } finally {
+      if (previousMimo === undefined) delete process.env.MIMO_TIMEOUT_MS;
+      else process.env.MIMO_TIMEOUT_MS = previousMimo;
+      if (previousDeepSeek === undefined) delete process.env.DEEPSEEK_TIMEOUT_MS;
+      else process.env.DEEPSEEK_TIMEOUT_MS = previousDeepSeek;
+    }
+  });
+
+  test("accepts a bounded provider-specific override", () => {
+    const previous = process.env.MIMO_TIMEOUT_MS;
+    process.env.MIMO_TIMEOUT_MS = "120000";
+    try {
+      expect(getLlmTimeoutMs("mimo")).toBe(120_000);
+      process.env.MIMO_TIMEOUT_MS = "999";
+      expect(getLlmTimeoutMs("mimo")).toBe(90_000);
+    } finally {
+      if (previous === undefined) delete process.env.MIMO_TIMEOUT_MS;
+      else process.env.MIMO_TIMEOUT_MS = previous;
+    }
   });
 });
 

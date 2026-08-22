@@ -10,6 +10,25 @@ import {
   parseBibleReferences,
 } from "@/lib/bible";
 
+const DEFAULT_MIMO_TIMEOUT_MS = 90_000;
+const DEFAULT_DEEPSEEK_TIMEOUT_MS = 30_000;
+const MIN_LLM_TIMEOUT_MS = 5_000;
+const MAX_LLM_TIMEOUT_MS = 300_000;
+
+function readLlmTimeoutMs(name: string, fallback: number): number {
+  const value = Number(process.env[name]);
+  if (!Number.isInteger(value) || value < MIN_LLM_TIMEOUT_MS || value > MAX_LLM_TIMEOUT_MS) {
+    return fallback;
+  }
+  return value;
+}
+
+export function getLlmTimeoutMs(provider: "mimo" | "deepseek"): number {
+  return provider === "mimo"
+    ? readLlmTimeoutMs("MIMO_TIMEOUT_MS", DEFAULT_MIMO_TIMEOUT_MS)
+    : readLlmTimeoutMs("DEEPSEEK_TIMEOUT_MS", DEFAULT_DEEPSEEK_TIMEOUT_MS);
+}
+
 const DISCLAIMER =
   "이 회고는 사용자가 남긴 기록을 정리한 성찰 자료입니다. 하나님의 뜻, 신앙 상태 또는 성경의 최종 해석을 판정하지 않으며, 기도와 성경 본문 읽기, 공동체의 분별을 대신하지 않습니다.";
 
@@ -360,7 +379,7 @@ export async function generateReviewWithMimo(
       apiKey: mimoKey,
       baseURL: (process.env.MIMO_BASE_URL || "https://api.xiaomimimo.com/v1").replace(/\/$/, ""),
       model: process.env.MIMO_MODEL || "mimo-v2.5",
-      timeoutMs: 30_000,
+      timeoutMs: getLlmTimeoutMs("mimo"),
       retries: 1,
     });
   }
@@ -372,7 +391,7 @@ export async function generateReviewWithMimo(
       apiKey: deepseekKey,
       baseURL: (process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com").replace(/\/$/, ""),
       model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
-      timeoutMs: 30_000,
+      timeoutMs: getLlmTimeoutMs("deepseek"),
       retries: 1,
     });
   }
@@ -406,7 +425,7 @@ export async function generateReviewWithMimo(
           { role: "user", content: buildClassificationPrompt(entries) },
         ],
       }),
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(primary.timeoutMs),
     });
 
     if (classificationRes.ok) {
