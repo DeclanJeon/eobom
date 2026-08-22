@@ -127,7 +127,7 @@ export default async function PersonalJournalPage({
     case "blocked_other": {
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <GuestKeyringCard now={new Date()} />
+          {/* 타인 seat — 전역 말씀 미노출 (프라이버시 불변식 §6.2) */}
           <h1 className="text-display-lg text-primary">
             다른 사람의 키링입니다
           </h1>
@@ -152,7 +152,7 @@ export default async function PersonalJournalPage({
     case "blocked_legacy_other": {
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <GuestKeyringCard now={new Date()} />
+          {/* 타인 seat — 전역 말씀 미노출 */}
           <h1 className="text-display-lg text-primary">다른 사람의 키링입니다</h1>
           <Link href="/today" className="cta-primary mt-8 inline-flex">
             내 홈으로
@@ -171,7 +171,7 @@ export default async function PersonalJournalPage({
     case "private_page": {
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <GuestKeyringCard now={new Date()} />
+          {/* 타인 seat — 전역 말씀 미노출 */}
           <p className="text-label-sm text-text-muted">키링 {slug}</p>
           <h1 className="mt-2 text-display-lg text-primary">
             이 주소는

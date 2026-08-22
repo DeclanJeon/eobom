@@ -1,8 +1,9 @@
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { GuestTodayView } from "@/components/today/guest-view";
-import { TodayCard } from "@/components/today/today-card";
+import { PendingSignalConsumer } from "@/components/today/pending-signal-consumer";
 import { EntryRow } from "@/components/ui-blocks";
+import { TodayCard } from "@/components/today/today-card";
 import { listOpenActionSteps } from "@/lib/actions";
 import { selectRandomScripture } from "@/lib/daily-scripture";
 import { getOptionalUser, type ApiUser } from "@/lib/session";
@@ -193,7 +194,7 @@ async function MemberTodayView({
 
   return (
     <AppShell wide bare>
-      <h1 className="text-headline-sm text-primary">오늘의 묵상</h1>
+      <PendingSignalConsumer dateKey={dateKey} />
       <p className="mb-4 text-eyebrow">
         {greeting}님 · {formatDateKo(now)}
       </p>
