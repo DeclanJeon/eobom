@@ -195,29 +195,38 @@ export function TodayCard({
                   <span className="hidden shrink-0 text-label-xs text-text-muted group-open:inline">접기 ▴</span>
                 </summary>
                 <div className="mt-3 space-y-3">
-                  <p className="text-body-sm leading-relaxed text-text-muted">
-                    {content.chapterBg.overview}
-                  </p>
-                  {(content.chapterBg.historical ||
-                    content.chapterBg.literary ||
-                    content.chapterBg.theological) && (
-                    <div className="space-y-2 border-t border-border/20 pt-3 text-body-sm leading-relaxed text-text-muted">
-                      {content.chapterBg.historical ? (
-                        <p>
-                          <span className="font-semibold text-primary">역사</span> — {content.chapterBg.historical}
-                        </p>
+                  {content.chapterBg.guide ? (
+                    <>
+                      <p className="text-label-md font-semibold text-primary">{content.chapterBg.guide.title}</p>
+                      {content.chapterBg.guide.background ? (
+                        <p className="text-body-sm leading-relaxed text-text-muted"><span className="font-semibold text-primary">장면의 배경</span> — {content.chapterBg.guide.background}</p>
                       ) : null}
-                      {content.chapterBg.literary ? (
-                        <p>
-                          <span className="font-semibold text-primary">문학</span> — {content.chapterBg.literary}
-                        </p>
+                      {content.chapterBg.guide.content ? (
+                        <p className="rounded-xl bg-secondary/30 px-3 py-3 text-body-sm leading-relaxed text-text-muted"><span className="font-semibold text-primary">이 장의 내용</span> — {content.chapterBg.guide.content}</p>
                       ) : null}
-                      {content.chapterBg.theological ? (
-                        <p>
-                          <span className="font-semibold text-primary">신학</span> — {content.chapterBg.theological}
-                        </p>
+                      {content.chapterBg.guide.observation ? (
+                        <p className="text-body-sm leading-relaxed text-text-muted"><span className="font-semibold text-primary">읽을 때 볼 점</span> — {content.chapterBg.guide.observation}</p>
                       ) : null}
-                    </div>
+                      {content.chapterBg.guide.characters.length ? (
+                        <details className="rounded-xl border border-border/30 px-3 py-2">
+                          <summary className="cursor-pointer list-none text-label-sm font-semibold text-primary">등장인물 알아보기</summary>
+                          <ul className="mt-2 space-y-1 text-body-sm leading-relaxed text-text-muted">
+                            {content.chapterBg.guide.characters.slice(0, 8).map((character) => <li key={character}>· {character}</li>)}
+                          </ul>
+                        </details>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-body-sm leading-relaxed text-text-muted">{content.chapterBg.overview}</p>
+                      {(content.chapterBg.historical || content.chapterBg.literary || content.chapterBg.theological) && (
+                        <div className="space-y-2 border-t border-border/20 pt-3 text-body-sm leading-relaxed text-text-muted">
+                          {content.chapterBg.historical ? <p><span className="font-semibold text-primary">역사</span> — {content.chapterBg.historical}</p> : null}
+                          {content.chapterBg.literary ? <p><span className="font-semibold text-primary">문학</span> — {content.chapterBg.literary}</p> : null}
+                          {content.chapterBg.theological ? <p><span className="font-semibold text-primary">신학</span> — {content.chapterBg.theological}</p> : null}
+                        </div>
+                      )}
+                    </>
                   )}
                   {content.chapterBg.keyVerses.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
