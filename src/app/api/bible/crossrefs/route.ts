@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCrossRefsForPassage, getCrossRefsForVerse, getCrossRefsGroupedForPassage } from "@/lib/bible/crossrefs";
+import { attachLinkCommentaries, attachLinkCommentariesBySourceRef, getVerseCommentary } from "@/lib/bible/crossref-commentary";
 import { getBook, getVerseCounts, isValidBookCode } from "@/lib/bible";
 import { parseSlug } from "@/lib/bible/format";
 import { enforcePublicReferenceRateLimit } from "@/lib/bible-reference-rate-limit";
@@ -37,27 +38,55 @@ export async function GET(request: Request) {
     if (!ref || !isValidBookCode(ref.code) || !validRange(ref.code, ref.chapter, ref.startVerse, ref.endVerse)) {
       return NextResponse.json({ error: "invalid slug" }, { status: 400 });
     }
-    if (grouped && ref.startVerse !== ref.endVerse) {
-      const g = getCrossRefsGroupedForPassage(ref, limit);
-      return NextResponse.json({ verseRef: `${ref.code} ${ref.chapter}:${ref.startVerse}-${ref.endVerse}`, total: g.total, byVerse: g.byVerse }, { headers: CACHE_HEADERS });
-    }
-    const result = ref.startVerse === ref.endVerse
-      ? getCrossRefsForVerse({ code: ref.code, chapter: ref.chapter, verse: ref.startVerse, limit })
-      : getCrossRefsForPassage(ref, limit);
-    return NextResponse.json({ verseRef: `${ref.code} ${ref.chapter}:${ref.startVerse}${ref.startVerse === ref.endVerse ? "" : `-${ref.endVerse}`}`, total: result.total, refs: result.refs }, { headers: CACHE_HEADERS });
+    return respondWithCommentary(ref, limit, grouped);
   }
 
   if (/^[0-9A-Z]{3}$/.test(code) && validRange(code, chapter, verse, endVerse)) {
-    if (grouped && verse !== endVerse) {
-      const g = getCrossRefsGroupedForPassage({ code, chapter, startVerse: verse, endVerse }, limit);
-      return NextResponse.json({ verseRef: `${code} ${chapter}:${verse}-${endVerse}`, total: g.total, byVerse: g.byVerse }, { headers: CACHE_HEADERS });
-    }
-    const result = verse === endVerse
-      ? getCrossRefsForVerse({ code, chapter, verse, limit })
-      : getCrossRefsForPassage({ code, chapter, startVerse: verse, endVerse }, limit);
-    const verseRef = verse === endVerse ? `${code} ${chapter}:${verse}` : `${code} ${chapter}:${verse}-${endVerse}`;
-    return NextResponse.json({ verseRef, total: result.total, refs: result.refs }, { headers: CACHE_HEADERS });
+    return respondWithCommentary({ code, chapter, startVerse: verse, endVerse }, limit, grouped);
   }
 
   return NextResponse.json({ error: "invalid ref" }, { status: 400 });
+}
+
+function respondWithCommentary(
+  ref: { code: string; chapter: number; startVerse: number; endVerse: number },
+  limit: number,
+  grouped: boolean,
+) {
+  const verseRef = `${ref.code} ${ref.chapter}:${ref.startVerse}${ref.startVerse === ref.endVerse ? "" : `-${ref.endVerse}`}`;
+
+  if (grouped && ref.startVerse !== ref.endVerse) {
+    const g = getCrossRefsGroupedForPassage(ref, limit);
+    for (const entry of g.byVerse) {
+      attachLinkCommentaries(ref.code, ref.chapter, entry.verse, entry.refs);
+    }
+    return NextResponse.json(
+      {
+        verseRef,
+        total: g.total,
+        byVerse: g.byVerse.map((entry) => ({
+          ...entry,
+          commentary: getVerseCommentary(ref.code, ref.chapter, entry.verse) ?? undefined,
+        })),
+      },
+      { headers: CACHE_HEADERS },
+    );
+  }
+
+  const result = ref.startVerse === ref.endVerse
+    ? getCrossRefsForVerse({ code: ref.code, chapter: ref.chapter, verse: ref.startVerse, limit })
+    : getCrossRefsForPassage(ref, limit);
+  attachLinkCommentariesBySourceRef(result.refs);
+
+  return NextResponse.json(
+    {
+      verseRef,
+      total: result.total,
+      refs: result.refs,
+      ...(ref.startVerse === ref.endVerse
+        ? { commentary: getVerseCommentary(ref.code, ref.chapter, ref.startVerse) ?? undefined }
+        : {}),
+    },
+    { headers: CACHE_HEADERS },
+  );
 }

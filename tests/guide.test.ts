@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { getBookGuide, getChapterGuide } from "../src/lib/bible/guide";
 import { getChapterBackground } from "../src/lib/bible/chapter-background";
 import { getPublicCommentaryExcerpt } from "../src/lib/bible/public-commentary";
@@ -36,8 +37,7 @@ describe("bible guide corpus parser", () => {
 
 
   test("all 66 guide books have non-empty chapter explanations", () => {
-    const fs = require("node:fs");
-    const books = JSON.parse(fs.readFileSync("data/bible/ko/metadata.json", "utf8")).books as Array<{ code: string }>;
+    const books = JSON.parse(readFileSync("data/bible/ko/metadata.json", "utf8")).books as Array<{ code: string }>;
     let chapters = 0;
     for (const book of books) {
       const guide = getBookGuide(book.code);

@@ -54,6 +54,13 @@ if (missing.length) {
   process.exit(1);
 }
 
+// 4) 선택 산출물: 연결 해설 DB (bun run generate:crossref-commentary 로 생성)
+// TODO: 전체 배치 생성이 완료되면 required 목록으로 승격할 것.
+const commentaryDb = path.join(OUT_DIR, "crossref-commentary.sqlite");
+if (!existsSync(commentaryDb)) {
+  console.warn(`경고: crossref-commentary.sqlite 없음 — 연결 해설 없이 표시됩니다. (bun run generate:crossref-commentary)`);
+}
+
 // 정리
 if (existsSync(csvPath)) {
   const head = readFileSync(csvPath, "utf8").split("\n").slice(0, 2).join("\n");

@@ -22,7 +22,8 @@
     "sync:reference": "node scripts/sync-reference-data.mjs",
     "build:reference-db": "node scripts/build-reference-sqlite.mjs",
     "ingest:public-commentary": "node scripts/ingest-public-commentary.mjs",
-    "build:public-commentary": "node scripts/build-public-commentary-sqlite.mjs"
+    "build:public-commentary": "node scripts/build-public-commentary-sqlite.mjs",
+    "generate:crossref-commentary": "node scripts/generate-crossref-commentary.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

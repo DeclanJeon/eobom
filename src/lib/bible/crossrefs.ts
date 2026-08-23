@@ -22,7 +22,9 @@ const DB_PATH = path.join(ROOT, "data", "reference", "crossrefs.sqlite");
 let db: ReadonlyDb | null | undefined;
 
 function openDb() {
-  if (db !== undefined) return db;
+  // 파일 부재 상태는 캐시하지 않는다 — 재빌드 창(window)에 열어둔 프로세스가
+  // 영구적으로 빈 응답을 내는 것을 막는다.
+  if (db) return db;
   if (!existsSync(DB_PATH)) { db = null; return db; }
   db = openReadonlySqlite(DB_PATH);
   return db;

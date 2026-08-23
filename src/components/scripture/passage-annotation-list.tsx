@@ -6,11 +6,12 @@ import { displayCrossRef } from "@/lib/bible/parse";
 
 type Ref = {
   sourceRef: string; targetRef: string; targetCode: string; targetChapter: number; targetStart: number; targetEnd: number;
-  votes: string; anchorPhrase: string; source: string; sourceName: string; license: string;
+  votes: string; anchorPhrase: string; source: string; sourceName: string; license: string; why?: string;
 };
 
-type Grouped = { total: number; byVerse: Array<{ verse: number; total: number; refs: Ref[] }> };
-type Flat = { total: number; refs: Ref[]; verseRef: string };
+type VerseCommentaryInfo = { theme: string; summary: string };
+type Grouped = { total: number; byVerse: Array<{ verse: number; total: number; refs: Ref[]; commentary?: VerseCommentaryInfo }> };
+type Flat = { total: number; refs: Ref[]; verseRef: string; commentary?: VerseCommentaryInfo };
 
 type Passage = { binding: { display: string }; verses: Array<{ verse: number; text: string }> };
 
@@ -31,14 +32,15 @@ function meaningfulAnchor(anchor: string): boolean {
   return !ANCHOR_STOPWORDS.has(word);
 }
 
-function CrossRefItem({ ref }: { ref: Ref }) {
+function CrossRefItem({ crossRef }: { crossRef: Ref }) {
   const [open, setOpen] = useState(false);
   const [passage, setPassage] = useState<Passage | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
-  const label = displayCrossRef(ref);
-  const anchor = meaningfulAnchor(ref.anchorPhrase) ? ref.anchorPhrase : null;
-  const votes = Number(ref.votes);
+  const label = displayCrossRef(crossRef);
+  const anchor = meaningfulAnchor(crossRef.anchorPhrase) ? crossRef.anchorPhrase : null;
+  const votes = Number(crossRef.votes);
+  const hasWhy = Boolean(crossRef.why?.trim());
 
   function toggle() {
     if (open) { setOpen(false); return; }
@@ -46,10 +48,10 @@ function CrossRefItem({ ref }: { ref: Ref }) {
     if (passage) return;
     setLoading(true);
     const qs = new URLSearchParams({
-      code: ref.targetCode,
-      chapter: String(ref.targetChapter),
-      startVerse: String(ref.targetStart),
-      endVerse: String(ref.targetEnd),
+      code: crossRef.targetCode,
+      chapter: String(crossRef.targetChapter),
+      startVerse: String(crossRef.targetStart),
+      endVerse: String(crossRef.targetEnd),
     });
     fetch(`/api/bible/passage?${qs}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -70,10 +72,16 @@ function CrossRefItem({ ref }: { ref: Ref }) {
           {label} {open ? "▾" : "▸"}
         </button>
         <span className="text-label-xs text-text-muted">
-          {votes > 0 ? `연결 추천 ${votes}` : ""}
-          {votes > 0 && anchor ? " · " : ""}
-          {anchor ? `연결 근거 ${anchor}` : ""}
-          {votes > 0 || anchor ? " · " : ""}{ref.license}
+          {hasWhy ? (
+            <span className="text-gold-ink">연결 해설 {crossRef.why}</span>
+          ) : (
+            <>
+              {votes > 0 ? `연결 추천 ${votes}` : ""}
+              {votes > 0 && anchor ? " · " : ""}
+              {anchor ? `연결 근거 ${anchor}` : ""}
+            </>
+          )}
+          {votes > 0 || anchor || hasWhy ? " · " : ""}{crossRef.license}
         </span>
       </div>
       {open ? (
@@ -120,6 +128,16 @@ function CrossRefItem({ ref }: { ref: Ref }) {
   );
 }
 
+function VerseCommentaryIntro({ commentary }: { commentary?: VerseCommentaryInfo }) {
+  if (!commentary?.theme?.trim()) return null;
+  return (
+    <p className="mt-2 rounded-lg border border-gold-ink/20 bg-gold-ink/5 px-3 py-2 text-body-sm leading-relaxed">
+      <span className="font-medium text-gold-ink">주제 · {commentary.theme}</span>
+      {commentary.summary?.trim() ? <span className="text-text-main"> — {commentary.summary}</span> : null}
+    </p>
+  );
+}
+
 export function PassageAnnotationList({ code, chapter, startVerse, endVerse }: { code: string; chapter: number; startVerse: number; endVerse: number }) {
   const isSingle = startVerse === endVerse;
   const [data, setData] = useState<Flat | Grouped | null>(null);
@@ -146,17 +164,19 @@ export function PassageAnnotationList({ code, chapter, startVerse, endVerse }: {
     if (!visible.length) return null;
     return (
       <div className="mt-3 space-y-2">
-        {visible.map(({ verse, total, refs }) => (
+        {visible.map(({ verse, total, refs, commentary }) => (
           <details key={verse} className="rounded-xl border border-border/20 bg-card/40 px-3 py-2">
             <summary className="cursor-pointer list-none text-label-xs text-text-muted">
               {verse}절 · 연관 {total}개 {total > refs.length ? `· 상위 ${refs.length}개` : ""} <span className="ml-2 text-gold-ink">펼치기</span>
             </summary>
+            <VerseCommentaryIntro commentary={commentary} />
             <ul className="mt-3 space-y-2">
               {refs.map((r) => (
-                <CrossRefItem key={`${r.targetRef}-${r.source}-${r.votes}`} ref={r} />
+                <CrossRefItem key={`${r.targetRef}-${r.source}-${r.votes}`} crossRef={r} />
               ))}
               {total > refs.length ? <li className="text-label-xs text-text-muted">외 {total - refs.length}개는 CSV에서 확인</li> : null}
             </ul>
+            <p className="mt-2 text-label-xs text-text-muted/70">연결 해설은 사전 생성된 AI 초안입니다.</p>
           </details>
         ))}
       </div>
@@ -170,12 +190,14 @@ export function PassageAnnotationList({ code, chapter, startVerse, endVerse }: {
       <summary className="cursor-pointer list-none text-label-xs text-text-muted">
         연관성구 {flat.total}개 {hidden > 0 ? `· 상위 ${flat.refs.length}개` : ""} <span className="ml-2 text-gold-ink">펼치기</span>
       </summary>
+      <VerseCommentaryIntro commentary={flat.commentary} />
       <ul className="mt-3 space-y-2">
         {flat.refs.map((r) => (
-          <CrossRefItem key={`${r.targetRef}-${r.source}-${r.votes}`} ref={r} />
+          <CrossRefItem key={`${r.targetRef}-${r.source}-${r.votes}`} crossRef={r} />
         ))}
         {hidden > 0 ? <li className="text-label-xs text-text-muted">외 {hidden}개는 CSV에서 확인</li> : null}
       </ul>
+      <p className="mt-2 text-label-xs text-text-muted/70">연결 해설은 사전 생성된 AI 초안입니다.</p>
     </details>
   );
 }
