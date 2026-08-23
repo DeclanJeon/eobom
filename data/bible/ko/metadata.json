@@ -19,7 +19,7 @@
   "totals": {
     "books": 66,
     "chapters": 1171,
-    "verses": 30625
+    "verses": 31098
   },
   "books": [
     {
@@ -28,7 +28,7 @@
       "name": "창세기",
       "testament": "구약",
       "chapters": 50,
-      "verses": 1520,
+      "verses": 1533,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -172,7 +172,7 @@
       "name": "에스더",
       "testament": "구약",
       "chapters": 10,
-      "verses": 164,
+      "verses": 167,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -190,7 +190,7 @@
       "name": "시편",
       "testament": "구약",
       "chapters": 150,
-      "verses": 2435,
+      "verses": 2464,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -478,7 +478,7 @@
       "name": "골로새서",
       "testament": "신약",
       "chapters": 4,
-      "verses": 86,
+      "verses": 95,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -558,8 +558,8 @@
       "code": "1PE",
       "name": "베드로전서",
       "testament": "신약",
-      "chapters": 4,
-      "verses": 80,
+      "chapters": 5,
+      "verses": 105,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
