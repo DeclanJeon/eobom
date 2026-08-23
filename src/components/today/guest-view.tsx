@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/app-shell";
-import { LoginButton } from "@/components/login-button";
+import { StartRecordingButton } from "@/components/start-recording-button";
 import { PageIntro } from "@/components/ui-blocks";
 import { GlobalScriptureCard } from "@/components/today/global-scripture-card";
 import { GlobalCardImpression } from "@/components/today/global-card-impression";
@@ -25,7 +25,7 @@ export async function GuestTodayView({ now }: { now: Date }) {
           <GlobalScriptureCard now={now} />
         </div>
         <div className="mt-8 max-w-xs">
-          <LoginButton callbackUrl="/today" label="기록으로 잇기" />
+          <StartRecordingButton label="기록으로 잇기" />
         </div>
         <p className="mt-4 max-w-xl text-body-sm text-text-muted">
           기록을 남기면 내일부터 이 카드가 당신을 위해 달라집니다.

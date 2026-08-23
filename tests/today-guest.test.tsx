@@ -10,8 +10,8 @@ mock.module("@/components/app-shell", () => ({
     <div data-testid="shell">{children}</div>
   ),
 }));
-mock.module("@/components/login-button", () => ({
-  LoginButton: ({ label }: { label: string }) => <button>{label}</button>,
+mock.module("@/components/start-recording-button", () => ({
+  StartRecordingButton: ({ label }: { label: string }) => <button>{label}</button>,
 }));
 
 const { GuestTodayView } = await import("../src/components/today/guest-view");

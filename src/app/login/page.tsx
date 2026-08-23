@@ -1,59 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getOptionalUser } from "@/lib/session";
-import { LoginButton } from "@/components/login-button";
-import { safeCallbackUrl } from "@/lib/utils";
 
-export const metadata = { title: "로그인" };
-
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
-}) {
-  const params = await searchParams;
-  const user = await getOptionalUser();
-  const callbackUrl = safeCallbackUrl(params.callbackUrl);
-  if (user) redirect(callbackUrl);
-
-  return (
-    <main className="relative flex min-h-dvh items-center justify-center px-5">
-      <div className="w-full max-w-sm text-center">
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <img src="/logo.svg" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" />
-          <Link href="/" className="inline-flex min-h-11 items-center font-journal text-title-journal text-primary">
-            이어봄
-          </Link>
-        </div>
-        <h1 className="text-display-lg text-primary">로그인</h1>
-        <p className="mt-3 text-body-md text-text-muted">
-          Google로 바로 기록을 시작합니다.
-        </p>
-
-        {params.error ? (
-          <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-label-md text-destructive" role="alert">
-            로그인에 실패했습니다. 다시 시도해 주세요.
-          </p>
-        ) : null}
-
-        <div className="mt-8">
-          {(() => {
-          const m = callbackUrl.match(/^\/j\/([a-z0-9-]+)/i);
-          return (
-            <LoginButton
-              callbackUrl={callbackUrl}
-              claimSlug={m?.[1]?.toLowerCase()}
-            />
-          );
-        })()}
-        </div>
-
-        <p className="mt-6 text-label-sm text-text-muted">
-          <Link href="/" className="inline-flex min-h-11 items-center hover:underline">
-            돌아가기
-          </Link>
-        </p>
-      </div>
-    </main>
-  );
+/**
+ * 로그인 없음 — /login 진입은 /today로 우회한다 (구 링크·OAuth 콜백 안전망).
+ */
+export default function LoginPage() {
+  redirect("/today");
 }

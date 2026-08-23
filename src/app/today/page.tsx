@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { GuestTodayView } from "@/components/today/guest-view";
-import { PendingSignalConsumer } from "@/components/today/pending-signal-consumer";
 import { EntryRow } from "@/components/ui-blocks";
 import { TodayCard } from "@/components/today/today-card";
 import { listOpenActionSteps } from "@/lib/actions";
@@ -194,7 +193,6 @@ async function MemberTodayView({
 
   return (
     <AppShell wide bare>
-      <PendingSignalConsumer dateKey={dateKey} />
       <p className="mb-4 text-eyebrow">
         {greeting}님 · {formatDateKo(now)}
       </p>

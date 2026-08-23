@@ -1,19 +1,18 @@
 import { selectGlobalScripture } from "@/lib/daily-scripture";
-import { toDisplay } from "@/lib/bible";
 import { getPassageFromRef } from "@/lib/bible/corpus";
+import { toKstDateKey } from "@/lib/kst";
 import { GuestScriptureSignal } from "@/components/today/guest-scripture-signal";
 
 /**
  * 전역 오늘의 말씀 카드 본문 — (KST dateKey)만으로 결정 (C2).
  * 게스트/비소유자 노출용. AppShell·CTA 없이 카드 본문 + "마음에 남아요" 신호.
- * 개인 데이터 조회 없음 (R-B3). 신호 저장은 로그인 후에만 (GATE-2).
- * 절별 렌더(writing-margin + 절 번호)는 멤버 오늘 카드와 동일한 가독성 계약.
+ * 개인 데이터 조회 없음 (R-B3). "마음에 남아요"는 익명 identity로 즉시 저장.
  */
 export async function GlobalScriptureCard({ now }: { now: Date }) {
   const dailyScripture = selectGlobalScripture(now);
   const heroDisplay = dailyScripture.display;
   const heroReason = dailyScripture.background?.trim() || null;
-  const scriptureRef = toDisplay(dailyScripture.ref);
+  const dateKey = toKstDateKey(now);
   const verses = getPassageFromRef(dailyScripture.ref)?.verses ?? [];
 
   return (
@@ -44,7 +43,7 @@ export async function GlobalScriptureCard({ now }: { now: Date }) {
       {heroReason ? (
         <p className="mt-3 text-body-md text-text-muted line-clamp-2">{heroReason}</p>
       ) : null}
-      <GuestScriptureSignal scriptureRef={scriptureRef} />
+      <GuestScriptureSignal dateKey={dateKey} />
     </section>
   );
 }

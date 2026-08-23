@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { PageIntro, SurfaceCard } from "@/components/ui-blocks";
-import { SignOutButton } from "@/components/sign-out-button";
 import { requireUser } from "@/lib/session";
+import { anonName } from "@/lib/anon-name";
 import { db } from "@/lib/db";
 import { appUrl } from "@/lib/utils";
 import { appVersionLabel } from "@/lib/version";
@@ -22,10 +22,8 @@ export default async function MePage() {
         <div>
           <PageIntro
             className="mb-0"
-            eyebrow="계정"
-            title={user.displayName || user.name || "사용자"}
+            title={user.displayName || user.name || anonName(user.id)}
           />
-          <p className="mt-2 text-label-md text-text-muted">{user.email}</p>
           <p className="mt-3 break-all font-mono text-label-sm text-text-muted">
             {journalUrl}
           </p>
@@ -45,8 +43,7 @@ export default async function MePage() {
             desc: "키링·공유용 주소",
           },
           { href: "/me/settings", label: "설정", desc: "이름, AI 동의, 번역" },
-          { href: "/me/export", label: "내보내기", desc: "JSON · Markdown" },
-          { href: "/contact", label: "문의", desc: "도움이 필요할 때" },
+          { href: "/me/export", label: "데이터 이동", desc: "내보내기 · 가져오기" },
           {
             href: "/suggest",
             label: "제안하기",
@@ -70,7 +67,6 @@ export default async function MePage() {
       </Link>
 
       <div className="mt-8 max-w-sm space-y-3">
-        <SignOutButton />
         <p className="text-label-sm text-text-muted">
           이어봄 {appVersionLabel()}
         </p>

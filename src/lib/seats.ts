@@ -216,7 +216,7 @@ export async function provisionSeats(opts?: {
  */
 export async function claimSeat(
   userId: string,
-  email: string,
+  email: string | null,
   rawSlug: string,
 ) {
   const slug = normalizeSeatSlug(rawSlug);

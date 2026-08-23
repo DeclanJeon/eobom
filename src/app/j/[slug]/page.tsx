@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { LoginButton } from "@/components/login-button";
 import { KeyringClaimPrompt } from "@/components/keyring-claim-prompt";
-import { OwnerLoginPrompt } from "@/components/owner-login-prompt";
 import { GlobalScriptureCard } from "@/components/today/global-scripture-card";
 import { TodayCard } from "@/components/today/today-card";
 import { GlobalCardImpression } from "@/components/today/global-card-impression";
@@ -161,10 +159,15 @@ export default async function PersonalJournalPage({
       );
     }
     case "owner_login_prompt": {
+      // 새 모델: 기기 토큰이 곧 identity이므로 이 분기는 실질적으로 도달하지 않는다.
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
           <GuestKeyringCard now={new Date()} />
-          <OwnerLoginPrompt slug={slug} />
+          <p className="text-label-sm text-text-muted">키링 {slug.toUpperCase()}</p>
+          <h1 className="mt-2 text-display-lg text-primary">내 기록으로</h1>
+          <Link href={`/j/${slug}`} className="cta-primary mt-8 inline-flex">
+            내 기록 보기
+          </Link>
         </Shell>
       );
     }
@@ -192,26 +195,10 @@ export default async function PersonalJournalPage({
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
           <GuestKeyringCard now={new Date()} />
           <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
-          <h1 className="mt-2 text-display-lg text-primary">
-            나의
-            <br />
-            묵상기록지
-          </h1>
-          <p className="mt-3 text-body-md text-text-muted">
-            이 키링은 당신만의 입구입니다.
-            <br />
-            Google로 연결하면 이 주소가 당신 기록이 됩니다.
-          </p>
           {renderClaimQueryError(sp.claim)}
-          <div className="mt-10">
-            <LoginButton
-              callbackUrl={`/j/${slug}`}
-              claimSlug={isSeatSlug(slug) ? slug : undefined}
-              label="Google로 시작하기"
-            />
-          </div>
+          <KeyringClaimPrompt slug={slug} />
           <p className="mt-6 text-label-sm text-text-muted">
-            연결 후 이 브라우저는 소유자 기기로 등록되어 자동으로 인식됩니다.
+            연결하면 이 브라우저는 소유자 기기로 등록되어 자동으로 인식됩니다.
           </p>
         </Shell>
       );

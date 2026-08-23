@@ -3,6 +3,8 @@ import { Noto_Sans_KR, Noto_Serif_KR } from "next/font/google";
 import "@mdxeditor/editor/style.css";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { IdentityBootstrap } from "@/components/identity-bootstrap";
+import { getCurrentUser } from "@/lib/session";
 import { JsonLd } from "@/components/json-ld";
 
 const notoSans = Noto_Sans_KR({
@@ -136,11 +138,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getCurrentUser();
   return (
     <html lang="ko" className="light" suppressHydrationWarning>
       <body
@@ -150,6 +153,7 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+        <IdentityBootstrap hasIdentity={Boolean(user)} />
       </body>
     </html>
   );

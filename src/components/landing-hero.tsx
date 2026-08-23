@@ -147,10 +147,10 @@ export function LandingHero({
               </Link>
             ) : (
               <Link
-                href="/login"
+                href="/today"
                 className="inline-flex min-h-11 items-center rounded-full border border-border bg-white/70 px-4 py-2 text-primary backdrop-blur transition hover:border-accent-gold/50 hover:bg-white"
               >
-                로그인
+                시작하기
               </Link>
             )}
           </nav>
@@ -237,7 +237,7 @@ export function LandingHero({
                   whileTap={reduce ? undefined : { scale: 0.98 }}
                 >
                   <Link
-                    href={isAuthenticated ? "/today" : "/login"}
+                    href="/today"
                     className="cta-primary relative inline-flex min-h-[44px] overflow-hidden px-8 py-3 text-label-md shadow-[0_16px_40px_-24px_rgba(6,27,14,0.65)]"
                   >
                     {!reduce ? (
@@ -467,10 +467,10 @@ export function LandingHero({
             쌓임의 시작은 거창하지 않습니다. 마음에 남은 말씀 하나면 됩니다.
           </p>
           <Link
-            href={isAuthenticated ? "/entries/new" : "/login"}
+            href="/entries/new"
             className="cta-primary mt-8 min-h-[44px] px-7 py-3"
           >
-            {isAuthenticated ? "묵상 기록하기" : "Google로 시작하기"}
+            {isAuthenticated ? "묵상 기록하기" : "시작하기"}
           </Link>
         </motion.section>
 
@@ -495,7 +495,7 @@ export function LandingHero({
               제안하기
             </Link>
             <Link
-              href={isAuthenticated ? "/today" : "/login"}
+              href="/today"
               className="inline-flex min-h-11 items-center hover:text-primary"
             >
               {isAuthenticated ? "내 기록" : "시작하기"}

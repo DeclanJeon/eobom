@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSession, requireApiUser } from "@/lib/session";
 import {
   CLAIM_COOKIE,
   claimErrorMessage,
@@ -7,12 +6,12 @@ import {
   ClaimError,
   DEVICE_COOKIE,
   DEVICE_COOKIE_MAX_AGE,
-  generateDeviceToken,
-  getSeatBySlug,
   normalizeSeatSlug,
-  registerDevice,
 } from "@/lib/seats";
-import { trySendWelcomeEmail } from "@/lib/mail";
+import {
+  createDeviceIdentity,
+  getCurrentUser,
+} from "@/lib/session";
 
 function clearClaimCookie(res: NextResponse) {
   res.cookies.set(CLAIM_COOKIE, "", {
@@ -35,56 +34,47 @@ function setDeviceCookie(res: NextResponse, token: string) {
   return res;
 }
 
-/** Explicit JSON claim (session required). 기기 토큰을 발급해 소유자 기기로 등록한다. */
+/**
+ * 키링 claim — 로그인 없음.
+ * 익명 기기 identity가 없으면 즉석에서 만들고, 그 identity에 seat을 바인딩한다.
+ * claim 성공 시 이 브라우저는 소유자 기기로 등록된다 (쿠키는 Route Handler에서만).
+ */
 export async function POST(request: Request) {
-  const auth = await requireApiUser();
-  if (!auth.ok) return auth.response;
-  const user = auth.user;
-  if (!user.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+  if (!("slug" in body) || typeof body.slug !== "string") {
+    return NextResponse.json({ error: "slug required" }, { status: 400 });
+  }
+  const slug = normalizeSeatSlug(body.slug);
+  if (!slug) {
+    return NextResponse.json({ error: "slug required" }, { status: 400 });
+  }
+
+  // 정체성 해석/생성 — 익명 기기 사용자는 여기서 처음 User가 만들어진다.
+  let user = await getCurrentUser();
+  let newToken: string | null = null;
+  if (!user) {
+    const created = await createDeviceIdentity();
+    user = created.user;
+    newToken = created.token;
   }
 
   try {
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "invalid body" }, { status: 400 });
-    }
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json({ error: "invalid body" }, { status: 400 });
-    }
-    if (!("slug" in body) || typeof body.slug !== "string") {
-      return NextResponse.json({ error: "slug required" }, { status: 400 });
-    }
-    const slug = normalizeSeatSlug(body.slug);
-    if (!slug) {
-      return NextResponse.json({ error: "slug required" }, { status: 400 });
-    }
-
-    // 기기 등록: 처음 claim(unclaimed → claimed) 전환 시에만 이 브라우저를
-    // 소유자 기기로 바인딩한다. 멱등 재-claim(이미 소유자)은 슬롯을 소모하지 않는다.
-    const wasUnclaimed = (await getSeatBySlug(slug))?.status === "unclaimed";
-    const seat = await claimSeat(user.id, user.email, slug);
+    const seat = await claimSeat(user.id, user.email ?? null, slug);
 
     let res: NextResponse = NextResponse.json({
       ok: true,
       slug: seat.slug,
       status: seat.status,
     });
-    if (wasUnclaimed) {
-      const { token } = generateDeviceToken();
-      await registerDevice(user.id, token, "keyring-claim");
-      res = setDeviceCookie(res, token);
-
-      // 환영 메일 발송 — 중복 방지/로그는 헬퍼가 담당, 실패해도 claim은 성공
-      void trySendWelcomeEmail({
-        userId: user.id,
-        email: user.email,
-        name: user.name || "",
-        slug: seat.slug,
-      });
-    }
+    if (newToken) res = setDeviceCookie(res, newToken);
     clearClaimCookie(res);
     return res;
   } catch (e) {
@@ -94,8 +84,6 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    // Prisma unique violation (P2002) / SQLite BUSY — race에서 진 safety net이
-    // ClaimError로 변환되기 전에 나가는 경우도 409로 안내한다.
     const code = (e as { code?: string }).code;
     if (code === "P2002" || String(e).includes("SQLITE_BUSY")) {
       return NextResponse.json(
@@ -110,7 +98,7 @@ export async function POST(request: Request) {
 
 /**
  * GET은 폐기 — page의 자동 claim redirect로 인한 선점 공격을 막는다.
- * claim은 POST(명시적 동의) 또는 OAuth 콜백(claim-intent 쿠키)에서만 수행한다.
+ * claim은 POST(명시적 동의)에서만 수행한다.
  */
 export async function GET() {
   return NextResponse.json(

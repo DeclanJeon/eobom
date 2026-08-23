@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getOptionalUser } from "@/lib/session";
 import { listSeats } from "@/lib/seats";
 import { appUrl } from "@/lib/utils";
@@ -19,7 +19,7 @@ export const metadata = { title: "좌석 관리" };
 
 export default async function AdminSeatsPage() {
   const user = await getOptionalUser();
-  if (!user?.email) redirect("/login?callbackUrl=/admin/seats");
+  if (!user?.email) notFound();
   const allowed = adminEmails();
   if (allowed.size === 0) {
     // no admins configured

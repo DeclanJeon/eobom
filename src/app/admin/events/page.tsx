@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { EventForm } from "@/components/admin/event-form";
 import { getOptionalUser } from "@/lib/session";
 import { listSeats } from "@/lib/seats";
@@ -16,7 +16,7 @@ export const metadata = { title: "이벤트 관리" };
 
 export default async function AdminEventsPage() {
   const user = await getOptionalUser();
-  if (!user?.email) redirect("/login?callbackUrl=/admin/events");
+  if (!user?.email) notFound();
   const allowed = adminEmails();
   if (allowed.size === 0 || !allowed.has(user.email.toLowerCase())) notFound();
 
