@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { ANON_NAMES } from "@/lib/anon-name";
 import {
   DEVICE_COOKIE,
   allocateWebUserSlug,
@@ -102,7 +103,30 @@ export async function requireApiUser(): Promise<
 }
 
 /**
+ * 이름 풀에서 중복 없이 첫 번째 미사용 이름을 골라온다.
+ * DB 조회가 있으나 첫 방문 시 1회만 호출되므로 성능 무관.
+ * 437개 풀이 다 소진되면 타임스탬프 기반 fallback.
+ */
+async function pickUniqueAnonName(): Promise<string> {
+  const used = new Set(
+    (
+      await db.user.findMany({
+        where: { displayName: { in: ANON_NAMES as unknown as string[] } },
+        select: { displayName: true },
+      })
+    )
+      .map((u) => u.displayName)
+      .filter((n): n is string => n !== null),
+  );
+  for (const name of ANON_NAMES) {
+    if (!used.has(name)) return name;
+  }
+  return `익명${Date.now().toString(36)}`;
+}
+
+/**
  * 익명 기기 정체성 생성 — 이메일 없는 User + 기기 등록.
+ * 중복 없는 캐릭터 이름을 displayName에 자동 배정.
  * 반환 토큰은 호출자(Route Handler)가 DEVICE_COOKIE로 설정해야 한다.
  */
 export async function createDeviceIdentity(): Promise<{
@@ -111,7 +135,8 @@ export async function createDeviceIdentity(): Promise<{
 }> {
   const { token } = generateDeviceToken();
   const personalSlug = await allocateWebUserSlug();
-  const user = await db.user.create({ data: { personalSlug } });
+  const displayName = await pickUniqueAnonName();
+  const user = await db.user.create({ data: { personalSlug, displayName } });
   await registerDevice(user.id, token);
   return { user: toApiUser(user), token };
 }
