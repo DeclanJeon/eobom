@@ -19,7 +19,7 @@
   "totals": {
     "books": 66,
     "chapters": 1171,
-    "verses": 31098
+    "verses": 31127
   },
   "books": [
     {
@@ -37,7 +37,7 @@
       "name": "출애굽기",
       "testament": "구약",
       "chapters": 40,
-      "verses": 1212,
+      "verses": 1213,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -55,7 +55,7 @@
       "name": "민수기",
       "testament": "구약",
       "chapters": 36,
-      "verses": 1287,
+      "verses": 1290,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -64,7 +64,7 @@
       "name": "신명기",
       "testament": "구약",
       "chapters": 34,
-      "verses": 962,
+      "verses": 963,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -73,7 +73,7 @@
       "name": "여호수아",
       "testament": "구약",
       "chapters": 24,
-      "verses": 656,
+      "verses": 659,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -82,7 +82,7 @@
       "name": "사사기",
       "testament": "구약",
       "chapters": 21,
-      "verses": 617,
+      "verses": 618,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -100,7 +100,7 @@
       "name": "사무엘상",
       "testament": "구약",
       "chapters": 31,
-      "verses": 808,
+      "verses": 810,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -118,7 +118,7 @@
       "name": "열왕기상",
       "testament": "구약",
       "chapters": 22,
-      "verses": 815,
+      "verses": 817,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -136,7 +136,7 @@
       "name": "역대상",
       "testament": "구약",
       "chapters": 29,
-      "verses": 941,
+      "verses": 942,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -190,7 +190,7 @@
       "name": "시편",
       "testament": "구약",
       "chapters": 150,
-      "verses": 2464,
+      "verses": 2465,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -199,7 +199,7 @@
       "name": "잠언",
       "testament": "구약",
       "chapters": 31,
-      "verses": 913,
+      "verses": 917,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -208,7 +208,7 @@
       "name": "전도서",
       "testament": "구약",
       "chapters": 12,
-      "verses": 221,
+      "verses": 222,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -226,7 +226,7 @@
       "name": "이사야",
       "testament": "구약",
       "chapters": 66,
-      "verses": 1291,
+      "verses": 1295,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -235,7 +235,7 @@
       "name": "예레미야",
       "testament": "구약",
       "chapters": 52,
-      "verses": 1361,
+      "verses": 1364,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -415,7 +415,7 @@
       "name": "사도행전",
       "testament": "신약",
       "chapters": 28,
-      "verses": 1009,
+      "verses": 1010,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
@@ -514,7 +514,7 @@
       "name": "디모데후서",
       "testament": "신약",
       "chapters": 4,
-      "verses": 82,
+      "verses": 83,
       "file": "korean_bible/canon_66_vpl.txt"
     },
     {
