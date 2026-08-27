@@ -24,7 +24,9 @@ function cleanField(s: string): string {
 }
 
 function field(raw: string, key: string): string {
-  const m = new RegExp(`\\*\\*${key}\\*\\*\\s*[:：]\\s*([\\s\\S]*?)(?=\\n\\s*(?:-\\s*)?\\*\\*[가-힣A-Za-z]+\\*\\*\\s*[:：]|$)`).exec(raw);
+  // 마지막 장의 마지막 필드가 뒤의 '## 등장인물 사전' 헤더를 삼키지 않도록
+  // 다음 '## ' 헤더에서도 필드를 끊는다.
+  const m = new RegExp(`\\*\\*${key}\\*\\*\\s*[:：]\\s*([\\s\\S]*?)(?=\\n\\s*(?:-\\s*)?\\*\\*[가-힣A-Za-z]+\\*\\*\\s*[:：]|\\n## |$)`).exec(raw);
   return cleanField(m ? m[1] : "");
 }
 

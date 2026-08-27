@@ -25,8 +25,13 @@ const DB_PATH = path.join(ROOT, "data", "reference", "chapter-background.sqlite"
 let db: ReadonlyDb | null | undefined;
 
 function openDb() {
-  if (db !== undefined) return db;
-  if (!existsSync(DB_PATH)) { db = null; return db; }
+  // 파일 부재 상태는 캐시하지 않는다 — 재빌드 창(window)에 열어둔 프로세스가
+  // 영구적으로 빈 응답을 내는 것을 막는다.
+  if (db) return db;
+  if (!existsSync(DB_PATH)) {
+    db = null;
+    return db;
+  }
   db = openReadonlySqlite(DB_PATH);
   return db;
 }
@@ -56,7 +61,8 @@ export function getChapterBackground(params: { code: string; chapter: number; lo
   let row: Record<string, unknown> | undefined;
   if (d) {
     row = d.prepare(`SELECT * FROM chapter_background WHERE code=? AND chapter=? AND locale=? LIMIT 1`).get(code, params.chapter, locale) as Record<string, unknown> | undefined;
-    if (!row && locale === "ko") row = d.prepare(`SELECT * FROM chapter_background WHERE code=? AND chapter=? AND locale='en' LIMIT 1`).get(code, params.chapter) as Record<string, unknown> | undefined;
+    // 설계 06§8/한국어 UX: ko 요청에 en 행으로 절대 폴백하지 않는다.
+    // 한국어 데이터가 없으면 영문 대신 문맥 카드를 생략한다.
   }
   const sqliteBackground = row ? rowToBg(row) : null;
   const publicCommentary = getPublicCommentaryExcerpt(code, params.chapter);
