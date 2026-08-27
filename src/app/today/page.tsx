@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { GuestTodayView } from "@/components/today/guest-view";
+import { BackupPrompt } from "@/components/backup-prompt";
 import { EntryRow } from "@/components/ui-blocks";
 import { TodayCard } from "@/components/today/today-card";
 import { recentChapterKeys, selectRandomScripture } from "@/lib/daily-scripture";
@@ -320,11 +321,26 @@ async function MemberTodayView({
   }
 
   const existingCheckin = await getCheckin(user.id, dateKey, heroCardKey);
+
+  // 조용한 안전망 (DESIGN.md "Continuity & identity policy") — 익명 유저의
+  // 3번째 기록 시점에 단 한 번, 구글 계정 연결을 부드럽게 제안한다.
+  const [entryCount, userRow] = await Promise.all([
+    db.reflectionEntry.count({ where: { userId: user.id, deletedAt: null } }),
+    db.user.findUnique({
+      where: { id: user.id },
+      select: { email: true, backupPromptDismissedAt: true },
+    }),
+  ]);
+  const showBackupPrompt =
+    !userRow?.email && !userRow?.backupPromptDismissedAt && entryCount >= 3;
+
   return (
     <AppShell wide bare>
       <p className="mb-4 text-eyebrow">
         {greeting}님 · {formatDateKo(now)}
       </p>
+
+      {showBackupPrompt ? <BackupPrompt /> : null}
 
       {/* 1. 지배적 장면 — 오늘의 카드 (Receive, B1) */}
       <TodayCard

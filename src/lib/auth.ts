@@ -8,7 +8,7 @@ import {
   ACCOUNT_LINK_COOKIE,
   verifyAccountLinkIntent,
 } from "@/lib/account-link-intent";
-import { accountLinkRedirect, attachGoogleAccountToUser } from "@/lib/account-link";
+import { accountLinkRedirect, attachGoogleAccountToUser, succeedAnonymousUserToGoogle } from "@/lib/account-link";
 import {
   CLAIM_COOKIE,
   allocateWebUserSlug,
@@ -141,6 +141,16 @@ export const authOptions: NextAuthOptions = {
         if (linkResult) {
           await clearAccountLinkIntent();
           return accountLinkRedirect(linkResult);
+        }
+
+        // 조용한 안전망 — auto-succession (DESIGN.md "Continuity & identity policy"):
+        // 현재 기기(DEVICE_COOKIE)로 익명 User를 쓰던 방문자가 Google 로그인하면
+        // 새 parallel 계정을 만들지 않고, 기존 익명 User에 Google을 붙여
+        // 세션을 그 User로 승계한다. PrismaAdapter는 이메일로만 매칭하므로
+        // 이메일 없는 익명 행은 매칭에 실패해 새 User를 만든다 — 그 직전에 가로챈다.
+        const succession = await succeedAnonymousUserToGoogle(account, user.email);
+        if (succession) {
+          return true; // adapter가 생성한(또는 생성할) user 대신 익명 행이 쓰인다
         }
       }
       return true;

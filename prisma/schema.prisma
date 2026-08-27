@@ -23,6 +23,7 @@ model User {
   communityEnabled          Boolean   @default(false)
   pastTodayEnabled          Boolean   @default(true)
   seatClaimedAt             DateTime?
+  backupPromptDismissedAt   DateTime?
   createdAt                 DateTime  @default(now())
   updatedAt                 DateTime  @updatedAt
   deletedAt                 DateTime?

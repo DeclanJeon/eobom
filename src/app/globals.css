@@ -43,6 +43,7 @@
   --color-outline-variant: var(--outline-variant);
   --color-primary-container: var(--primary-container);
   --color-leaf: var(--leaf);
+  --color-forest: var(--forest);
   --color-safety: var(--safety);
   --color-chalk: var(--chalk);
   --color-ink: var(--ink);
@@ -97,6 +98,7 @@
   --accent-gold-ink: #7a5a24;
   --accent-terracotta: #b36a5e;
   --leaf: #295c3b;
+  --forest: #1b3022;
   --safety-blue: #4a6fa5;
   --safety: #ba1a1a;
   --chalk: #f5f3f0;
@@ -952,11 +954,271 @@
 .story-card{margin-top:14px;background:linear-gradient(180deg,#fff 0%,#FDF8F0 100%);border:1px solid #E8DDC8;border-radius:16px;padding:16px;position:relative;overflow:hidden}
 .story-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C99A)}
 .story-eyebrow{color:var(--goldink);font-size:10px;letter-spacing:.1em;font-weight:700}
-.story-title{margin:6px 0 0;color:var(--forest);font:600 15px/1.5 Georgia,'Noto Serif KR',serif}
-.story-body{margin:10px 0 0;color:var(--ink);font:400 13px/1.85 Georgia,'Noto Serif KR',serif}
+.story-title{margin:8px 0 0;color:var(--forest);font:600 17px/1.55 Georgia,'Noto Serif KR',serif;word-break:keep-all}
+.story-body{margin:12px 0 0;color:var(--ink);font:400 15px/1.95 Georgia,'Noto Serif KR',serif;word-break:keep-all}
 .story-body em{font-style:normal;color:var(--forest);font-weight:700}
-.story-closing{margin:12px 0 0;padding:10px 12px;background:#fff;border:1px dashed #E0D5C0;border-radius:10px;color:var(--muted);font:400 12px/1.7 Georgia,'Noto Serif KR',serif;text-align:center}
+/* 이야기 closing 카드 — 흰 배경 위에서 충분히 읽히도록 muted-foreground 톤
+   (var(--muted)는 #efeeeb인 회색 surface 톤이라 글자색으로 쓰면 거의 사라진다).
+   또한 serif 본문과 어울리도록 살짝 warm하게 기울이고, 대괄호 같은 인용
+   톤을 느낄 수 있도록 letter-spacing을 약간 준다. */
+.story-closing{
+  margin:14px 0 0;
+  padding:13px 14px;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FBF6EC 100%);
+  border:1px dashed #C8BBA0;
+  border-radius:12px;
+  color:var(--muted-foreground);
+  font:500 14.5px/1.85 Georgia,'Noto Serif KR',serif;
+  text-align:center;
+  word-break:keep-all;
+  letter-spacing:-0.005em;
+}
 .story-actions{margin-top:12px;display:flex;gap:8px}
 .story-actions button{flex:1;border-radius:999px;padding:10px;font-size:11px}
 .btn-ghost{border:1px solid var(--line);background:#fff;color:var(--forest)}
 .btn-leaf{border:1px solid var(--leaf);background:var(--leaf);color:#fff}
+
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){[class*="animate-\\[fadeInUp"]{animation:none!important}}
+
+.sheet-content-stable[data-state="open"] {
+  animation: none !important;
+  transform: translateY(0) !important;
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sheet-content-stable[data-state="closed"] {
+  animation: none !important;
+  transform: translateY(100%) !important;
+  transition: transform 220ms cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-content-stable[data-state="open"],
+  .sheet-content-stable[data-state="closed"] {
+    transition: none;
+  }
+}
+
+/* Scripture Detail Modal — Quiet Reflection standalone.
+   컨테이너 안에 3개 섹션(문맥/연결/이야기)을 모두 두고 한 스크롤로 보여주는
+   구조이므로, 컨테이너가 충분히 길어야 탭 클릭 시 해당 섹션이 viewport에
+   들어온다. 데스크톱 46rem 한계는 컨테이너를 작게 만들어 마지막 섹션이
+   잘리는 원인이 되므로, viewport 기반으로 확장한다. */
+.scripture-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 100;
+  display: flex;
+  width: calc(100vw - 1.5rem);
+  max-width: 38rem;
+  height: min(calc(100vh - 2rem), 90vh);
+  max-height: calc(100vh - 2rem);
+  min-height: min(20rem, calc(100vh - 2rem));
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  overflow: hidden;
+  gap: 0;
+  border: 1px solid #E6E0D4;
+  border-top: 3px solid var(--accent-gold);
+  border-radius: 1.5rem;
+  background: #FDFBF7 linear-gradient(180deg, #FDFBF7 0%, #F8F4EA 100%);
+  box-shadow: 0 24px 64px -16px rgba(6, 27, 14, 0.35), 0 2px 10px rgba(0, 0, 0, 0.06);
+  outline: none;
+}
+
+@supports (height: 100dvh) {
+  .scripture-modal {
+    height: min(calc(100dvh - 2rem), 90dvh);
+    max-height: calc(100dvh - 2rem);
+  }
+}
+
+/* 좁은 화면(≤520px)에서는 모달을 화면에 거의 가득 차게 만들어
+   컨텐츠가 잘려 안 보이는 일이 없도록 한다. */
+@media (max-width: 520px) {
+  .scripture-modal {
+    width: 100vw;
+    height: calc(100dvh - 0.5rem);
+    max-height: calc(100dvh - 0.5rem);
+    min-height: calc(100dvh - 0.5rem);
+    border-radius: 1.25rem 1.25rem 0 0;
+    /* 모바일에서는 하단 safe-area까지 살짝 띄움 */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+.scripture-modal__scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  will-change: scroll-position;
+  scrollbar-width: thin;
+  scrollbar-color: #B8AE9C transparent;
+  scrollbar-gutter: stable;
+  scroll-padding-top: 16px;
+}
+
+.scripture-modal__scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scripture-modal__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scripture-modal__scroll::-webkit-scrollbar-thumb {
+  background: #B8AE9C;
+  border-radius: 999px;
+}
+
+.scripture-modal__scroll::-webkit-scrollbar-thumb:hover {
+  background: #9D9280;
+}
+
+/* ── Modal 내부 카드/라벨/본문 — Quiet Reflection typography scale ──
+   모달 안에서만 쓰는 톤이 linen 위에 잘 읽히도록 정의한다.
+   - 카드: 흰색, 단단한 보더, 내부 패딩 1.25rem
+   - 라벨: accent-gold 위 11.5px uppercase + tracking
+   - 카드 제목(H4): 15.5px / 1.25 line, primary
+   - 본문(p): 16.5px / 1.75 line, ink (#1F1B16) */
+.scripture-card {
+  background-color: #FFFFFF;
+  border: 1px solid #D9CFB7;
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 22px -16px rgba(27, 28, 26, 0.16);
+}
+
+.scripture-card--dashed {
+  background-color: #FFFFFF;
+  border: 1px dashed #C8BBA0;
+  border-radius: 18px;
+  padding: 1.25rem;
+}
+
+.scripture-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.scripture-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.scripture-label--gold {
+  background-color: color-mix(in oklab, var(--accent-gold) 22%, white);
+  color: #5C3D14;
+}
+
+.scripture-label--leaf {
+  background-color: color-mix(in oklab, var(--leaf) 16%, white);
+  color: #1F3A26;
+}
+
+.scripture-label--clay {
+  background-color: color-mix(in oklab, var(--accent-terracotta) 18%, white);
+  color: #6B3329;
+}
+
+.scripture-h4 {
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+.scripture-body {
+  font-family: var(--font-serif);
+  font-size: 16.5px;
+  line-height: 1.75;
+  color: #1F1B16;
+}
+
+.scripture-h3 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+  color: var(--primary);
+}
+
+@media (min-width: 640px) {
+  .scripture-h3 {
+    font-size: 22px;
+  }
+}
+
+.scripture-bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.8;
+  color: #1F1B16;
+}
+
+.scripture-muted {
+  color: #5C574F;
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+
+.scripture-caution {
+  border: 1px solid color-mix(in oklab, #B36A5E 30%, transparent);
+  background-color: color-mix(in oklab, #B36A5E 10%, white);
+  color: #6B3329;
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.scripture-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #5C3D14;
+}
+
+/* Modal-open body lock — 모달이 떠 있는 동안 뒤 페이지를 스크롤할 수 없게 한다.
+   Radix의 Dialog는 body lock을 걸지 않으므로 명시적으로 잡아야 모바일에서
+   모달 바깥이 따라 스크롤되는 일이 없다. */
+body:has(.scripture-modal[data-state="open"]) {
+  overflow: hidden;
+  /* iOS Safari에서 fixed positioning의 기준이 흔들리는 것을 막는다. */
+  position: relative;
+  /* iOS rubber-band scroll로 모달이 끌려나가는 것을 막는다. */
+  overscroll-behavior: contain;
+}
+
+/* Reduced-motion 사용자는 위치를 즉시 확정한다. */
+@media (prefers-reduced-motion: reduce) {
+  .scripture-modal__scroll {
+    scroll-behavior: auto;
+  }
+}

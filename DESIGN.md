@@ -83,7 +83,8 @@
 - Motion: subtle only (160–320ms); `prefers-reduced-motion` globally honored. No decorative motion on the review detail.
 
 ## Components
-- Reuse: `AppShell`, `SurfaceCard`, `EntryRow`, `PageIntro`, `EmptyState`, `SoftBadge`, `chip`, `chip-gold`, `cta-primary`, `cta-secondary`.
+- Reuse: `AppShell`, `SurfaceCard`, `EntryRow`, `PageIntro`, `EmptyState`, `SoftBadge`, `chip`, `chip-gold`, `cta-primary`, `cta-secondary`, `Sheet` (Radix Dialog).
+- TodayCard — scripture hero: verse only in hero, single progressive disclosure `말씀 더 보기` via `ScriptureDetailModal` (Radix Dialog, not Sheet). Viewport-bound centered dialog `width: calc(100vw - 1.5rem)` capped at `38rem`; `height: min(calc(100vh - 2rem), 46rem)` with `dvh` support; `max-height: calc(100vh - 2rem)`; `left:50% top:50% translate(-50%,-50%)`; `display:flex flex-col overflow:hidden`. Dark overlay `bg-[#0C1710]/70 backdrop-blur-md`. 100% solid linen base `#FDFBF7` with `linear-gradient(180deg, #FDFBF7 0%, #F8F4EA 100%)`, top gold rule `var(--accent-gold)`, `rounded-[24px]`, `shadow 0 24px 64px -16px rgba(6,27,14,0.35)`. Header `Scripture Context & Story` + `Dialog.Title/Description` + circular close; sticky segmented control `문맥 · 연결 성구 · 이야기` (700ms tab lock, `container.scrollTo` via `offsetTop`). Scroll body `.scripture-modal__scroll` is `flex:1 1 0% min-h-0 overflow-y:scroll -webkit-overflow-scrolling:touch touch-action:pan-y overscroll-behavior:contain` with thin `#B8AE9C` thumb. Content cards follow standalone 12/13 spec: `rounded-[18px] border-[#EAE3D5] bg-white shadow-[0_8px_22px_#1b1c1a0a]` and `mist` variant, `rounded-[18px]` line-height 1.85, `break-keep`, `15–16px` body. Story via `StoryApplicationCard`, gated `이야기 펼치기`.
 - Review detail composition (actual):
   - `ReviewDetailHeader` — report type + period
   - `ReviewSectionNav` — spine rail (desktop) / bar (mobile)
@@ -127,6 +128,20 @@
 - Entries save private by default (`shareVisibility: "private"`); `/api/entries/quick` already forces private.
 - Derive companion suggestions from existing fields until a dedicated field exists.
 - Tests cover summary mapping and empty-block omission.
+
+## Continuity & identity policy (조용한 안전망)
+- **No signup funnel, ever.** Visitors start as anonymous device identities (`DEVICE_COOKIE` → `UserDevice`); nothing may introduce a registration wall, banner nag, or "회원가입" language.
+- **Data lives server-side on a `User` row from day one** — a device cookie is only a handle to it. Losing the cookie must be recoverable, not lossy by design.
+- **One quiet moment, one ask.** When a user's 3rd reflection entry is saved and their identity is still email-less (anonymous), `/today` shows a single soft card once:
+  - Copy frame: "묵상이 쌓이기 시작했네요. 이 기록들, 지금은 이 기기에만 살아 있어요."
+  - Primary action: `구글 계정 연결하기` → existing `attachGoogleAccountToUser` flow (attach-in-place on the anonymous User — never a new parallel account, never "회원가입").
+  - Secondary action: `나중에` (quiet text button). Dismissing records `backupPromptDismissedAt` on the User; the prompt must not reappear.
+- **Automatic succession on Google sign-in.** When a Google login resolves to an email whose anonymous User already exists (email-less row created by `createDeviceIdentity`), the session succeeds that User instead of creating a duplicate:
+  - Move/merge rule: attach the Google `Account` to the existing anonymous row and re-point the current device registration to it. Reflection entries, moments, prayers, review reports stay with the original row (no row copy).
+  - If the email already belongs to a *connected* (different) user, fall back to existing `email_in_use` handling — no silent merge of two connected accounts.
+- **Prompt trigger is count-based, not time-based.** `ReflectionEntry.count({ userId, deletedAt: null }) === 3` at save time is the only trigger. No banners on first visit, no repeated nudges.
+- **Settings remains the power-user path.** `/me/settings` keeps the manual `Google 계정 연결` control with existing `email_in_use` / `already_connected` / `stale_intent` error states.
+- Accepted tradeoff: an anonymous user who dismisses the prompt and loses their device cookie still loses access — recovery-code UX is deliberately out of scope to keep the experience free of key management.
 
 ## Accepted debt
 - [ ] Dark-mode scaffolding removed (next-themes dependency + tailwind `darkMode:"class"` gone). Permanently light.

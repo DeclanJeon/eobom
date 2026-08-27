@@ -4,18 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CHECKIN_REACTIONS, type CheckinReaction } from "@/lib/checkin";
 import { TINY_ACTION_CATALOG } from "@/lib/tiny-action";
-import { StoryApplicationCard } from "@/components/story-application-card";
 import type { ChapterBackground } from "@/lib/bible/chapter-background";
 import type { BibleReference } from "@/lib/bible/types";
-import { PassageAnnotationList } from "@/components/scripture/passage-annotation-list";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { ScriptureDetailModal } from "./scripture-detail-modal";
 export type TodayCardContent =
   | {
       kind: "scripture";
@@ -95,8 +86,9 @@ export function TodayCard({
   // 설계 05§11 — still_hold(아직 비슷해요) 선택 후에만 tiny action을 제안한다(opt-in).
   const [tinyActionOffered, setTinyActionOffered] = useState(false);
   const [tinyActionDone, setTinyActionDone] = useState(false);
-  const [storyRevealed, setStoryRevealed] = useState(false);
-  // B4: 카드 노출 계측 — 서버 컴포넌트 렌더 금지, mount 후 세션당 1회
+  const [modalOpen, setModalOpen] = useState(false);
+
+
   useEffect(() => {
     if (impressionSent.current) return;
     const storageKey = `eobom-imp:${identityKey ?? "session"}:${surface}:${dateKey}:${cardKey}`;
@@ -112,7 +104,6 @@ export function TodayCard({
       body: JSON.stringify({ cardKey, surface }),
     }).catch(() => {});
   }, [cardKey, dateKey, identityKey, surface]);
-
   async function save(body: { reaction?: string | null; oneLine?: string | null }) {
     setSaving(true);
     setError("");
@@ -229,159 +220,19 @@ export function TodayCard({
                 {content.text}
               </p>
             ) : null}
-            {/* 03§10 progressive disclosure — single CTA: verse only in hero, rest behind Sheet */}
+            {/* 03§10 progressive disclosure — single CTA: verse only in hero, rest behind Dialog */}
             {content.chapterBg || content.reason || content.ref || content.background || content.story ? (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <button
-                    type="button"
-                    className="mt-5 inline-flex min-h-11 items-center rounded-full border border-border bg-white px-5 py-2 text-label-sm font-medium text-primary transition hover:border-leaf/40"
-                  >
-                    말씀 더 보기
-                  </button>
-                </SheetTrigger>
-                <SheetContent
-                  side="bottom"
-                  className="mx-auto flex max-h-[85vh] w-full max-w-lg flex-col gap-0 overflow-hidden rounded-t-2xl border-border p-0"
+              <>
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(true)}
+                  className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-white px-5 py-2 text-label-sm font-medium text-primary shadow-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:border-leaf/40 hover:shadow-md active:scale-[0.98]"
                 >
-                  <SheetHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left">
-                    <SheetTitle className="text-headline-sm text-primary">말씀 더 보기</SheetTitle>
-                    <SheetDescription className="text-body-sm text-text-muted">
-                      문맥과 연결된 성구를 천천히 살펴보세요.
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="flex-1 overflow-y-auto px-5 py-5">
-                    <div className="space-y-6">
-                      {content.chapterBg ? (
-                        <div className="space-y-4">
-                          {content.chapterBg.guide ? (
-                            <>
-                              <p className="text-label-md font-semibold text-primary">{content.chapterBg.guide.title}</p>
-                              {content.chapterBg.guide.background ? (
-                                <p className="text-body-sm leading-relaxed text-text-muted">
-                                  <span className="font-semibold text-primary">장면의 배경</span> — {content.chapterBg.guide.background}
-                                </p>
-                              ) : null}
-                              {content.chapterBg.guide.content ? (
-                                <p className="rounded-xl bg-secondary/30 px-3 py-3 text-body-sm leading-relaxed text-text-muted">
-                                  <span className="font-semibold text-primary">이 장의 내용</span> — {content.chapterBg.guide.content}
-                                </p>
-                              ) : null}
-                              {content.chapterBg.guide.observation.length ? (
-                                <div>
-                                  <p className="text-label-sm font-semibold text-primary">읽을 때 볼 점</p>
-                                  <ul className="mt-2 space-y-1.5 text-body-sm leading-relaxed text-text-muted">
-                                    {content.chapterBg.guide.observation.map((item, index) => (
-                                      <li key={index} className="flex gap-2">
-                                        <span className="mt-[0.55em] h-1 w-1 shrink-0 rounded-full bg-accent-gold" />
-                                        {item}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ) : null}
-                              {content.chapterBg.guide.characters.length ? (
-                                <div>
-                                  <p className="text-label-sm font-semibold text-primary">등장인물</p>
-                                  <ul className="mt-2 space-y-1 text-body-sm leading-relaxed text-text-muted">
-                                    {content.chapterBg.guide.characters.slice(0, 8).map((character) => (
-                                      <li key={character}>· {character}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ) : null}
-                              {content.chapterBg.publicCommentary?.text ? (
-                                <div>
-                                  <p className="text-label-sm font-semibold text-primary">공개 고전 주석 원문</p>
-                                  <p className="mt-2 text-body-sm leading-relaxed text-text-muted">
-                                    {content.chapterBg.publicCommentary.text}
-                                  </p>
-                                  <p className="mt-2 text-label-xs text-text-muted">Matthew Henry · Public Domain · CCEL/CrossWire</p>
-                                </div>
-                              ) : null}
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-body-sm leading-relaxed text-text-muted">{content.chapterBg.overview}</p>
-                              {(content.chapterBg.historical || content.chapterBg.literary || content.chapterBg.theological) && (
-                                <div className="space-y-2 border-t border-border/20 pt-3 text-body-sm leading-relaxed text-text-muted">
-                                  {content.chapterBg.historical ? (
-                                    <p>
-                                      <span className="font-semibold text-primary">역사</span> — {content.chapterBg.historical}
-                                    </p>
-                                  ) : null}
-                                  {content.chapterBg.literary ? (
-                                    <p>
-                                      <span className="font-semibold text-primary">문학</span> — {content.chapterBg.literary}
-                                    </p>
-                                  ) : null}
-                                  {content.chapterBg.theological ? (
-                                    <p>
-                                      <span className="font-semibold text-primary">신학</span> — {content.chapterBg.theological}
-                                    </p>
-                                  ) : null}
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {content.chapterBg.keyVerses.length > 0 ? (
-                            <div className="flex flex-wrap gap-1.5">
-                              {content.chapterBg.keyVerses.map((kv) => (
-                                <span key={kv.reference} className="chip-gold px-2 py-1 text-xs">
-                                  {kv.reference}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
-                          {content.chapterBg.cautions.length > 0 ? (
-                            <p className="text-label-xs leading-relaxed text-text-muted">주의: {content.chapterBg.cautions.join(" · ")}</p>
-                          ) : null}
-                        </div>
-                      ) : content.background ? (
-                        <p className="text-body-md leading-relaxed text-text-muted">{content.background}</p>
-                      ) : null}
-                      {content.reason ? (
-                        <div className="rounded-xl border border-border/20 bg-card/40 px-3 py-3">
-                          <p className="text-label-sm font-semibold text-primary">왜 이 말씀이 나왔나요?</p>
-                          <p className="mt-2 text-body-sm leading-relaxed text-text-muted">{content.reason}</p>
-                        </div>
-                      ) : null}
-                      {content.ref ? (
-                        <div>
-                          <p className="text-label-sm font-semibold text-primary">연결된 성구</p>
-                          <div className="mt-3">
-                            <PassageAnnotationList
-                              code={content.ref.code}
-                              chapter={content.ref.chapter}
-                              startVerse={content.ref.startVerse}
-                              endVerse={content.ref.endVerse}
-                            />
-                          </div>
-                        </div>
-                      ) : null}
-                      {content.story ? (
-                        storyRevealed ? (
-                          <StoryApplicationCard
-                            title={content.story.title}
-                            body={content.story.body}
-                            closing={content.story.closing}
-                            onReadClick={() => {}}
-                            onWriteClick={() => document.getElementById(`one-line-${cardKey}`)?.focus()}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setStoryRevealed(true)}
-                            className="inline-flex min-h-11 items-center rounded-full border border-border bg-white px-5 py-2 text-label-sm font-medium text-primary transition hover:border-accent-gold/40"
-                          >
-                            이 말씀의 이야기
-                          </button>
-                        )
-                      ) : null}
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+                  말씀 더 보기
+                  <span aria-hidden className="text-[11px]">→</span>
+                </button>
+                <ScriptureDetailModal open={modalOpen} onOpenChange={setModalOpen} content={content} cardKey={cardKey} />
+              </>
             ) : null}
           </>
         ) : content.kind === "prompt" ? (

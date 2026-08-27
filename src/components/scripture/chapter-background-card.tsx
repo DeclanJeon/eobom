@@ -1,4 +1,5 @@
 import type { ChapterBackground } from "@/lib/bible/chapter-background";
+import { localizeKeyVerseReference } from "@/lib/bible/parse";
 
 export function ChapterBackgroundCard({ background }: { background: ChapterBackground }) {
   const hasThreeEyes = Boolean(background.historical || background.literary || background.theological);
@@ -66,7 +67,11 @@ export function ChapterBackgroundCard({ background }: { background: ChapterBackg
           <div className="border-t border-border/20 pt-3">
             <p className="text-label-sm font-semibold text-primary">붙잡을 말씀</p>
             <p className="mt-2 flex flex-wrap gap-2">
-              {background.keyVerses.map((kv) => <span key={kv.reference} className="chip-gold px-2 py-1 text-xs">{kv.reference}{kv.why ? ` · ${kv.why}` : ""}</span>)}
+              {background.keyVerses.map((kv) => (
+                <span key={kv.reference} title={kv.reference} className="chip-gold px-2 py-1 text-xs">
+                  {localizeKeyVerseReference(kv.reference)}{kv.why ? ` · ${kv.why}` : ""}
+                </span>
+              ))}
             </p>
           </div>
         ) : null}

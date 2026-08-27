@@ -8,6 +8,7 @@ import {
   Home,
   PenLine,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const desktopNav = [
   { href: "/today", label: "오늘", icon: Home },
   { href: "/lookback", label: "지나온 나", icon: Sparkles },
   { href: "/entries", label: "기록", icon: BookOpen },
+  { href: "/together", label: "함께", icon: Users },
   { href: "/me", label: "나", icon: CircleUserRound },
 ] as const;
 
@@ -25,6 +27,7 @@ const mobileNavLeft = [
 
 const mobileNavRight = [
   { href: "/entries", label: "기록", icon: BookOpen },
+  { href: "/together", label: "함께", icon: Users },
   { href: "/me", label: "나", icon: CircleUserRound },
 ] as const;
 
@@ -186,7 +189,7 @@ export function AppShell({
         </div>
       </div>
 
-      {/* Mobile bottom: 오늘 | 지나온 나 | 기록 | 나 */}
+      {/* Mobile bottom: 오늘 | 지나온 나 | ＋ 새 묵상 | 기록 | 함께 | 나 */}
       <nav
         className="fixed bottom-0 left-0 z-50 w-full border-t border-border/70 bg-surface/95 pb-safe shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)] backdrop-blur-md md:hidden"
         aria-label="모바일 메뉴"
@@ -213,6 +216,17 @@ export function AppShell({
             );
           })}
 
+          {/* 중앙 ＋ 새 묵상 (설계: mobile center ＋) */}
+          <Link
+            href="/entries/new"
+            aria-label="새 묵상"
+            className="-mt-5 flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_-2px_rgba(6,27,14,0.45)] transition active:scale-[0.95]"
+          >
+            <PenLine className="h-5 w-5" strokeWidth={2} />
+            <span className="mt-0.5 text-[10px] font-semibold leading-none">
+              새 묵상
+            </span>
+          </Link>
 
           {mobileNavRight.map((item) => {
             const active = isActive(pathname, item.href);
