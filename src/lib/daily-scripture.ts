@@ -12,6 +12,7 @@ import {
   type BibleReference,
   type ScriptureBinding,
 } from "@/lib/bible";
+import { refTouchesExcludedVerse } from "@/lib/cold-start-filter";
 
 export type DailyScripturePath = "ai" | "random";
 
@@ -35,7 +36,9 @@ export type EntrySnippet = {
   entryDate?: Date | string | null;
 };
 
+
 /** 묵상 부적합 장 — 족보 위주. */
+
 const EXCLUDED_CHAPTERS = new Set([
   "1CH-1",
   "1CH-2",
@@ -213,14 +216,19 @@ export function selectRandomScripture(opts: {
       break;
     }
   }
-  const range = pickRange(chosen.verses, `${opts.seed}:${chosen.code}:${chosen.chapter}`);
-  const ref: BibleReference = {
-    code: chosen.code,
-    chapter: chosen.chapter,
-    startVerse: range.startVerse,
-    endVerse: range.endVerse,
-  };
-  return buildResult("random", ref);
+  // 설계 05§4 — 절 단위 감정 필터: 오독 위험 구절이 범위에 걸리면 seed를 바꿔 재추첨.
+  let ref: BibleReference = { code: "", chapter: 0, startVerse: 0, endVerse: 0 };
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const range = pickRange(chosen.verses, `${opts.seed}:${chosen.code}:${chosen.chapter}:${attempt}`);
+    ref = {
+      code: chosen.code,
+      chapter: chosen.chapter,
+      startVerse: range.startVerse,
+      endVerse: range.endVerse,
+    };
+    if (!refTouchesExcludedVerse(ref)) break;
+  }
+   return buildResult("random", ref);
 }
 
 /**

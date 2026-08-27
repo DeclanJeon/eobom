@@ -13,6 +13,7 @@ import { db } from "@/lib/db";
 import { kstDaysAgoStart } from "@/lib/kst";
 import { recentlyExposedEntryIds } from "@/lib/memory-exposure";
 import type { CardCandidate } from "@/lib/select-card";
+import { computeResurfaceScore } from "@/lib/continuity/resurface-score";
 import { parseJsonArray } from "@/lib/utils";
 
 export const TIME_CAPSULE_ANCHORS = [
@@ -94,7 +95,7 @@ export async function findTimeCapsuleCandidates(
       where: {
         userId,
         deletedAt: null,
-        entryDate: { gte: w.gte, lt: w.lt }, // 배타 상한 — 경계일 전체 포함 (QA-1)
+        entryDate: { gte: w.gte, lt: w.lt },
       },
       select: {
         id: true,
@@ -107,12 +108,9 @@ export async function findTimeCapsuleCandidates(
       orderBy: [{ entryDate: "desc" }, { createdAt: "desc" }, { id: "desc" }],
     });
 
-    // 노출 제외 (14일)
     const eligible = entries.filter((e) => !exposed.has(e.id));
     if (eligible.length === 0) continue;
 
-    // 윈도우 안 최근접 (anchor와의 거리 최소) — orderBy가 이미 tie-break 정렬이므로
-    // 최초 최소 거리 탐색 시 동률이면 정렬 순서의 첫 항목이 유지된다.
     let best = eligible[0]!;
     let bestDist = Math.abs(w.anchorDays - elapsedDaysKst(now, best.entryDate));
     for (const e of eligible) {
@@ -125,15 +123,64 @@ export async function findTimeCapsuleCandidates(
     candidates.push(toCandidate(best, w.anchorDays, now));
   }
 
+  if (candidates.length === 0) return candidates;
+
+  // 05§7 scoring inputs — batch enrich from DB (PastEncounter still_hold, ActionStep open, DailyCheckIn oneLine)
+  const entryIds = candidates.map((c) => c.entryId!).filter(Boolean);
+  const [stillHolds, openActions, oneLines] = await Promise.all([
+    db.pastEncounter.findMany({
+      where: { userId, sourceEntryId: { in: entryIds }, reaction: "still_hold" },
+      select: { sourceEntryId: true },
+    }),
+    db.actionStep.findMany({
+      where: { userId, sourceEntryId: { in: entryIds }, status: { in: ["pending", "walking"] } },
+      select: { sourceEntryId: true },
+    }),
+    db.dailyCheckIn.findMany({
+      where: { userId, entryId: { in: entryIds }, oneLine: { not: null } },
+      select: { entryId: true, oneLine: true },
+    }),
+  ]);
+  const stillHoldSet = new Set(stillHolds.map((r) => r.sourceEntryId));
+  const openActionSet = new Set(openActions.map((r) => r.sourceEntryId).filter(Boolean) as string[]);
+  const oneLineSet = new Set(oneLines.filter((r) => r.oneLine && r.oneLine.trim().length > 0).map((r) => r.entryId!));
+
+  for (const c of candidates) {
+    const id = c.entryId ?? c.sourceId;
+    c.stillHold = stillHoldSet.has(id);
+    c.hasOpenAction = openActionSet.has(id);
+    c.hasOneLine = oneLineSet.has(id);
+    // matchesTodayContext & anniversary는 호출자가 topContext를 알 때 별도 갱신 (today/page가 갱신)
+  }
+
   return candidates;
 }
-
 /** 타임캡슐 후보 중 우선순위가 가장 높은 1개. 노출은 client impression API가 저장. */
 export async function selectTimeCapsuleCard(
   userId: string,
   now: Date,
 ): Promise<CardCandidate | null> {
   const candidates = await findTimeCapsuleCandidates(userId, now);
+  if (candidates.length === 0) return null;
+  const hasScoreInputs = candidates.some((c) => c.stillHold || c.matchesTodayContext || c.hasOpenAction);
+  if (hasScoreInputs) {
+    const ranked = [...candidates]
+      .map((candidate, index) => ({
+        candidate,
+        index,
+        score: computeResurfaceScore({
+          candidate,
+          stillHold: candidate.stillHold,
+          hasOneLine: candidate.hasOneLine,
+          matchesTodayContext: candidate.matchesTodayContext,
+          hasOpenAction: candidate.hasOpenAction,
+          anniversary: candidate.anniversary,
+        }),
+      }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map((entry) => entry.candidate);
+    return ranked[0] ?? null;
+  }
   return [...candidates].sort((a, b) => {
     const ap = a.anchorDays ?? Number.POSITIVE_INFINITY;
     const bp = b.anchorDays ?? Number.POSITIVE_INFINITY;
@@ -141,4 +188,3 @@ export async function selectTimeCapsuleCard(
     return (a.distanceDays ?? Number.POSITIVE_INFINITY) - (b.distanceDays ?? Number.POSITIVE_INFINITY);
   })[0] ?? null;
 }
-

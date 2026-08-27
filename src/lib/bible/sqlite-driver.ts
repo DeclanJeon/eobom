@@ -21,28 +21,81 @@ type Driver = {
 
 let cachedDriver: Driver | null | undefined;
 
+type NodeDatabaseCtor = new (path: string, opts?: { readOnly?: boolean }) => NodeDatabase;
+type BunDatabaseCtor = new (path: string, opts?: { readonly?: boolean }) => BunDatabase;
+
+function isNodeSqliteModule(mod: unknown): mod is { DatabaseSync: NodeDatabaseCtor } {
+  if (typeof mod !== "object" || mod === null || !("DatabaseSync" in mod)) return false;
+  // 구조 확인용 1회 참조 — narrowing 후 생성자로만 사용된다.
+  const ctor = (mod as { DatabaseSync: unknown }).DatabaseSync;
+  return typeof ctor === "function";
+}
+
+function isBunSqliteModule(mod: unknown): mod is { Database: BunDatabaseCtor } {
+  if (typeof mod !== "object" || mod === null || !("Database" in mod)) return false;
+  // 구조 확인용 1회 참조 — narrowing 후 생성자로만 사용된다.
+  const ctor = (mod as { Database: unknown }).Database;
+  return typeof ctor === "function";
+}
+
+
 function loadDriver(): Driver | null {
   if (cachedDriver !== undefined) return cachedDriver;
   cachedDriver = null;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const bunMod = require("bun:sqlite") as { Database: new (path: string, opts?: { readonly?: boolean }) => BunDatabase };
-    cachedDriver = { name: "bun", open: (path) => adaptBun(new bunMod.Database(path, { readonly: true })) };
-  } catch {
-    /* fall through to node */
-  }
-  if (!cachedDriver) {
+
+  // 번들러(Turbopack)는 문자열 리터럴 require()를 external 참조로 치환해 런타임에
+  // 실패하게 만든다. 그래서 실패해도 다음 후보로 넘어가는 폴백 사슬이 필요하다.
+  const processWithBuiltins = process as typeof process & {
+    getBuiltinModule?: (id: string) => unknown;
+  };
+
+  // require 리터럴은 번들러 치환 대상이라 직접 호출을 피하고 eval로 우회한다.
+  const tryRequire = (id: string): unknown => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const nodeMod = require("node:sqlite") as { DatabaseSync: new (path: string, opts?: { readOnly?: boolean }) => NodeDatabase };
-      cachedDriver = { name: "node", open: (path) => adaptNode(new nodeMod.DatabaseSync(path, { readOnly: true })) };
+      return require(id);
     } catch {
-      cachedDriver = null;
+      return undefined;
+    }
+  };
+
+  const bunMod = [tryRequire("bun:sqlite")].find((m): m is { Database: BunDatabaseCtor } => isBunSqliteModule(m));
+  if (bunMod) {
+    cachedDriver = { name: "bun", open: (path) => adaptBun(new bunMod.Database(path, { readonly: true })) };
+    return cachedDriver;
+  }
+
+  let builtinRaw: unknown;
+  try {
+    builtinRaw = processWithBuiltins.getBuiltinModule?.("node:sqlite");
+  } catch {
+    builtinRaw = undefined;
+  }
+
+  let evaledRequireRaw: unknown;
+  let evaledNodeRequire: ((id: string) => unknown) | null = null;
+  try {
+    const req = eval("require");
+    if (typeof req === "function") evaledNodeRequire = req as (id: string) => unknown;
+  } catch {
+    /* ESM 전용 컨텍스트 */
+  }
+  if (evaledNodeRequire) {
+    try {
+      evaledRequireRaw = evaledNodeRequire("node:sqlite");
+    } catch {
+      evaledRequireRaw = undefined;
     }
   }
+
+  const nodeMod = [builtinRaw, evaledRequireRaw].find((m): m is { DatabaseSync: NodeDatabaseCtor } => isNodeSqliteModule(m));
+  if (nodeMod) {
+    cachedDriver = { name: "node", open: (path) => adaptNode(new nodeMod.DatabaseSync(path, { readOnly: true })) };
+    return cachedDriver;
+  }
+
   return cachedDriver;
 }
-
 // bun:sqlite — query()가 statement, exec()는 db에 존재
 type BunStatement = { all: (...p: unknown[]) => unknown[]; get: (...p: unknown[]) => unknown; run: (...p: unknown[]) => unknown };
 type BunDatabase = { query: (sql: string) => BunStatement; exec: (sql: string) => void; close: () => void };

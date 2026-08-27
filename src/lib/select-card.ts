@@ -1,3 +1,5 @@
+import { computeResurfaceScore } from "@/lib/continuity/resurface-score";
+
 /**
  * src/lib/select-card.ts
  * 오늘의 카드 선택 정책 (GATE-5, R-B1) — 순수 함수, DB 비의존.
@@ -28,6 +30,12 @@ export type CardCandidate = {
   distanceDays?: number;
   display: string;
   excerpt?: string;
+  /** 설계 05§7 스코어링 입력 — 호출자가 사전 조회해 채운다 */
+  stillHold?: boolean;
+  hasOneLine?: boolean;
+  matchesTodayContext?: boolean;
+  hasOpenAction?: boolean;
+  anniversary?: boolean;
 };
 
 export type CardSelection = {
@@ -48,12 +56,30 @@ export function cardKeyFor(
 }
 
 /**
- * 타임캡슐 후보 정렬 — anchor 우선순위(30→100→365) 후 최근접(distance).
- * anchorDays 없는 후보는 distance 기준으로만 정렬한다.
+ * 타임캡슐 후보 정렬 — 설계 05§7 스코어가 채워진 후보는 점수 desc,
+ * 미채원 후보는 기존 anchor(30→100→365) → distance 순위를 유지한다.
  */
 export function rankTimeCapsuleCandidates(
   candidates: CardCandidate[],
 ): CardCandidate[] {
+  const hasScoreInputs = candidates.some((c) => c.stillHold || c.matchesTodayContext || c.hasOpenAction);
+  if (hasScoreInputs) {
+    return [...candidates]
+      .map((candidate, index) => ({
+        candidate,
+        index,
+        score: computeResurfaceScore({
+          candidate,
+          stillHold: candidate.stillHold,
+          hasOneLine: candidate.hasOneLine,
+          matchesTodayContext: candidate.matchesTodayContext,
+          hasOpenAction: candidate.hasOpenAction,
+          anniversary: candidate.anniversary,
+        }),
+      }))
+      .sort((a, b) => b.score - a.score || a.index - b.index)
+      .map((entry) => entry.candidate);
+  }
   return [...candidates].sort((a, b) => {
     const ap = a.anchorDays ?? Number.POSITIVE_INFINITY;
     const bp = b.anchorDays ?? Number.POSITIVE_INFINITY;
@@ -63,6 +89,7 @@ export function rankTimeCapsuleCandidates(
     return ad - bd;
   });
 }
+
 
 /** Memory 후보 중복 제거 — 첫 번째 entryId만 유지. */
 export function dedupeByEntryId(
