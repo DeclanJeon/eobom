@@ -11,6 +11,7 @@ import { getEntry } from "@/lib/entries";
 import { getChapterBackground } from "@/lib/bible/chapter-background";
 import { formatDateKo } from "@/lib/utils";
 import { ShareLinkButton } from "@/components/share-link-button";
+import { ShareVisibilityToggle } from "@/components/share-visibility-toggle";
 import { listEntryShareLinks } from "@/lib/share-link";
 
 export async function generateMetadata() {
@@ -125,16 +126,16 @@ export default async function EntryDetailPage({
           </SurfaceCard>
         ) : null}
 
-        <div className="flex flex-wrap gap-3 pt-2">
-          {entry.shareVisibility === "private" ? (
-            <Link href={`/entries/${entry.id}/edit`} className="cta-secondary">
-              공개로 바꾸기
-            </Link>
-          ) : (
-            <Link href="/together" className="cta-secondary">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-start">
+          <ShareVisibilityToggle
+            entryId={entry.id}
+            initialVisibility={entry.shareVisibility === "public" ? "public" : "private"}
+          />
+          {entry.shareVisibility === "public" ? (
+            <Link href="/together" className="cta-secondary min-h-11 self-start">
               함께에서 보기
             </Link>
-          )}
+          ) : null}
         <ShareLinkButton
           entryId={entry.id}
           suggestedSentence={entry.reflectionBody.split(/(?<=[.!?。…])\s+/)[0]?.slice(0, 300) ?? ""}
