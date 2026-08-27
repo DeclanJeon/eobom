@@ -2,6 +2,27 @@
 
 이 파일은 CI가 main 푸시마다 자동으로 갱신합니다. 상세 개발노트는 `docs/dev-notes/`를 보세요.
 
+## v1.18.1 — 2026-08-27
+
+### 개선
+
+- Ship scripture modal QA, quiet safety net, and together nav
+- cover continuity and privacy contracts
+- Implement continuity scoring and cold-start guards
+- Restore UX contracts for hero and disclosure
+- Restore Korean chapter guides for full 66-book coverage
+
+### 수정
+
+- remaining product fixes and test harness
+- Fix Moment verseKey carrying fake dateKey
+
+### 기타
+
+- Add expiring share links and harden E2E and rate limits
+- Gate story-mirror runs and visualize behind consent
+- Enforce private-by-default for journal entries
+
 ## v1.18.0 — 2026-08-23
 
 ### 기타
