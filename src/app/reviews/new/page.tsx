@@ -10,11 +10,24 @@ export const metadata = { title: "회고 만들기" };
 
 export default async function NewReviewPage() {
   const user = await requireUser();
-  const [count, flags] = await Promise.all([
+  const now = new Date();
+  const currentStart = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+  const priorStart = new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000);
+  const [count, flags, currentWindowCount, priorWindowCount] = await Promise.all([
     db.reflectionEntry.count({
       where: { userId: user.id, deletedAt: null },
     }),
     getUserPreferenceFlags(user.id),
+    db.moment.count({
+      where: { userId: user.id, context: { not: null }, happenedAt: { gte: currentStart } },
+    }),
+    db.moment.count({
+      where: {
+        userId: user.id,
+        context: { not: null },
+        happenedAt: { gte: priorStart, lt: currentStart },
+      },
+    }),
   ]);
 
   return (
@@ -23,7 +36,11 @@ export default async function NewReviewPage() {
       <PageIntro title="회고 만들기" />
       <p className="mb-4 text-label-md text-text-muted">보관 중인 기록 {count}개</p>
       {flags.aiProcessingConsent ? (
-        <ReviewCreateForm entryCount={count} />
+        <ReviewCreateForm
+          entryCount={count}
+          currentWindowCount={currentWindowCount}
+          priorWindowCount={priorWindowCount}
+        />
       ) : (
         <SurfaceCard>
           <h2 className="text-headline-sm text-primary">AI 회고 허용이 필요합니다</h2>

@@ -6,27 +6,26 @@ import {
   BookOpen,
   CircleUserRound,
   Home,
-  Plus,
+  PenLine,
   Sparkles,
-  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const desktopNav = [
   { href: "/today", label: "오늘", icon: Home },
+  { href: "/lookback", label: "지나온 나", icon: Sparkles },
   { href: "/entries", label: "기록", icon: BookOpen },
-  { href: "/lookback", label: "돌아보기", icon: Sparkles },
-  { href: "/together", label: "함께", icon: Users },
+  { href: "/me", label: "나", icon: CircleUserRound },
 ] as const;
 
 const mobileNavLeft = [
   { href: "/today", label: "오늘", icon: Home },
-  { href: "/entries", label: "기록", icon: BookOpen },
+  { href: "/lookback", label: "지나온 나", icon: Sparkles },
 ] as const;
 
 const mobileNavRight = [
-  { href: "/lookback", label: "돌아보기", icon: Sparkles },
-  { href: "/together", label: "함께", icon: Users },
+  { href: "/entries", label: "기록", icon: BookOpen },
+  { href: "/me", label: "나", icon: CircleUserRound },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -138,13 +137,22 @@ export function AppShell({
               이어봄
             </span>
           </Link>
-          <Link
-            href="/me"
-            className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-primary"
-            aria-label="내 정보"
-          >
-            <CircleUserRound className="h-5 w-5" strokeWidth={1.75} />
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href="/entries/new"
+              className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-primary"
+              aria-label="새 묵상"
+            >
+              <PenLine className="h-5 w-5" strokeWidth={1.75} />
+            </Link>
+            <Link
+              href="/me"
+              className="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-border bg-white text-primary"
+              aria-label="내 정보"
+            >
+              <CircleUserRound className="h-5 w-5" strokeWidth={1.75} />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -178,7 +186,7 @@ export function AppShell({
         </div>
       </div>
 
-      {/* Mobile bottom: 오늘 | 기록 | ＋ | 돌아보기 | 함께 */}
+      {/* Mobile bottom: 오늘 | 지나온 나 | 기록 | 나 */}
       <nav
         className="fixed bottom-0 left-0 z-50 w-full border-t border-border/70 bg-surface/95 pb-safe shadow-[0_-4px_20px_0_rgba(0,0,0,0.04)] backdrop-blur-md md:hidden"
         aria-label="모바일 메뉴"
@@ -205,15 +213,6 @@ export function AppShell({
             );
           })}
 
-          <Link
-            href="/entries/new"
-            className="-mt-5 flex min-h-14 min-w-14 flex-col items-center justify-center"
-            aria-label="새 묵상 쓰기"
-          >
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition active:scale-[0.98]">
-              <Plus className="h-7 w-7" strokeWidth={2.25} />
-            </span>
-          </Link>
 
           {mobileNavRight.map((item) => {
             const active = isActive(pathname, item.href);

@@ -1,24 +1,30 @@
 import Link from "next/link";
+import { listOpenActionSteps } from "@/lib/actions";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { KeyringClaimPrompt } from "@/components/keyring-claim-prompt";
-import { GlobalScriptureCard } from "@/components/today/global-scripture-card";
 import { TodayCard } from "@/components/today/today-card";
 import { GlobalCardImpression } from "@/components/today/global-card-impression";
+import { ReceiveEntrance } from "@/components/j/receive-entrance";
 import { KeyringLandingSeen } from "@/components/j/landing-seen";
 import { db } from "@/lib/db";
 import { getOptionalUser } from "@/lib/session";
 import { getCheckin } from "@/lib/checkin";
 import { toKstDateKey } from "@/lib/kst";
 import { selectGlobalScripture } from "@/lib/daily-scripture";
-import { selectCardPolicy } from "@/lib/select-card";
+import { getPassageFromRef } from "@/lib/bible/corpus";
+import { getChapterBackground } from "@/lib/bible/chapter-background";
+import { createKeyringEventToken } from "@/lib/keyring-event-token";
+import { composeExperience } from "@/lib/experience-composer";
+import { buildResurfaceReason } from "@/lib/continuity/explain";
+import { projectCheckinToMoment } from "@/lib/continuity/moment";
 import { excerpt, formatDateKo, parseJsonArray } from "@/lib/utils";
 import {
   claimErrorMessage,
   getDeviceTokenHash,
   getSeatBySlug,
+  isKeyringSlug,
   isOwnerDevice,
-  isSeatSlug,
   normalizeSeatSlug,
   type ClaimErrorCode,
 } from "@/lib/seats";
@@ -69,6 +75,13 @@ export default async function PersonalJournalPage({
           where: { personalSlug: slug, deletedAt: null },
         })
       : null;
+  if (!isKeyringSlug(slug) && !legacyOwner) {
+    return (
+      <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
+        <NonKeyringLinkState />
+      </Shell>
+    );
+  }
 
   const access = await decideKeyringAccess({
     seat,
@@ -86,12 +99,14 @@ export default async function PersonalJournalPage({
       // 폐기된 키링은 사용할 수 없는 상태이므로 전역 카드·impression을 의도적으로 표시하지 않는다.
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <h1 className="text-display-lg text-primary">사용할 수 없는 키링</h1>
+          <h1 className="text-display-lg text-primary">
+            이 키링은 더 이상 사용할 수 없어요
+          </h1>
           <p className="mt-3 text-body-md text-text-muted">
-            {claimErrorMessage("revoked")}
+            이 키링은 폐기되어 오늘의 말씀을 열 수 없습니다. 도움이 필요하면 문의해 주세요.
           </p>
           <Link href="/contact" className="cta-secondary mt-8 inline-flex">
-            문의
+            문의하기
           </Link>
         </Shell>
       );
@@ -113,12 +128,16 @@ export default async function PersonalJournalPage({
     case "claim_prompt": {
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <GuestKeyringCard now={new Date()} />
-          <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
-          <KeyringClaimPrompt slug={slug} />
-          <p className="mt-6 text-label-sm text-text-muted">
-            연결 후 이 브라우저는 소유자 기기로 등록됩니다.
-          </p>
+          <GuestKeyringCard
+            seatId={seat?.id}
+            now={new Date()}
+            rememberContent={
+              <>
+                <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
+                <KeyringClaimPrompt slug={slug} />
+              </>
+            }
+          />
         </Shell>
       );
     }
@@ -127,10 +146,10 @@ export default async function PersonalJournalPage({
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
           {/* 타인 seat — 전역 말씀 미노출 (프라이버시 불변식 §6.2) */}
           <h1 className="text-display-lg text-primary">
-            다른 사람의 키링입니다
+            이미 다른 사람에게 연결된 키링이에요
           </h1>
           <p className="mt-3 text-body-md text-text-muted">
-            이 주소는 이미 다른 계정에 연결되어 있습니다.
+            개인 기록은 보호되어 이 키링의 내용을 보여드릴 수 없습니다.
           </p>
           <Link href="/today" className="cta-primary mt-8 inline-flex">
             내 홈으로
@@ -193,24 +212,53 @@ export default async function PersonalJournalPage({
     case "first_register": {
       return (
         <Shell isAuthenticated={Boolean(viewer)} slug={slug}>
-          <GuestKeyringCard now={new Date()} />
-          <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
-          {renderClaimQueryError(sp.claim)}
-          <KeyringClaimPrompt slug={slug} />
-          <p className="mt-6 text-label-sm text-text-muted">
-            연결하면 이 브라우저는 소유자 기기로 등록되어 자동으로 인식됩니다.
-          </p>
+          <GuestKeyringCard
+            now={new Date()}
+            seatId={seat?.id}
+            rememberContent={
+              <>
+                <p className="text-eyebrow">키링 {slug.toUpperCase()}</p>
+                {renderClaimQueryError(sp.claim)}
+                <KeyringClaimPrompt slug={slug} />
+              </>
+            }
+          />
         </Shell>
       );
     }
   }
 }
 
-function GuestKeyringCard({ now }: { now: Date }) {
+async function GuestKeyringCard({
+  now,
+  seatId,
+  rememberContent,
+}: {
+  now: Date;
+  seatId?: string;
+  rememberContent?: React.ReactNode;
+}) {
+  const dailyScripture = selectGlobalScripture(now);
+  const verses = getPassageFromRef(dailyScripture.ref)?.verses ?? [];
+  const chapterBackground = getChapterBackground({
+    code: dailyScripture.ref.code,
+    chapter: dailyScripture.ref.chapter,
+    locale: "ko",
+  });
   return (
     <div className="mb-6 text-left">
       <GlobalCardImpression dateKey={toKstDateKey(now)} surface="keyring_guest" />
-      <GlobalScriptureCard now={now} />
+      <ReceiveEntrance
+        dateKey={toKstDateKey(now)}
+        display={dailyScripture.display}
+        verses={verses}
+        fallbackText={dailyScripture.text}
+        surface="keyring"
+        seatToken={seatId ? createKeyringEventToken(seatId) : undefined}
+        rememberContent={rememberContent}
+        chapterBackground={chapterBackground}
+        scriptureRef={dailyScripture.ref}
+      />
     </div>
   );
 }
@@ -260,6 +308,24 @@ function Shell({
     </div>
   );
 }
+function NonKeyringLinkState() {
+  return (
+    <>
+      <h1 className="text-display-lg text-primary">이 링크를 열 수 없어요</h1>
+      <p className="mt-3 text-body-md text-text-muted">
+        유효한 이어봄 주소가 아니거나 더 이상 사용할 수 없는 링크입니다.
+      </p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link href="/today" className="cta-primary inline-flex">
+          오늘의 말씀으로 가기
+        </Link>
+        <Link href="/contact" className="cta-secondary inline-flex">
+          문의하기
+        </Link>
+      </div>
+    </>
+  );
+}
 
 async function OwnerView({
   slug,
@@ -276,7 +342,7 @@ async function OwnerView({
   // pastTodayEnabled is a user privacy/feature preference; honor it on keyring too.
   // 수련회 이벤트 DAY 30/90 메시지 (G013) — 있으면 그 카드가 최우선
   const eventMessage = await eventMessageForSeat(slug, now);
-  const [timeCapsule, pastToday, lastWeek, reactionChecks] = await Promise.all([
+  const [timeCapsule, pastToday, lastWeek, reactionChecks, openActions] = await Promise.all([
     findTimeCapsuleCandidates(userId, now),
     flags.pastTodayEnabled
       ? (async () => {
@@ -303,13 +369,24 @@ async function OwnerView({
     db.dailyCheckIn.findMany({
       where: { userId, reaction: { not: null } },
       orderBy: { updatedAt: "desc" },
-      select: { cardKey: true },
+      select: {
+        id: true,
+        userId: true,
+        cardKey: true,
+        reaction: true,
+        oneLine: true,
+        entryId: true,
+        createdAt: true,
+      },
     }),
+    listOpenActionSteps(userId, 1),
   ]);
-
   const exposed = await recentlyExposedEntryIds(userId, { now });
-  const reactionEntryIds = reactionChecks
-    .map((r) => r.cardKey.startsWith("memory:") ? r.cardKey.slice("memory:".length) : null)
+  const reactionMoments = reactionChecks
+    .map(projectCheckinToMoment)
+    .filter((moment): moment is NonNullable<typeof moment> => Boolean(moment));
+  const reactionEntryIds = reactionMoments
+    .map((moment) => moment.sourceEntryId)
     .filter((id): id is string => id !== null && !exposed.has(id));
   const reactionEntries = reactionEntryIds.length
     ? await db.reflectionEntry.findMany({
@@ -317,13 +394,16 @@ async function OwnerView({
         orderBy: { updatedAt: "desc" },
       })
     : [];
-
-  // 키링 경로 = Memory 우선 (G3): 타임캡슐 → 과거의 오늘 → 지난주 → 리액션 → 말씀.
-  // 모든 fallback 후보도 MemoryExposure 14일 필터를 통과해야 한다 (architecture gate).
+  // Keyring path is memory-first through the shared ExperienceComposer.
   const pastCandidate = pastToday && !exposed.has(pastToday.id) ? pastToday : null;
   const lastWeekCandidate = lastWeek && !exposed.has(lastWeek.id) ? lastWeek : null;
-  const selection = selectCardPolicy({
+  const candidateLifecycle =
+    timeCapsule.length || pastCandidate || lastWeekCandidate || reactionEntries.length
+      ? "returning"
+      : "new";
+  const selection = composeExperience({
     surface: "keyring",
+    lifecycle: candidateLifecycle,
     dateKey,
     timeCapsule,
     pastToday: pastCandidate
@@ -369,6 +449,12 @@ async function OwnerView({
     })),
   });
 
+  const dueAction =
+    openActions[0] &&
+    (!openActions[0].targetDate || new Date(openActions[0].targetDate) <= now)
+      ? openActions[0]
+      : null;
+
   let cardContent;
   let heroCardKey = "";
   if (eventMessage) {
@@ -379,6 +465,13 @@ async function OwnerView({
       hint: eventMessage.label,
     };
     heroCardKey = `event:${eventMessage.eventId ?? slug}:${eventMessage.day}`;
+  } else if (dueAction) {
+    cardContent = {
+      kind: "prompt" as const,
+      display: dueAction.body,
+      hint: "지난번에 남긴 작은 행동, 지금 다시 볼까요?",
+    };
+    heroCardKey = `action:${dueAction.id}`;
   } else if (selection.kind === "memory" && selection.candidate) {
     const c = selection.candidate;
     cardContent = {
@@ -391,6 +484,11 @@ async function OwnerView({
       display: c.display,
       excerpt: c.excerpt,
       entryId: c.entryId!,
+      reason:
+        buildResurfaceReason({
+          sourceType: c.sourceType,
+          elapsedDays: c.entryDate ? elapsedDaysKst(now, c.entryDate) : undefined,
+        }) ?? undefined,
     };
     heroCardKey = selection.cardKey;
   } else {

@@ -1,12 +1,15 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { OpenActionCard } from "@/components/open-action-card";
 import { GuestTodayView } from "@/components/today/guest-view";
 import { EntryRow } from "@/components/ui-blocks";
 import { TodayCard } from "@/components/today/today-card";
-import { listOpenActionSteps } from "@/lib/actions";
-import { selectRandomScripture } from "@/lib/daily-scripture";
+import { recentChapterKeys, selectRandomScripture } from "@/lib/daily-scripture";
+import { parseBibleReferences } from "@/lib/bible/parse";
+import { toSlug } from "@/lib/bible/format";
 import { getOptionalUser, type ApiUser } from "@/lib/session";
 import { getCheckin } from "@/lib/checkin";
+import { listOpenActionSteps } from "@/lib/actions";
 import { kstDaysAgoStart, toKstDateKey } from "@/lib/kst";
 import { weekdayContentKey, selectPrompt } from "@/lib/weekday-rhythm";
 import {
@@ -18,6 +21,10 @@ import { getChapterBackground } from "@/lib/bible/chapter-background";
 import { getPassageFromRef } from "@/lib/bible/corpus";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
+import { getStoryForRef } from "@/lib/story-application";
+import { buildResurfaceReason, buildTopContextReason } from "@/lib/continuity/explain";
+import { computeContextScores } from "@/lib/continuity/context-score";
+import { composeExperience } from "@/lib/experience-composer";
 
 export const metadata = { title: "오늘" };
 
@@ -51,12 +58,67 @@ async function MemberTodayView({
     where: { userId: user.id, deletedAt: null },
     orderBy: { entryDate: "desc" },
     take: 3,
-    select: { id: true, title: true, entryDate: true, reflectionBody: true },
+    select: { id: true, title: true, entryDate: true, reflectionBody: true, scriptureRefs: true, scriptureBindings: true },
   });
+  const continuityEntry =
+    recentEntries.find((entry) => entry.reflectionBody.trim().length > 5) ?? null;
+
+  // 설계 05§6 — 최근 28일 Moment 행동 신호로 context 점수 계산 (점수 미노출).
+  const momentRows = await db.moment.findMany({
+    where: {
+      userId: user.id,
+      happenedAt: { gte: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000) },
+      context: { not: null },
+    },
+    select: { context: true, happenedAt: true, reaction: true },
+    orderBy: { happenedAt: "desc" },
+    take: 200,
+  });
+  const topContext = computeContextScores({
+    moments: momentRows.map((m) => ({
+      context: m.context,
+      happenedAt: m.happenedAt,
+      reaction: m.reaction,
+    })),
+    now,
+  })[0] ?? null;
+
+  // 05§4 최근 장 중복 방지 — 최근 기록의 성구에서 장 키 추출해 Today hero에서 제외 (recentChapterKeys helper 사용)
+  const recentSlugs: string[] = [];
+  for (const entry of recentEntries) {
+    try {
+      const rawRefs = (entry as unknown as { scriptureRefs?: string | null }).scriptureRefs;
+      if (rawRefs) {
+        const parsed = JSON.parse(rawRefs);
+        if (Array.isArray(parsed)) {
+          for (const text of parsed) {
+            for (const ref of parseBibleReferences(String(text))) {
+              recentSlugs.push(toSlug(ref));
+            }
+          }
+        }
+      }
+    } catch {}
+    try {
+      const rawBindings = (entry as unknown as { scriptureBindings?: string | null }).scriptureBindings;
+      if (rawBindings) {
+        const parsed = JSON.parse(rawBindings);
+        if (Array.isArray(parsed)) {
+          for (const b of parsed as Array<{ slug?: string; code?: string; chapter?: number }>) {
+            if (b?.slug) recentSlugs.push(String(b.slug));
+            else if (b?.code && b?.chapter) recentSlugs.push(`${String(b.code).toUpperCase()}-${Number(b.chapter)}-1`);
+          }
+        }
+      }
+    } catch {}
+  }
+  const recentChapters = recentChapterKeys(recentSlugs);
 
   // 오늘 붙들 말씀 — 매일 하나, 사용자·KST 날짜 시드로 결정적 랜덤 (AI 호출 없음).
+  // 05§4 전역 중복 방지 활성: 최근 장 제외 + topContext는 reason+아래 todayMemory 스코어링으로 반영
   const dailyScripture = selectRandomScripture({
     seed: `${user.id}:${toKstDateKey(now)}`,
+    excludeChapters: recentChapters.size ? recentChapters : undefined,
   });
   const heroRef = dailyScripture.display;
   const heroDisplay = dailyScripture.display;
@@ -115,7 +177,6 @@ async function MemberTodayView({
   let writeHref = heroRef
     ? `/entries/new?scripture=${encodeURIComponent(heroDisplay || heroRef)}`
     : "/entries/new";
-
   const scriptureContent = {
     kind: "scripture" as const,
     display: heroDisplay || heroRef,
@@ -125,7 +186,78 @@ async function MemberTodayView({
     ref: dailyScripture.ref,
     background: heroReason ?? undefined,
     sourceLabel: heroSourceLabel,
+    reason: topContext ? buildTopContextReason(topContext.context) ?? undefined : undefined,
+    story: getStoryForRef(dailyScripture.ref, continuityEntry?.reflectionBody ?? null),
   };
+  const lifecycle =
+    recentEntries.length === 0
+      ? "new"
+      : recentEntries.length < 3
+        ? "early"
+        : "returning";
+  // 05§6+§7: todayMemory에 DB 스코어 입력 채워 topContext가 선택 경로에 반영되도록 와이어링
+  // (still_hold / open action / matchesTodayContext 채워 rankTimeCapsuleCandidates가 score path를 타게 함)
+  let todayMemory: Array<{
+    sourceType: "entry";
+    sourceId: string;
+    entryId: string;
+    entryDate: Date;
+    display: string;
+    excerpt: string;
+    stillHold?: boolean;
+    hasOpenAction?: boolean;
+    matchesTodayContext?: boolean;
+    hasOneLine?: boolean;
+  }> = [];
+  if (continuityEntry && elapsedDaysKst(now, continuityEntry.entryDate) >= 3) {
+    const base = {
+      sourceType: "entry" as const,
+      sourceId: continuityEntry.id,
+      entryId: continuityEntry.id,
+      entryDate: continuityEntry.entryDate,
+      display: continuityEntry.title || "지난 기록",
+      excerpt: excerpt(continuityEntry.reflectionBody, 120),
+    };
+    const [stillHoldRow, openActionRow, oneLineRow] = await Promise.all([
+      db.pastEncounter.findFirst({ where: { userId: user.id, sourceEntryId: continuityEntry.id, reaction: "still_hold" }, select: { sourceEntryId: true } }),
+      db.actionStep.findFirst({ where: { userId: user.id, sourceEntryId: continuityEntry.id, status: { in: ["pending", "walking"] } }, select: { sourceEntryId: true } }),
+      db.dailyCheckIn.findFirst({ where: { userId: user.id, entryId: continuityEntry.id, oneLine: { not: null } }, select: { oneLine: true } }),
+    ]);
+    const matchesTodayContext = topContext ? momentRows.some((m) => m.context === topContext.context) : false;
+    todayMemory = [
+      {
+        ...base,
+        stillHold: !!stillHoldRow,
+        hasOpenAction: !!openActionRow,
+        hasOneLine: !!(oneLineRow?.oneLine && oneLineRow.oneLine.trim().length > 0),
+        matchesTodayContext,
+      },
+    ];
+  }
+  // v1.3 scripture-first: today surface does not use keyring timeCapsule path as hero.
+  // composedExperience is kept scripture-only; memory resurface is secondary below hero.
+  // 05§4 와이어링 보증: recentChapters는 위 dailyScripture excludeChapters로 전달되어 Today hero 전역 중복 방지를 활성화한다.
+  // topContext는 위 todayMemory matchesTodayContext로 선택 경로에 영향을 준다.
+  const composedExperience = composeExperience({
+    surface: "today",
+    lifecycle,
+    dateKey,
+  });
+  void composedExperience;
+  // Secondary resurface candidate — shown below hero when scripture is dominant.
+  const secondaryCandidate =
+    contentKey === "scripture" && lifecycle === "returning" && todayMemory[0]
+      ? todayMemory[0]
+      : null;
+  const secondaryDaysAgo = secondaryCandidate?.entryDate
+    ? elapsedDaysKst(now, secondaryCandidate.entryDate)
+    : 0;
+  const secondaryReason = secondaryCandidate
+    ? (buildResurfaceReason({
+        sourceType: secondaryCandidate.sourceType,
+        elapsedDays: secondaryDaysAgo,
+      }) ?? null)
+    : null;
 
   if (contentKey === "prompt") {
     const question = await selectPrompt(dateKey);
@@ -183,14 +315,11 @@ async function MemberTodayView({
         .filter((g): g is string => Boolean(g))
         .slice(0, 5),
     };
-    heroCardKey = `gratitude:${dateKey}`;
-    writeHref = "/entries";
   } else {
     cardContent = scriptureContent;
   }
 
   const existingCheckin = await getCheckin(user.id, dateKey, heroCardKey);
-
   return (
     <AppShell wide bare>
       <p className="mb-4 text-eyebrow">
@@ -209,15 +338,40 @@ async function MemberTodayView({
         initialEntryId={existingCheckin?.entryId ?? null}
         writeHref={writeHref}
       />
+      {/* 2. 보조 회상 — Scripture-first: memory는 hero가 아닌 보조 카드로 (screen 08) */}
+      {secondaryCandidate ? (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+          <h2 className="text-label-sm font-medium text-text-muted">
+            {secondaryDaysAgo}일 전의 나
+          </h2>
+          <p className="mt-2 text-body-md font-semibold text-foreground">
+            {secondaryCandidate.display}
+          </p>
+          {secondaryCandidate.excerpt ? (
+            <p className="mt-1 text-body-sm leading-relaxed text-text-muted">
+              {secondaryCandidate.excerpt}
+            </p>
+          ) : null}
+          {secondaryReason ? (
+            <p className="mt-2 text-caption text-text-muted">{secondaryReason}</p>
+          ) : null}
+          <Link
+            href={`/entries/${secondaryCandidate.entryId ?? secondaryCandidate.sourceId}/edit`}
+            className="cta-secondary mt-3 inline-flex min-h-11 items-center px-4 py-2"
+          >
+            다시 읽기
+          </Link>
+        </section>
+      ) : null}
 
-      {/* 2. 보조 행동 — 열린 결단 하나 */}
+      {/* 3. 보조 행동 — 열린 결단 하나 */}
       {primaryAction ? (
         <div className="mt-6">
           <OpenActionCard item={primaryAction} />
         </div>
       ) : null}
 
-      {/* 3. 조용한 목록 — 최근 기록 */}
+      {/* 4. 조용한 목록 — 최근 기록 */}
       {recentEntries.length > 0 ? (
         <section className="mt-8">
           <h2 className="text-label-sm font-medium text-text-muted">최근 기록</h2>

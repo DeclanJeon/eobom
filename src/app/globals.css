@@ -120,8 +120,12 @@
   --sidebar-accent-foreground: #061b0e;
   --sidebar-border: #e0ddd7;
   --sidebar-ring: #4d6453;
+  --receive-width: 24.375rem;
+  --receive-radius: 1.5rem;
+  --receive-gutter: 1.25rem;
+  --receive-min-height: 52rem;
+  --receive-desktop-min-height: 44rem;
 }
-
 @layer base {
   * {
     @apply border-border;
@@ -742,3 +746,217 @@
     padding-inline: 0.875rem;
   }
 }
+
+/* Receive-first mobile surface: the QR route is a quiet value moment, not app chrome. */
+.receive-surface {
+  min-height: min(100dvh, var(--receive-min-height));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: min(100%, var(--receive-width));
+  margin-inline: auto;
+  padding: var(--receive-gutter);
+  background: var(--background);
+  background-image: url("/eobom-ui/linen-paper-texture.png");
+  background-size: 22.5rem;
+  color: var(--text-main);
+}
+
+.receive-eyebrow {
+  color: var(--accent-gold-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  line-height: 1.5;
+}
+
+.receive-title {
+  margin-top: 0.65rem;
+  color: var(--primary);
+  font-family: var(--font-journal);
+  font-size: clamp(1.75rem, 8vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.035em;
+}
+
+.receive-title-serif {
+  font-size: clamp(1.45rem, 6vw, 1.9rem);
+  line-height: 1.7;
+}
+
+.receive-muted {
+  margin-top: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.receive-reflection {
+  max-width: 22rem;
+}
+
+.receive-verse-card {
+  margin-top: 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--receive-radius);
+  background: color-mix(in srgb, var(--surface-shared) 88%, white);
+  padding: 1.35rem;
+  box-shadow: 0 0.75rem 2rem rgb(27 28 26 / 6%);
+}
+
+.receive-reference {
+  color: var(--accent-gold-ink);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.receive-verse {
+  margin-top: 0.9rem;
+  color: var(--primary);
+  font-family: var(--font-journal);
+  font-size: 1.15rem;
+  line-height: 1.85;
+}
+.receive-context-details {
+
+  margin-top: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: var(--receive-radius);
+  background: color-mix(in srgb, var(--surface-shared) 70%, transparent);
+  padding: 0.85rem 1rem;
+  font-size: 0.875rem;
+}
+
+.receive-context-details summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.receive-context-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.receive-context-body {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.receive-context-body strong {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.receive-guide-title {
+  color: var(--primary);
+  font-family: var(--font-journal);
+  font-size: 1rem;
+}
+
+.receive-guide-heading {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.receive-primary,
+.receive-secondary {
+  min-height: 3rem;
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.receive-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.receive-primary:hover,
+.receive-primary:focus-visible,
+.receive-secondary:hover,
+.receive-secondary:focus-visible {
+  transform: translateY(-1px);
+}
+
+.receive-secondary {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--primary);
+}
+
+.receive-text-button {
+  min-height: 2.75rem;
+  margin-top: 0.6rem;
+  color: var(--leaf);
+  font-size: 0.8125rem;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.receive-context-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 1.75rem;
+}
+
+.receive-context-chip {
+  min-height: 3.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 0.75rem;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.receive-context-chip:hover,
+.receive-context-chip:focus-visible {
+  border-color: var(--accent-gold);
+  background: var(--bg-warm);
+}
+
+.receive-claim-slot {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+@media (min-width: 768px) {
+  .receive-surface {
+    min-height: var(--receive-desktop-min-height);
+    border-radius: var(--receive-radius);
+    padding: calc(var(--receive-gutter) + 0.75rem);
+    box-shadow: 0 1rem 3rem rgb(27 28 26 / 7%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .receive-primary,
+  .receive-secondary {
+    transition: none;
+  }
+}
+
+/* 이야기 중심 적용 카드 — 성구와 삶을 잇는 거울 */
+.story-card{margin-top:14px;background:linear-gradient(180deg,#fff 0%,#FDF8F0 100%);border:1px solid #E8DDC8;border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.story-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),#E8C99A)}
+.story-eyebrow{color:var(--goldink);font-size:10px;letter-spacing:.1em;font-weight:700}
+.story-title{margin:6px 0 0;color:var(--forest);font:600 15px/1.5 Georgia,'Noto Serif KR',serif}
+.story-body{margin:10px 0 0;color:var(--ink);font:400 13px/1.85 Georgia,'Noto Serif KR',serif}
+.story-body em{font-style:normal;color:var(--forest);font-weight:700}
+.story-closing{margin:12px 0 0;padding:10px 12px;background:#fff;border:1px dashed #E0D5C0;border-radius:10px;color:var(--muted);font:400 12px/1.7 Georgia,'Noto Serif KR',serif;text-align:center}
+.story-actions{margin-top:12px;display:flex;gap:8px}
+.story-actions button{flex:1;border-radius:999px;padding:10px;font-size:11px}
+.btn-ghost{border:1px solid var(--line);background:#fff;color:var(--forest)}
+.btn-leaf{border:1px solid var(--leaf);background:var(--leaf);color:#fff}
