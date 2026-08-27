@@ -12,9 +12,9 @@ if (!isBunTestRunner) {
     test("guest /today receives the global scripture card without login", async ({ page }) => {
       const response = await page.goto("/today");
       expect(response?.status()).toBe(200);
-      await expect(page.getByRole("heading", { name: "오늘 함께 읽을 말씀" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "기록으로 잇기" })).toBeVisible();
-      await expect(page.getByText("최근 기록")).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: "오늘의 말씀" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "조금 더 보기" })).toBeVisible();
+      await expect(page.getByText("오늘 함께 읽을 말씀")).toHaveCount(0);
     });
 
     test("keyring landing stays public and does not expose private records", async ({ page }) => {

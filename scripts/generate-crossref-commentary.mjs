@@ -264,6 +264,17 @@ function loadCheckpoint() {
     if (!line.trim()) continue;
     try {
       const rec = JSON.parse(line);
+      // 에이전트 헬퍼가 저장한 배열형 링크 [coord, label, votes, anchor] 정규화
+      if (Array.isArray(rec.links)) {
+        rec.links = rec.links.map((l) =>
+          Array.isArray(l)
+            ? {
+                coord: l[0],
+                why: l[3] ? `${l[3]} (${l[1]})` : String(l[1] ?? ""),
+              }
+            : l,
+        );
+      }
       done.add(rec.key);
       records.push(rec);
     } catch {
@@ -271,6 +282,10 @@ function loadCheckpoint() {
     }
   }
   return { done, records };
+}
+
+function hasKoreanText(value) {
+  return typeof value === "string" && /[가-힣]/.test(value);
 }
 
 function buildDb(records) {
@@ -322,31 +337,39 @@ function buildDb(records) {
   db.exec("BEGIN");
   let verseCount = 0;
   let linkCount = 0;
+  let rejectedLanguage = 0;
   for (const rec of records) {
     if (!rec.theme?.trim() || !rec.summary?.trim()) continue;
+    if (!hasKoreanText(rec.theme) || !hasKoreanText(rec.summary)) {
+      rejectedLanguage++;
+      continue;
+    }
     insertVerse.run(rec.key, rec.theme.trim(), rec.summary.trim());
     verseCount++;
     for (const link of rec.links ?? []) {
       if (!link.coord || !link.why?.trim()) continue;
+      if (!hasKoreanText(link.why)) { rejectedLanguage++; continue; }
       const parts = String(link.coord).split("-");
-      if (parts.length !== 4) continue;
-      const [code, chapter, start, end] = [
-        parts[0],
-        Number(parts[1]),
-        Number(parts[2]),
-        Number(parts[3]),
-      ];
+      // 4부분: BOOK-C-S-E / 3부분(에이전트 작성 단일 절): BOOK-C-S → end=start
+      const [code, chapter, start, end] =
+        parts.length === 4
+          ? [parts[0], Number(parts[1]), Number(parts[2]), Number(parts[3])]
+          : parts.length === 3
+            ? [parts[0], Number(parts[1]), Number(parts[2]), Number(parts[2])]
+            : [null, null, null, null];
       if (!code || !Number.isInteger(chapter) || !Number.isInteger(start)) continue;
+      // 좌표 무결성 게이트: 잘못된 coord(오타 등)는 DB 오염 대신 적재 시 제외
+      if (!Number.isInteger(end) || chapter < 1 || start < 1 || end < start) continue;
       insertLink.run(rec.key, code, chapter, start, end, link.why.trim());
       linkCount++;
     }
   }
+  meta.run("rejected_language_rows", String(rejectedLanguage));
   db.exec("COMMIT");
   db.exec("VACUUM");
   db.close();
   return { verseCount, linkCount };
 }
-
 function saveBatchResults(items, results, provider) {
   const byKey = new Map(results.map((r) => [r.key, r]));
   let savedLines = 0;
@@ -356,7 +379,10 @@ function saveBatchResults(items, results, provider) {
       console.warn(`\n  missing result for ${item.key} — will retry next run`);
       continue;
     }
-    // links: 모델 응답의 target 라벨을 좌표로 역매핑해 coord 기록
+    if (!hasKoreanText(result.theme) || !hasKoreanText(result.summary)) {
+      console.warn(`\n  non-Korean result for ${item.key} — will retry next run`);
+      continue;
+    }
     const record = {
       key: item.key,
       theme: String(result.theme).slice(0, 200),
@@ -369,7 +395,10 @@ function saveBatchResults(items, results, provider) {
       if (!outLink || typeof outLink.target !== "string") continue;
       const matched = item.allLinks.find((l) => l.to_label === outLink.target);
       if (!matched) continue;
-      record.links.push({ coord: `${matched.to_code}-${matched.to_chapter}-${matched.to_start_verse}-${matched.to_end_verse}`, why: String(outLink.why ?? "").slice(0, 500) });
+      record.links.push({
+        coord: `${matched.to_code}-${matched.to_chapter}-${matched.to_start_verse}-${matched.to_end_verse}`,
+        why: String(outLink.why ?? "").slice(0, 500),
+      });
     }
     appendFileSync(OUT_JSONL, `${JSON.stringify(record)}\n`);
     savedLines++;

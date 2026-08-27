@@ -91,6 +91,17 @@ export const reactionSchema = z.object({
   reactionType: z.enum(["empathize", "pray", "same_scripture", "bookmark"]),
 });
 
+export const shareLinkCreateSchema = z.object({
+  selectedSentence: z.string().min(1).max(300),
+  scriptureRefs: z.array(z.string()).max(5).optional(),
+  expiresInDays: z.union([z.literal(7), z.literal(30), z.null()]).optional(),
+});
+
+export const tinyActionSchema = z.object({
+  catalogId: z.string().min(1),
+  sourceEntryId: z.string().optional(),
+});
+
 export const claimIntentSchema = z.object({
   slug: z.string().min(1),
 });

@@ -15,7 +15,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS StoryChunkFts USING fts5(
   summary,
   title,
   themes,
-  tokenize = 'unicode61 "remove_diacritics 2"'
+  tokenize = 'unicode61'
 );
 
 -- StoryChunk 삽입/수정/삭제 시 FTS5 인덱스를 자동 동기화한다.

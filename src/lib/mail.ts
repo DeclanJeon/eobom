@@ -163,6 +163,7 @@ export async function sendInactivityReminder(input: {
   name: string;
   slug: string;
   kind: ReminderKind;
+  continuityPreview?: string | null;
 }) {
   const transporter = createTransport();
   const from = getFromAddress();
@@ -175,23 +176,32 @@ export async function sendInactivityReminder(input: {
   const subject = is3d
     ? "작은 기록이 기다리고 있어요"
     : "당신의 목소리가 그리워요";
+  const continuityHtml = input.continuityPreview
+    ? `<p style="font-size:15px;color:#2d2d2d;background:#f0f4f2;border-radius:12px;padding:14px">지난번의 당신<br /><strong>${escapeHtml(input.continuityPreview)}</strong></p>`
+    : "";
+  const continuityText = input.continuityPreview
+    ? `지난번의 당신: ${input.continuityPreview}`
+    : "";
 
   const body3d = `
     <p style="font-size:15px;color:#2d2d2d">안녕하세요, <strong>${escapeHtml(displayName)}</strong>님.</p>
+    ${continuityHtml}
     <p style="font-size:15px;color:#2d2d2d">마지막 기록으로부터 3일이 지났습니다.<br />작은 한 문장이면 충분합니다.</p>
     <p style="font-size:15px;color:#2d2d2d">오늘 마음에 남은 것이 있나요?</p>
   `;
-
   const body7d = `
     <p style="font-size:15px;color:#2d2d2d">안녕하세요, <strong>${escapeHtml(displayName)}</strong>님.</p>
+    ${continuityHtml}
     <p style="font-size:15px;color:#2d2d2d">일주일째 기록이 없습니다.</p>
     <p style="font-size:15px;color:#2d2d2d">기록은 판단이 아니라 기억입니다.</p>
     <p style="font-size:15px;color:#2d2d2d">어제든 그저께든, 마음에 남은 말씀이 있었다면<br />그것만 남겨주세요.</p>
   `;
+  const continuityLines = continuityText ? [continuityText, ""] : [];
 
   const bodyText = is3d
     ? [
         `안녕하세요, ${displayName}님.`,
+        ...continuityLines,
         "",
         "마지막 기록으로부터 3일이 지났습니다.",
         "작은 한 문장이면 충분합니다.",
@@ -201,6 +211,7 @@ export async function sendInactivityReminder(input: {
       ].join("\n")
     : [
         `안녕하세요, ${displayName}님.`,
+        ...continuityLines,
         "",
         "일주일째 기록이 없습니다.",
         "기록은 판단이 아니라 기억입니다.",

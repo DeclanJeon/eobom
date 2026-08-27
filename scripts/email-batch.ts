@@ -11,6 +11,10 @@
 
 import { db } from "../src/lib/db";
 import { sendInactivityReminder, type ReminderKind } from "../src/lib/mail";
+import { composeExperience } from "../src/lib/experience-composer";
+import { findTimeCapsuleCandidates } from "../src/lib/time-capsule";
+import { recentlyExposedEntryIds } from "../src/lib/memory-exposure";
+import { toKstDateKey } from "../src/lib/kst";
 
 function getWeekKey(date: Date): string {
   const d = new Date(date);
@@ -94,6 +98,20 @@ async function main() {
       skipped++;
       continue;
     }
+    const candidateRows = await findTimeCapsuleCandidates(user.id, now);
+    const exposed = await recentlyExposedEntryIds(user.id, { now });
+    const timeCapsule = candidateRows.filter(
+      (candidate) => !candidate.entryId || !exposed.has(candidate.entryId),
+    );
+    const continuity = composeExperience({
+      surface: "keyring",
+      lifecycle: "returning",
+      dateKey: toKstDateKey(now),
+      timeCapsule,
+    });
+    const continuityPreview =
+      continuity.kind === "memory" ? continuity.candidate?.excerpt ?? null : null;
+
 
     try {
       await sendInactivityReminder({
@@ -101,6 +119,7 @@ async function main() {
         email: user.email,
         name: user.displayName || user.name || "",
         slug: user.claimedSeat.slug,
+        continuityPreview,
         kind,
       });
 

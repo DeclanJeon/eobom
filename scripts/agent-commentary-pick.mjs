@@ -1,6 +1,8 @@
 // 에이전트 세션 생성 헬퍼 — LLM 호출 없이 pick/save만 담당.
-//   pick <N>            : 미완료 절 중 연결 밀도 상위 N개의 페이로드를 stdout으로 출력
+//   pick <N> [wid] [W]  : 미완료 절 중 연결 밀도 상위 N개의 페이로드를 stdout으로 출력
+//                         wid/W 지정 시 hash(ref)%W==wid 버킷만 담당 (병렬 워커 분할)
 //   save <jsonl-path>   : 에이전트가 작성한 레코드를 워크 체크포인트에 병합 (provider=agent)
+//   status [W]          : 전체 완료/잔여 및 버킷별 잔여 현황 출력
 import { readFileSync, appendFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -36,16 +38,20 @@ function loadTexts() {
   return map;
 }
 
-function nextTargets(done, texts, n) {
+function nextTargets(done, texts, n, wid, W, tail) {
   const rows = [];
   for (const line of readFileSync(DENSITY_PATH, "utf8").split("\n").slice(1)) {
     if (!line.trim()) continue;
     const cols = line.split(",");
     const ref = cols[0];
     const count = Number(cols[cols.length - 1]);
-    if (!done.has(ref) && texts.has(ref)) rows.push({ ref, count });
+    if (done.has(ref) || !texts.has(ref)) continue;
+    if (W && wid !== undefined && hashRef(ref) % W !== wid) continue;
+    rows.push({ ref, count });
   }
-  rows.sort((a, b) => b.count - a.count || a.ref.localeCompare(b.ref));
+  rows.sort((a, b) => tail
+    ? a.count - b.count || a.ref.localeCompare(b.ref)
+    : b.count - a.count || a.ref.localeCompare(b.ref));
   return rows.slice(0, n);
 }
 
@@ -78,22 +84,32 @@ function topLinks(db, key) {
     .slice(0, LINKS_PER_VERSE);
 }
 
-function pick(n) {
+function hashRef(ref) {
+  let h = 5381;
+  for (let i = 0; i < ref.length; i++) h = ((h << 5) + h + ref.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function pick(n, wid, W, tail) {
   const done = loadDone();
   const texts = loadTexts();
-  const targets = nextTargets(done, texts, n);
+  const targets = nextTargets(done, texts, n, wid, W, tail === "tail");
   if (!targets.length) {
     console.log("[]");
     return;
   }
   const db = new DatabaseSync(CROSSREFS_DB, { readOnly: true });
-  const payload = targets.map(({ ref }) => ({
-    key: ref,
-    text: texts.get(ref),
-    links: topLinks(db, ref),
-  }));
+  // 컨텍스트 절약: 한 줄당 한 절(JSONL), 불필요 필드 제외
+  for (const { ref } of targets) {
+    console.log(
+      JSON.stringify({
+        key: ref,
+        text: texts.get(ref),
+        links: topLinks(db, ref).map((l) => [l.coord, l.label, l.votes, l.anchor || null]),
+      }),
+    );
+  }
   db.close();
-  console.log(JSON.stringify(payload, null, 1));
 }
 
 function save(jsonPath) {
@@ -122,10 +138,33 @@ function save(jsonPath) {
   console.log(`saved=${saved} skipped=${skipped} total_done=${done.size}`);
 }
 
-const [, , cmd, arg] = process.argv;
-if (cmd === "pick") pick(Number(arg) || 10);
-else if (cmd === "save") save(arg);
+function status(W) {
+  const done = loadDone();
+  const texts = loadTexts();
+  let remaining = 0;
+  const buckets = W ? new Map() : null;
+  for (const line of readFileSync(DENSITY_PATH, "utf8").split("\n").slice(1)) {
+    if (!line.trim()) continue;
+    const ref = line.split(",")[0];
+    if (!texts.has(ref)) continue;
+    if (!done.has(ref)) {
+      remaining++;
+      if (buckets) buckets.set(hashRef(ref) % W, (buckets.get(hashRef(ref) % W) || 0) + 1);
+    }
+  }
+  const total = done.size + remaining;
+  console.log(`total=${total} done=${done.size} remaining=${remaining} (${((done.size / total) * 100).toFixed(1)}%)`);
+  if (buckets) for (const [wid, cnt] of [...buckets.entries()].sort((a, b) => a[0] - b[0])) console.log(`bucket ${wid}: remaining=${cnt}`);
+}
+
+const [, , cmd, arg, arg2, arg3, arg4] = process.argv;
+if (cmd === "pick") {
+  const wid = arg2 !== undefined && arg2 !== "" ? Number(arg2) : undefined;
+  const W = arg3 !== undefined && arg3 !== "" ? Number(arg3) : undefined;
+  pick(Number(arg) || 10, wid, W, arg4);
+} else if (cmd === "save") save(arg);
+else if (cmd === "status") status(arg !== undefined ? Number(arg) : undefined);
 else {
-  console.error("usage: agent-commentary-pick.mjs pick <N> | save <jsonl>");
+  console.error("usage: agent-commentary-pick.mjs pick <N> [workerId] [numWorkers] | save <jsonl> | status [numWorkers]");
   process.exitCode = 1;
 }

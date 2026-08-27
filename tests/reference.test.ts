@@ -40,10 +40,17 @@ describe("chapter-background JSON", () => {
   test("ko + en chapter counts", () => {
     const ko = JSON.parse(readFileSync(path.join(process.cwd(), "data/reference/chapter-background-ko.json"), "utf8"));
     const en = JSON.parse(readFileSync(path.join(process.cwd(), "data/reference/chapter-background-en.json"), "utf8"));
-    expect(ko.chapters.length).toBe(1171);
-    expect(en.chapters.length).toBe(1189);
-    expect(ko.chapters[0].overview.length).toBeGreaterThan(10);
-    expect(ko.chapters[0].sources[0].license).toBeTruthy();
-    expect(ko.stats.totalChapters).toBe(1171);
+    // 한국어 배경은 en 전체 장을 커버해야 한다(누락 시 영문 폴백 없이 카드 생략).
+    expect(ko.chapters.length).toBe(en.chapters.length);
+    expect(ko.chapters.length).toBe(1189);
+    expect(ko.stats.totalChapters).toBe(ko.chapters.length);
+    const enIds = new Set(en.chapters.map((c) => c.id));
+    for (const chapter of ko.chapters) {
+      expect(enIds.has(chapter.id)).toBe(true);
+      expect(chapter.overview.length).toBeGreaterThan(10);
+    }
+    const koIds = new Set(ko.chapters.map((c) => c.id));
+    const missingKo = en.chapters.filter((c) => !koIds.has(c.id));
+    expect(missingKo).toEqual([]);
   });
 });

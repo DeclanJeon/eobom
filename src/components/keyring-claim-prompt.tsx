@@ -30,14 +30,14 @@ export function KeyringClaimPrompt({ slug }: { slug: string }) {
         setError(
           data?.code
             ? claimErrorMessage(data.code as Parameters<typeof claimErrorMessage>[0])
-            : data?.error || "연결에 실패했습니다.",
+            : data?.error || "키링을 지금 연결하지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
         return;
       }
       router.push(`/j/${slug}`);
       router.refresh();
     } catch {
-      setError("연결에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      setError("키링을 지금 연결하지 못했어요. 잠시 후 다시 시도해 주세요.");
     } finally {
       setLoading(false);
     }

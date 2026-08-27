@@ -1,6 +1,5 @@
 import { selectGlobalScripture } from "@/lib/daily-scripture";
 import { getPassageFromRef } from "@/lib/bible/corpus";
-import { toKstDateKey } from "@/lib/kst";
 import { GuestScriptureSignal } from "@/components/today/guest-scripture-signal";
 
 /**
@@ -12,7 +11,6 @@ export async function GlobalScriptureCard({ now }: { now: Date }) {
   const dailyScripture = selectGlobalScripture(now);
   const heroDisplay = dailyScripture.display;
   const heroReason = dailyScripture.background?.trim() || null;
-  const dateKey = toKstDateKey(now);
   const verses = getPassageFromRef(dailyScripture.ref)?.verses ?? [];
 
   return (
@@ -43,7 +41,7 @@ export async function GlobalScriptureCard({ now }: { now: Date }) {
       {heroReason ? (
         <p className="mt-3 text-body-md text-text-muted line-clamp-2">{heroReason}</p>
       ) : null}
-      <GuestScriptureSignal dateKey={dateKey} />
+      <GuestScriptureSignal surface="today" />
     </section>
   );
 }

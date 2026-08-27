@@ -3,10 +3,16 @@
 import { useState } from "react";
 
 /**
- * 전역 말씀 카드의 "♡ 마음에 남아요" 신호.
- * 로그인이 없으므로 익명 identity로 즉시 저장한다 (부트스트랩 후 이미 정체성 존재).
+ * Public receive reaction. It stores only the enum event and never creates a
+ * person-level guest identity.
  */
-export function GuestScriptureSignal({ dateKey }: { dateKey: string }) {
+export function GuestScriptureSignal({
+  surface = "today",
+  seatToken,
+}: {
+  surface?: "today" | "keyring";
+  seatToken?: string;
+}) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -14,13 +20,13 @@ export function GuestScriptureSignal({ dateKey }: { dateKey: string }) {
     if (saving || saved) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/today/checkin", {
+      const res = await fetch("/api/moments/respond", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cardKey: `scripture:${dateKey}`,
-          surface: "guest",
+          surface,
           reaction: "still_hold",
+          seatToken,
         }),
       });
       if (res.ok) setSaved(true);

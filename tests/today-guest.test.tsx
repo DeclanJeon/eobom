@@ -31,12 +31,14 @@ async function renderGuest(now: Date) {
 }
 
 describe("GATE-2 /today 게스트 경로", () => {
-  test("비로그인 렌더: 전역 말씀 카드 + 로그인 CTA (인증 요구 0회)", async () => {
+  test("비로그인 렌더: Receive-first 말씀 화면과 선택적 다음 행동", async () => {
     const html = await renderGuest(new Date("2026-08-21T03:00:00.000Z"));
-    expect(html).toContain("오늘 함께 읽을 말씀");
-    expect(html).toContain("기록으로 잇기");
-    expect(html).toContain("chip-gold"); // 성구 칩
-    // 개인 데이터 미노출: 인사말·기록 목록·회고·타임캡슐·결단 없음
+    expect(html).toContain("오늘의 말씀");
+    expect(html).toContain("조금 더 보기");
+    expect(html).toContain("오늘은 여기까지");
+    expect(html).toContain("receive-verse-card");
+    expect(html).not.toContain("오늘 함께 읽을 말씀");
+    expect(html).not.toContain("기록으로 잇기");
     expect(html).not.toContain("순례자");
     expect(html).not.toContain("최근 기록");
     expect(html).not.toContain("최근 회고");

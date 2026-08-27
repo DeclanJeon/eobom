@@ -14,23 +14,21 @@ export async function recordMemoryExposure(input: {
   sourceEntryId: string;
   surfaceDateKey: string;
 }): Promise<void> {
-  try {
-    await db.memoryExposure.create({
-      data: {
+  await db.memoryExposure.upsert({
+    where: {
+      userId_sourceEntryId_surfaceDateKey: {
         userId: input.userId,
         sourceEntryId: input.sourceEntryId,
         surfaceDateKey: input.surfaceDateKey,
       },
-    });
-  } catch (error) {
-    // unique(userId, sourceEntryId, surfaceDateKey) 충돌 = 이미 기록됨 — 멱등 성공
-    const isP2002 =
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "P2002";
-    if (!isP2002) throw error;
-  }
+    },
+    create: {
+      userId: input.userId,
+      sourceEntryId: input.sourceEntryId,
+      surfaceDateKey: input.surfaceDateKey,
+    },
+    update: {},
+  });
 }
 
 /** createdAt이 오늘 - withinDays 이후인 노출된 entryId 집합. (기본 14일) */

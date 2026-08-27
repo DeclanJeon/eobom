@@ -23,6 +23,7 @@ export const EVENT_TYPES = [
   "one_line_saved",
   "entry_created",
   "return_landing",
+  "context_selected",
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 

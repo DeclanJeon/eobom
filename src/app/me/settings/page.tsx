@@ -6,11 +6,24 @@ import { db } from "@/lib/db";
 
 export const metadata = { title: "설정" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ linked?: string; linkError?: string }>;
+}) {
   const sessionUser = await requireUser();
   const user = await db.user.findUniqueOrThrow({
     where: { id: sessionUser.id },
   });
+  const query = await searchParams;
+  const linkStatus =
+    query.linked === "1"
+      ? "linked"
+      : query.linkError === "email_in_use" ||
+          query.linkError === "account_in_use" ||
+          query.linkError === "stale_intent"
+        ? query.linkError
+        : null;
 
   return (
     <AppShell title="설정">
@@ -18,13 +31,17 @@ export default async function SettingsPage() {
       <SurfaceCard>
         <SettingsForm
           initial={{
+            accountEmail: user.email,
+            linkStatus,
             displayName: user.displayName || user.name || "",
             preferredBibleTranslation: user.preferredBibleTranslation,
             aiProcessingConsent: user.aiProcessingConsent,
             communityEnabled: user.communityEnabled,
             pastTodayEnabled: user.pastTodayEnabled,
-            storyMirrorEnabled: (user as Record<string, unknown>).storyMirrorEnabled as boolean ?? false,
-            storyMirrorExternalConsent: (user as Record<string, unknown>).storyMirrorExternalConsent as boolean ?? false,
+            storyMirrorEnabled:
+              ((user as Record<string, unknown>).storyMirrorEnabled as boolean) ?? false,
+            storyMirrorExternalConsent:
+              ((user as Record<string, unknown>).storyMirrorExternalConsent as boolean) ?? false,
           }}
         />
       </SurfaceCard>

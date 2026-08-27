@@ -58,7 +58,8 @@ export async function POST(request: Request) {
   const filename = `${randomUUID()}.${extension}`;
   const directory = path.join(uploadRoot(), user.id);
   await mkdir(directory, { recursive: true });
-  await writeFile(path.join(directory, filename), Buffer.from(await image.arrayBuffer()), {
+  const destination = `${directory}${path.sep}${filename}`;
+  await writeFile(destination, Buffer.from(await image.arrayBuffer()), {
     flag: "wx",
   });
 

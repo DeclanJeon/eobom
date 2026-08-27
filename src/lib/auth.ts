@@ -1,9 +1,14 @@
-import type { NextAuthOptions } from "next-auth";
+import type { Account, NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import {
+  ACCOUNT_LINK_COOKIE,
+  verifyAccountLinkIntent,
+} from "@/lib/account-link-intent";
+import { accountLinkRedirect, attachGoogleAccountToUser } from "@/lib/account-link";
 import {
   CLAIM_COOKIE,
   allocateWebUserSlug,
@@ -51,6 +56,21 @@ async function applyClaimIfNeeded(
   }
 }
 
+async function readAccountLinkIntent() {
+  const jar = await cookies();
+  return verifyAccountLinkIntent(jar.get(ACCOUNT_LINK_COOKIE)?.value);
+}
+
+async function clearAccountLinkIntent() {
+  const jar = await cookies();
+  jar.set(ACCOUNT_LINK_COOKIE, "", { path: "/", maxAge: 0 });
+}
+
+async function attachGoogleAccountToIdentity(account: Account, email: string) {
+  const intent = await readAccountLinkIntent();
+  if (!intent) return null;
+  return attachGoogleAccountToUser(intent.userId, account, email);
+}
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
@@ -114,8 +134,15 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if (!user.email) return false;
+      if (account?.provider === "google") {
+        const linkResult = await attachGoogleAccountToIdentity(account, user.email);
+        if (linkResult) {
+          await clearAccountLinkIntent();
+          return accountLinkRedirect(linkResult);
+        }
+      }
       return true;
     },
     async redirect({ url, baseUrl }) {

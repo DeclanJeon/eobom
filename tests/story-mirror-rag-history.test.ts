@@ -31,7 +31,9 @@ let runId = "";
 let otherRunId = "";
 
 beforeAll(async () => {
-  await db.user.deleteMany({ where: { email: { in: [EMAIL, EMAIL2] } } });
+  await db.user.deleteMany({
+    where: { OR: [{ email: { in: [EMAIL, EMAIL2] } }, { id: { in: [USER_ID, USER_ID2] } }] },
+  });
   await db.user.create({
     data: {
       email: EMAIL,
@@ -131,7 +133,9 @@ afterAll(async () => {
   if (otherRunId) await db.storyRagRun.deleteMany({ where: { id: otherRunId } });
   if (chunkId) await db.storyChunk.deleteMany({ where: { id: chunkId } });
   if (workId) await db.storyWork.deleteMany({ where: { id: workId } });
-  await db.user.deleteMany({ where: { email: { in: [EMAIL, EMAIL2] } } });
+  await db.user.deleteMany({
+    where: { OR: [{ email: { in: [EMAIL, EMAIL2] } }, { id: { in: [USER_ID, USER_ID2] } }] },
+  });
 });
 
 describe("RAG run 이력 조회", () => {

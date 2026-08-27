@@ -93,6 +93,7 @@ describe("event type/source enum", () => {
     expect(EVENT_TYPES).toContain("one_line_saved");
     expect(EVENT_TYPES).toContain("entry_created");
     expect(EVENT_TYPES).toContain("return_landing");
+    expect(EVENT_TYPES).toContain("context_selected");
   });
 
   test("entry source enum", () => {
@@ -119,6 +120,8 @@ describe("logEvent (DB)", () => {
     delegate.create = async () => {
       throw new Error("forced db failure");
     };
+    const originalError = console.error;
+    console.error = () => {};
     try {
       await expect(
         logEvent({ eventType: "entry_created", fireAndForget: true }),
@@ -127,6 +130,7 @@ describe("logEvent (DB)", () => {
         logEvent({ eventType: "entry_created", fireAndForget: false }),
       ).rejects.toThrow("forced db failure");
     } finally {
+      console.error = originalError;
       delegate.create = original;
     }
   });

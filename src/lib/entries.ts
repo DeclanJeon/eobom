@@ -35,8 +35,7 @@ export async function ensureEntryFts5(): Promise<void> {
   } catch {
     // ignore and try to create
   }
-  // CREATE VIRTUAL TABLE + triggers — best-effort, fallback to plain unicode61 if diacritics unavailable (bun:sqlite 3.53)
-  const diac = "remove_" + "diacritics 2";
+  // Keep the tokenizer portable across SQLite builds used by local and CI tests.
   const createSql = `
     CREATE VIRTUAL TABLE IF NOT EXISTS ReflectionEntryFts USING fts5(
       entryId UNINDEXED,
@@ -44,7 +43,7 @@ export async function ensureEntryFts5(): Promise<void> {
       reflectionBody,
       gratitude,
       prayer,
-      tokenize = 'unicode61 "${diac}"'
+      tokenize = 'unicode61'
     );
   `;
   const triggers = [
@@ -72,8 +71,7 @@ export async function ensureEntryFts5(): Promise<void> {
   try {
     await tryExec(createSql);
   } catch {
-    const fallback = createSql.replace(`tokenize = 'unicode61 "${diac}"'`, `tokenize = 'unicode61'`).replace(`tokenize='unicode61 "${diac}"'`, `tokenize='unicode61'`);
-    await tryExec(fallback);
+    // FTS is optional; LIKE search remains the functional fallback.
   }
   for (const t of triggers) {
     try { await tryExec(t); } catch {}
