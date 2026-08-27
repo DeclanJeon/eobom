@@ -36,7 +36,8 @@ const KINDS = ["summary"] as const;
 export async function POST(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
-
+  const consentUser = await db.user.findUnique({ where: { id: auth.user.id }, select: { storyMirrorEnabled: true, storyMirrorExternalConsent: true } });
+  if (!consentUser?.storyMirrorEnabled || !consentUser?.storyMirrorExternalConsent) return NextResponse.json({ error: "consent required" }, { status: 403 });
   let body: { kind?: string; force?: boolean } = {};
   try {
     body = (await request.json()) as { kind?: string; force?: boolean };

@@ -15,6 +15,7 @@ import { buildNarrativeBridge } from "@/lib/story-mirror/narrative-bridge";
 import { computeInputFingerprint } from "@/lib/story-mirror/cache";
 import { listPublishedCards } from "@/lib/story-mirror/db";
 import { parseJsonArray } from "@/lib/utils";
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const CORPUS_VERSION = "v1.0";
@@ -28,6 +29,8 @@ const runCreateSchema = z.object({
 export async function POST(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+  const limited = await checkRateLimit(`story-mirror:runs:${auth.user.id}`, RATE_LIMITS.storyMirrorRuns);
+  if (!limited.ok) return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
 
   const parsed = await parseJsonBody(request, runCreateSchema);
   if (!parsed.ok) return parsed.response;
@@ -89,7 +92,16 @@ export async function POST(request: Request) {
     });
   }
 
-  // 5. StoryCard 로드 (published만)
+  // 5. 동의 게이트 (06§4) — 매칭 전 확인
+  const consentUser = await db.user.findUnique({
+    where: { id: auth.user.id },
+    select: { storyMirrorEnabled: true, storyMirrorExternalConsent: true },
+  });
+  if (!consentUser?.storyMirrorEnabled || !consentUser?.storyMirrorExternalConsent) {
+    return NextResponse.json({ error: "consent required" }, { status: 403 });
+  }
+
+  // 6. StoryCard 로드 (published만)
   const cards = await listPublishedCards();
   if (cards.length === 0) {
     return NextResponse.json(
@@ -98,7 +110,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 6. 매칭 실행
+  // 7. 매칭 실행
   const candidates = cards.map((card) => ({
     id: card.id,
     workId: card.workId,
@@ -114,14 +126,14 @@ export async function POST(request: Request) {
 
   const matches = matchPhaseA(profile, candidates);
 
-  // 7. run 생성 + match 저장
+  // 8. run 생성 + match 저장
   const run = await db.storyMirrorRun.create({
     data: {
       userId: auth.user.id,
       inputFingerprint: fingerprint,
       corpusVersion: CORPUS_VERSION,
       matcherVersion: MATCHER_VERSION,
-      consentSnapshot: false,
+      consentSnapshot: true,
       status: "complete",
       completedAt: new Date(),
     },
