@@ -10,7 +10,7 @@ import { parseJsonArray, toJsonArray } from "@/lib/utils";
 export type ShareVisibility = "public" | "private";
 
 export function normalizeShareVisibility(value: unknown): ShareVisibility {
-  return value === "private" ? "private" : "public";
+  return value === "public" ? "public" : "private";
 }
 
 /** Turn journal markdown/plain text into a calm anonymous share body. */
@@ -80,9 +80,9 @@ export async function syncEntryShare(
 
   const flags = await getUserPreferenceFlags(userId);
   if (!flags.communityEnabled) {
-    return { status: "skipped_community_off" };
+    const count = await withdrawLinkedShares(userId, entryId);
+    return count > 0 ? { status: "withdrawn" } : { status: "skipped_community_off" };
   }
-
   const publicBody = buildPublicBodyFromEntry({
     title: entry.title,
     reflectionBody: entry.reflectionBody,

@@ -5,10 +5,10 @@ import {
 } from "../src/lib/entry-share";
 
 describe("entry share visibility", () => {
-  test("defaults unknown values to public", () => {
-    expect(normalizeShareVisibility(undefined)).toBe("public");
-    expect(normalizeShareVisibility(null)).toBe("public");
-    expect(normalizeShareVisibility("nope")).toBe("public");
+  test("defaults unknown values to private (06§2 private-by-default)", () => {
+    expect(normalizeShareVisibility(undefined)).toBe("private");
+    expect(normalizeShareVisibility(null)).toBe("private");
+    expect(normalizeShareVisibility("nope")).toBe("private");
     expect(normalizeShareVisibility("private")).toBe("private");
     expect(normalizeShareVisibility("public")).toBe("public");
   });

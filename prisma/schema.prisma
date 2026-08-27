@@ -55,7 +55,9 @@ model User {
   events    EventLog[]
   memoryExposures MemoryExposure[]
   dailyCheckIns   DailyCheckIn[]
+  moments         Moment[]
   pastEncounters  PastEncounter[]
+  shareLinks      EntryShareLink[]
 
   @@index([personalSlug])
 }
@@ -81,7 +83,7 @@ model EventLog {
   id           String   @id @default(cuid())
   userId       String? // guest는 null
   seatId       String? // /j/eNN — 키링 단위 집계용
-  eventType    String   // landing_seen | card_impression | card_reaction | one_line_saved | entry_created | return_landing
+  eventType    String   // landing_seen | card_impression | card_reaction | one_line_saved | entry_created | return_landing | context_selected
   dateKey      String   // YYYY-MM-DD (Asia/Seoul service day) — 서버 계산
   entrySource  String   @default("unknown") // nfc | qr | link | email | unknown
   experimentId String?
@@ -133,6 +135,49 @@ model DailyCheckIn {
 
   @@unique([userId, dateKey, cardKey])
   @@index([userId, dateKey])
+}
+
+// Continuity domain projection for meaningful context/reaction moments.
+// DailyCheckIn remains the user-facing check-in contract; Moment is additive.
+model Moment {
+  id              String   @id @default(cuid())
+  userId          String
+  source          String   // keyring | today | entry | resurface
+  sourceCheckinId String?  @unique
+  context         String?
+  verseKey        String?
+  reaction        String?
+  oneLine         String?
+  sourceEntryId   String?
+  promotedEntryId String?
+  happenedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, happenedAt])
+  @@index([userId, context, happenedAt])
+}
+
+// ─── 한 사람에게 건네기 (Journey F MVP, E7-1) ────────────────────────────────
+// 사용자가 고른 한 문장 + 선택 성구만 공유한다. 원문(reflectionBody 등)은
+// 저장하지 않는다 — 뷰어 쿼리 자체가 이 테이블만 읽는다(IDOR 방지).
+model EntryShareLink {
+  id               String    @id @default(cuid())
+  userId           String
+  entryId          String
+  token            String    @unique
+  selectedSentence String
+  scriptureRefsJson String   @default("[]")
+  expiresAt        DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry ReflectionEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entryId])
 }
 
 // ─── 타임캡슐 응답 (B5·C4) ────────────────────────────────────────────────────
@@ -213,7 +258,7 @@ model ReflectionEntry {
   templateType     String    @default("free")
   privateNote      String?
   cellShareSummary String?
-  shareVisibility  String    @default("public")
+  shareVisibility  String    @default("private")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
@@ -227,6 +272,7 @@ model ReflectionEntry {
   storyMirrorEvidence StoryMirrorEvidence[]
   memoryExposures   MemoryExposure[]
   pastEncounters    PastEncounter[]
+  shareLinks        EntryShareLink[]
 
   @@index([userId])
   @@index([entryDate])

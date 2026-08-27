@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { db } from "@/lib/db";
 import { toJsonArray } from "@/lib/utils";
-
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 /** 배열이면 직렬화, 문자열이면 그대로, 그 외엔 fallback. */
 function jsonArrayOr(raw: unknown, fallback: string): string {
   if (Array.isArray(raw)) return toJsonArray(raw as string[]);
@@ -21,6 +21,8 @@ function strOrNull(raw: unknown): string | null {
 export async function POST(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+  const limited = await checkRateLimit(`import:${auth.user.id}`, { limit: 5, windowMs: 60 * 1000 });
+  if (!limited.ok) return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
   const user = auth.user;
 
   let body: unknown;
@@ -35,6 +37,9 @@ export async function POST(request: Request) {
   )
     ? ((body as { entries: unknown[] }).entries)
     : [];
+  if (entries.length > 100) {
+    return NextResponse.json({ error: "too many entries (max 100)" }, { status: 400 });
+  }
 
   let imported = 0;
   let skipped = 0;
@@ -73,7 +78,7 @@ export async function POST(request: Request) {
         privateNote: strOrNull(r.privateNote),
         cellShareSummary: strOrNull(r.cellShareSummary),
         shareVisibility:
-          typeof r.shareVisibility === "string" ? r.shareVisibility : "public",
+          r.shareVisibility === "public" ? "public" : "private",
       },
     });
     imported++;
