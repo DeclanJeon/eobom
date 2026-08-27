@@ -9,10 +9,11 @@ import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { parseJsonBody } from "@/lib/api-schemas";
 import { db } from "@/lib/db";
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
-  observationKey: z.string(),
+  observationKey: z.string().max(64),
   type: z.enum(["helpful", "inaccurate", "context_different", "exclude"]),
 });
 
@@ -22,8 +23,9 @@ export async function POST(
 ) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+  const limited = await checkRateLimit(`reviews:feedback:${auth.user.id}`, { limit: 30, windowMs: 60 * 1000 });
+  if (!limited.ok) return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
   const { id } = await params;
-
   const report = await db.reviewReport.findFirst({
     where: { id, userId: auth.user.id, deletedAt: null },
   });

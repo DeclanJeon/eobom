@@ -12,9 +12,11 @@ export default defineConfig({
     trace: "off",
   },
   webServer: {
-    command: "bun run dev",
+    command: "node scripts/with-e2e-db.mjs",
     url: "http://localhost:3100",
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    // E2E runs against an isolated temp DB (with-e2e-db.mjs mints file:/tmp/e2e-*/e2e.db)
+    // so dev DB (db/eobom.db) is never polluted by 5routes fixtures.
   },
 });

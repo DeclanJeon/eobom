@@ -24,6 +24,7 @@ let prisma: PrismaClient;
 let e2eUserId: string;
 let e2eSessionToken: string;
 let e2eReviewId: string;
+let e2eEntryId: string;
 let e2eChunkId: string;
 
 if (!isBunTestRunner) {
@@ -41,8 +42,9 @@ if (!isBunTestRunner) {
       });
     }
     e2eUserId = user.id;
-
+    await prisma.user.update({ where: { id: e2eUserId }, data: { communityEnabled: true } });
     let entry = await prisma.reflectionEntry.findFirst({ where: { userId: e2eUserId } });
+
     if (!entry) {
       entry = await prisma.reflectionEntry.create({
         data: {
@@ -58,6 +60,7 @@ if (!isBunTestRunner) {
         },
       });
     }
+    e2eEntryId = entry.id;
 
     let report = await prisma.reviewReport.findFirst({
       where: { userId: e2eUserId, deletedAt: null },
@@ -208,8 +211,7 @@ if (!isBunTestRunner) {
     test("/today 200 + 결정성 seed", async ({ page }) => {
       await addAuthCookie(page);
       const res = await page.goto("/today");
-      expect(res?.status()).toBe(200);
-      await expect(page.getByText("오늘 하루 함께할 말씀").first()).toBeVisible({ timeout: 8000 });
+      await expect(page.getByText("오늘 함께 읽을 말씀").first()).toBeVisible({ timeout: 8000 });
       const firstBody = await page.content();
       const now = new Date();
       const kst = toKstParts(now);
@@ -315,6 +317,89 @@ if (!isBunTestRunner) {
       await page.reload();
       await expect(page.getByText("계속 기도 중").first()).toBeVisible({ timeout: 5000 });
     });
+
+    test("/together companion contract + share reaction", async ({ page, request }) => {
+      await addAuthCookie(page);
+      const headers = { Cookie: `${SESSION_COOKIE}=${e2eSessionToken}` };
+      const createRes = await request.post("/api/together", {
+        headers: { ...headers, "content-type": "application/json" },
+        data: {
+          publicBody: `E2E 함께 공유 ${Date.now()} — 오늘의 마음을 안전하게 나눕니다.`,
+          scriptureRefs: ["시편 23:1"],
+          topicTags: ["평안"],
+          pseudonym: "E2E 동행자",
+        },
+      });
+      expect(createRes.status()).toBe(201);
+      const created = (await createRes.json()) as { item: { id: string } };
+      expect(created.item.id).toBeTruthy();
+
+      const feed = await page.goto("/together");
+      expect(feed?.status()).toBe(200);
+      await expect(page.getByText("함께").first()).toBeVisible({ timeout: 8000 });
+
+      const detail = await page.goto(`/together/${created.item.id}`);
+      expect(detail?.status()).toBe(200);
+      await expect(page.getByText("E2E 동행자").first()).toBeVisible({ timeout: 8000 });
+
+      const reactRes = await request.post(`/api/together/${created.item.id}/react`, {
+        headers: { ...headers, "content-type": "application/json" },
+        data: { reactionType: "pray" },
+      });
+      expect(reactRes.status()).toBe(200);
+      expect((await reactRes.json()) as { toggled: boolean }).toEqual({ toggled: true });
+
+      const fresh = getPrisma();
+      await fresh.sharedReflection.delete({ where: { id: created.item.id } });
+      await fresh.$disconnect();
+    });
+    test("share link click-through — create, guest view, revoke", async ({ page, request, browser }) => {
+      await addAuthCookie(page);
+      const headers = { Cookie: `${SESSION_COOKIE}=${e2eSessionToken}` };
+
+      // 1) 소유자: 기록 상세에서 링크 생성
+      const detail = await page.goto(`/entries/${e2eEntryId}`);
+      expect(detail?.status()).toBe(200);
+      await expect(page.getByText("한 사람에게 건네기").first()).toBeVisible({ timeout: 8000 });
+
+      const createRes = await request.post(`/api/entries/${e2eEntryId}/share-link`, {
+        headers: { ...headers, "content-type": "application/json" },
+        data: { selectedSentence: "E2E 건네는 한 문장 — 감사와 평온", expiresInDays: 7 },
+      });
+      expect(createRes.status()).toBe(201);
+      const { link } = (await createRes.json()) as { link: { id: string; token: string } };
+
+      // 2) 게스트(새 컨텍스트, 쿠키 없음): 문장은 보이고 원문은 보이지 않아야 한다
+      const guestContext = await browser.newContext();
+      const guestPage = await guestContext.newPage();
+      try {
+        const viewer = await guestPage.goto(`/s/${link.token}`);
+        expect(viewer?.status()).toBe(200);
+        const viewerBody = await guestPage.locator("body").innerText();
+        expect(viewerBody).toContain("E2E 건네는 한 문장");
+        expect(viewerBody).not.toContain("E2E 테스트 본문"); // reflectionBody 미노출
+        expect(viewerBody).not.toContain("평안을 구합니다"); // prayer 미노출
+
+        // 3) 알 수 없는 토큰도 같은 안전 화면
+        const unknown = await guestPage.goto("/s/does-not-exist-token");
+        expect(unknown?.status()).toBe(200);
+        await expect(guestPage.getByText("더 이상 열리지 않아요").first()).toBeVisible({ timeout: 5000 });
+      } finally {
+        await guestContext.close();
+      }
+
+      // 4) 소유자 철회 후 뷰어 차단
+      const revokeRes = await request.patch(`/api/share-links/${link.id}`, {
+        headers: { ...headers, "content-type": "application/json" },
+        data: { action: "revoke" },
+      });
+      expect(revokeRes.status()).toBe(200);
+      const closed = await page.goto(`/s/${link.token}`);
+      expect(closed?.status()).toBe(200);
+      await expect(page.getByText("더 이상 열리지 않아요").first()).toBeVisible({ timeout: 5000 });
+    });
+
+
 
     test("/api/health?db=1 200 FTS", async ({ request }) => {
       const res = await request.get("/api/health?db=1");

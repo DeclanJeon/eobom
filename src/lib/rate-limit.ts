@@ -150,4 +150,8 @@ export const RATE_LIMITS = {
   contact: { limit: 10, windowMs: MINUTE_MS },
   visualizationGenerate: { limit: 10, windowMs: MINUTE_MS },
   ragStream: { limit: 30, windowMs: MINUTE_MS },
+  seatsClaim: { limit: 10, windowMs: MINUTE_MS },
+  actionsCreate: { limit: 20, windowMs: MINUTE_MS },
+  entriesCreate: { limit: 30, windowMs: MINUTE_MS },
+  storyMirrorRuns: { limit: 10, windowMs: MINUTE_MS },
 } as const;

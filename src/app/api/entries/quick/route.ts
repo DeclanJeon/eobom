@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/session";
 import { createQuickEntry, type QuickEntryInput } from "@/lib/entries";
 import { parseJsonBody, quickEntrySchema } from "@/lib/api-schemas";
-
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 /**
  * POST /api/entries/quick — 카드 한 줄 → quick 기록 승격 (GATE-1).
  * shareVisibility는 서버에서 private으로 강제된다 (클라이언트 입력 무시).
@@ -11,6 +11,8 @@ import { parseJsonBody, quickEntrySchema } from "@/lib/api-schemas";
 export async function POST(request: Request) {
   const auth = await requireApiUser();
   if (!auth.ok) return auth.response;
+  const limited = await checkRateLimit(`entries:create:${auth.user.id}`, RATE_LIMITS.entriesCreate);
+  if (!limited.ok) return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
   const parsed = await parseJsonBody(request, quickEntrySchema);
   if (!parsed.ok) return parsed.response;
   try {

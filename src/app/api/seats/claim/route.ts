@@ -12,7 +12,11 @@ import {
   createDeviceIdentity,
   getCurrentUser,
 } from "@/lib/session";
-
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  rateLimitedBody,
+} from "@/lib/rate-limit";
 function clearClaimCookie(res: NextResponse) {
   res.cookies.set(CLAIM_COOKIE, "", {
     httpOnly: true,
@@ -55,6 +59,15 @@ export async function POST(request: Request) {
   const slug = normalizeSeatSlug(body.slug);
   if (!slug) {
     return NextResponse.json({ error: "slug required" }, { status: 400 });
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const limited = await checkRateLimit(`seats:claim:${ip}`, RATE_LIMITS.seatsClaim);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), {
+      status: 429,
+      headers: { "Retry-After": String(limited.retryAfterSec) },
+    });
   }
 
   // 정체성 해석/생성 — 익명 기기 사용자는 여기서 처음 User가 만들어진다.

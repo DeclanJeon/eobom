@@ -10,6 +10,8 @@ import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
 import { getChapterBackground } from "@/lib/bible/chapter-background";
 import { formatDateKo } from "@/lib/utils";
+import { ShareLinkButton } from "@/components/share-link-button";
+import { listEntryShareLinks } from "@/lib/share-link";
 
 export async function generateMetadata() {
   return { title: "기록 상세" };
@@ -24,6 +26,8 @@ export default async function EntryDetailPage({
   const { id } = await params;
   const entry = await getEntry(user.id, id);
   if (!entry) notFound();
+
+  const [shareLinks] = await Promise.all([listEntryShareLinks(user.id, id)]);
 
   return (
     <AppShell
@@ -131,6 +135,18 @@ export default async function EntryDetailPage({
               함께에서 보기
             </Link>
           )}
+        <ShareLinkButton
+          entryId={entry.id}
+          suggestedSentence={entry.reflectionBody.split(/(?<=[.!?。…])\s+/)[0]?.slice(0, 300) ?? ""}
+          initialLinks={shareLinks.map((l) => ({
+            id: l.id,
+            token: l.token,
+            selectedSentence: l.selectedSentence,
+            scriptureRefs: l.scriptureRefs,
+            expiresAt: l.expiresAt,
+            revokedAt: l.revokedAt,
+          }))}
+        />
           <DeleteEntryButton id={entry.id} />
         </div>
       </article>

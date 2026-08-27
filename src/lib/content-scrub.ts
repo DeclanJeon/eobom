@@ -4,6 +4,7 @@ export const FORBIDDEN_MIRROR_PATTERNS: RegExp[] = [
   /하나님이\s*당신(?:에게|께)?\s*말씀/i,
   /하나님은\s*당신이\s*반드시/i,
   /믿음이\s*부족/i,
+  /믿음이\s*(약|강)하다/i,
   /당신은\s*죄\s*가운데/i,
   /이것이\s*당신의\s*소명/i,
   /기도가\s*응답되지\s*않은\s*이유/i,
