@@ -16,7 +16,7 @@ if [[ "${1:-}" == "--remote" || ! -d "$APP_DIR" ]]; then
   if [[ -d data/reference/public-commentary/mhc ]]; then
     bun run build:public-commentary
   fi
-  for required in data/reference/chapter-background.sqlite data/reference/crossrefs.sqlite data/reference/public-commentary.sqlite; do
+  for required in data/reference/chapter-background.sqlite data/reference/crossrefs.sqlite data/reference/public-commentary.sqlite data/reference/crossref-commentary.sqlite; do
     if [[ ! -s "$required" ]]; then
       echo "missing required generated artifact: $required" >&2
       exit 1

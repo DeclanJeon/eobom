@@ -49,11 +49,10 @@ function loadDriver(): Driver | null {
     getBuiltinModule?: (id: string) => unknown;
   };
 
-  // require 리터럴은 번들러 치환 대상이라 직접 호출을 피하고 eval로 우회한다.
   const tryRequire = (id: string): unknown => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require(id);
+      const r = eval("require") as (id: string) => unknown;
+      return r(id);
     } catch {
       return undefined;
     }
