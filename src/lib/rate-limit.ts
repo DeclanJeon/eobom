@@ -154,4 +154,7 @@ export const RATE_LIMITS = {
   actionsCreate: { limit: 20, windowMs: MINUTE_MS },
   entriesCreate: { limit: 30, windowMs: MINUTE_MS },
   storyMirrorRuns: { limit: 10, windowMs: MINUTE_MS },
+  identity: { limit: 30, windowMs: MINUTE_MS },
+  impression: { limit: 60, windowMs: MINUTE_MS },
+  moments: { limit: 60, windowMs: MINUTE_MS },
 } as const;

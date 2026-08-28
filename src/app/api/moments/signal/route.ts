@@ -5,6 +5,7 @@ import { logEvent } from "@/lib/events";
 import { recordContinuityMoment } from "@/lib/continuity/moment-store";
 import { verifyKeyringEventToken } from "@/lib/keyring-event-token";
 import { getOptionalUser } from "@/lib/session";
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 
 const signalSchema = z.object({
   seatToken: z.string().max(2048).optional(),
@@ -20,6 +21,11 @@ const signalSchema = z.object({
 
 /** Records only the selected context enum; reflection text never enters analytics. */
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-real-ip")?.trim() || request.headers.get("cf-connecting-ip")?.trim() || "unknown";
+  const limited = await checkRateLimit(`moments:signal:${ip}`, RATE_LIMITS.moments);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
+  }
   const user = await getOptionalUser();
   const parsed = await parseJsonBody(request, signalSchema);
   if (!parsed.ok) return parsed.response;

@@ -5,7 +5,7 @@ import { logEvent } from "@/lib/events";
 import { recordContinuityMoment } from "@/lib/continuity/moment-store";
 import { verifyKeyringEventToken } from "@/lib/keyring-event-token";
 import { getOptionalUser } from "@/lib/session";
-
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 const responseSchema = z.object({
   surface: z.enum(["keyring", "today"]),
   reaction: z.enum(["re_read", "still_hold", "changed_view"]),
@@ -14,6 +14,11 @@ const responseSchema = z.object({
 
 /** Records public receive reactions without creating a person-level guest identity. */
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-real-ip")?.trim() || request.headers.get("cf-connecting-ip")?.trim() || "unknown";
+  const limited = await checkRateLimit(`moments:respond:${ip}`, RATE_LIMITS.moments);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
+  }
   const parsed = await parseJsonBody(request, responseSchema);
   if (!parsed.ok) return parsed.response;
 

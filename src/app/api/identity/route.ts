@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { createDeviceIdentity, getCurrentUser } from "@/lib/session";
 import { DEVICE_COOKIE, DEVICE_COOKIE_MAX_AGE } from "@/lib/seats";
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 
 /**
  * 익명 기기 정체성 확보 (멱등).
  * 이미 정체성이 있으면 그대로 반환, 없으면 User+기기 토큰을 만들고 쿠키를 설정한다.
  * 로그인 없이 기기 단위로 유저를 식별하는 부트스트랩 엔드포인트.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const ip = request.headers.get("x-real-ip")?.trim() || request.headers.get("cf-connecting-ip")?.trim() || "unknown";
+  const limited = await checkRateLimit(`identity:${ip}`, RATE_LIMITS.identity);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
+  }
   const existing = await getCurrentUser();
   if (existing) return NextResponse.json({ user: existing });
 

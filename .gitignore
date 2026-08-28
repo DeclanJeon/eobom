@@ -81,9 +81,10 @@ data/reference/public-commentary/mhc/
 data/reference/*.sqlite
 # crossref commentary generation checkpoint (rebuild with generate:crossref-commentary)
 data/reference/crossref-commentary-work.jsonl
+data/reference/crossref-commentary-work.jsonl.bak-*
 data/reference/crossref-commentary-work.jsonl.backup-*
 data/reference/crossref-commentary-work.recovered-*.jsonl
-
+data/reference/backup/
 # agent workers transient state
 scripts/agent-workers/
 

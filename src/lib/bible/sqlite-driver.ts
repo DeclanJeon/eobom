@@ -19,6 +19,7 @@ type Driver = {
   open: (path: string) => ReadonlyDb;
 };
 
+// 캐시된 드라이버는 프로세스당 1회 로드된다. DB 파일을 교체한 뒤에는 프로세스 재시작이 필요하다.
 let cachedDriver: Driver | null | undefined;
 
 type NodeDatabaseCtor = new (path: string, opts?: { readOnly?: boolean }) => NodeDatabase;

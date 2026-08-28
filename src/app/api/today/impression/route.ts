@@ -6,6 +6,7 @@ import { logEvent } from "@/lib/events";
 import { recordMemoryExposure } from "@/lib/memory-exposure";
 import { toKstDateKey } from "@/lib/kst";
 import { GUEST_ID_COOKIE, GUEST_ID_MAX_AGE, newGuestId } from "@/lib/guest-id";
+import { checkRateLimit, RATE_LIMITS, rateLimitedBody } from "@/lib/rate-limit";
 
 /**
  * B4: 서버 컴포넌트 렌더 금지 — 클라이언트 mount → 이 라우트 호출.
@@ -17,8 +18,12 @@ const impressionSchema = z.object({
   cardKey: z.string().min(1).max(128),
   surface: z.string().max(16),
 });
-
 export async function POST(request: Request) {
+  const ip = request.headers.get("x-real-ip")?.trim() || request.headers.get("cf-connecting-ip")?.trim() || "unknown";
+  const limited = await checkRateLimit(`impression:${ip}`, RATE_LIMITS.impression);
+  if (!limited.ok) {
+    return NextResponse.json(rateLimitedBody(limited.retryAfterSec), { status: 429, headers: { "Retry-After": String(limited.retryAfterSec) } });
+  }
   const user = await getOptionalUser();
   const parsed = await parseJsonBody(request, impressionSchema);
   if (!parsed.ok) return parsed.response;
