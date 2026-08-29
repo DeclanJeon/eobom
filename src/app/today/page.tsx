@@ -23,26 +23,33 @@ import { getPassageFromRef } from "@/lib/bible/corpus";
 import { db } from "@/lib/db";
 import { excerpt, formatDateKo, formatDateShort, parseJsonArray } from "@/lib/utils";
 import { getStoryForRef } from "@/lib/story-application";
-import { buildResurfaceReason, buildTopContextReason } from "@/lib/continuity/explain";
+import { buildTopContextReason } from "@/lib/continuity/explain";
 import { computeContextScores } from "@/lib/continuity/context-score";
 import { composeExperience } from "@/lib/experience-composer";
 
 export const metadata = { title: "오늘" };
 
-export default async function TodayPage() {
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ next?: string }>;
+}) {
   const user = await getOptionalUser();
   const now = new Date();
+  const nextSeed = (await searchParams)?.next ?? "";
   // GATE-2: 게스트는 전역 말씀만 (개인 기록·타임캡슐·회고·개인 seed 조회 금지)
   if (!user) return <GuestTodayView now={now} />;
-  return <MemberTodayView user={user} now={now} />;
+  return <MemberTodayView user={user} now={now} nextSeed={nextSeed} />;
 }
 
 async function MemberTodayView({
   user,
   now,
+  nextSeed = "",
 }: {
   user: ApiUser;
   now: Date;
+  nextSeed?: string;
 }) {
 
   const [openActions, latestReview] = await Promise.all([
@@ -118,7 +125,7 @@ async function MemberTodayView({
   // 오늘 붙들 말씀 — 매일 하나, 사용자·KST 날짜 시드로 결정적 랜덤 (AI 호출 없음).
   // 05§4 전역 중복 방지 활성: 최근 장 제외 + topContext는 reason+아래 todayMemory 스코어링으로 반영
   const dailyScripture = selectRandomScripture({
-    seed: `${user.id}:${toKstDateKey(now)}`,
+    seed: `${user.id}:${toKstDateKey(now)}:${nextSeed}`,
     excludeChapters: recentChapters.size ? recentChapters : undefined,
   });
   const heroRef = dailyScripture.display;
@@ -178,6 +185,12 @@ async function MemberTodayView({
   let writeHref = heroRef
     ? `/entries/new?scripture=${encodeURIComponent(heroDisplay || heroRef)}`
     : "/entries/new";
+  const lifecycle =
+    recentEntries.length === 0
+      ? "new"
+      : recentEntries.length < 3
+        ? "early"
+        : "returning";
   const scriptureContent = {
     kind: "scripture" as const,
     display: heroDisplay || heroRef,
@@ -188,14 +201,17 @@ async function MemberTodayView({
     background: heroReason ?? undefined,
     sourceLabel: heroSourceLabel,
     reason: topContext ? buildTopContextReason(topContext.context) ?? undefined : undefined,
+    pastContext:
+      lifecycle === "returning" && continuityEntry
+        ? {
+            label: "지난 기록에서 이어진 오늘",
+            display: continuityEntry.title || "지난 기록",
+            excerpt: excerpt(continuityEntry.reflectionBody, 120),
+            scriptureRefs: parseJsonArray(continuityEntry.scriptureRefs),
+          }
+        : null,
     story: getStoryForRef(dailyScripture.ref, continuityEntry?.reflectionBody ?? null),
   };
-  const lifecycle =
-    recentEntries.length === 0
-      ? "new"
-      : recentEntries.length < 3
-        ? "early"
-        : "returning";
   // 05§6+§7: todayMemory에 DB 스코어 입력 채워 topContext가 선택 경로에 반영되도록 와이어링
   // (still_hold / open action / matchesTodayContext 채워 rankTimeCapsuleCandidates가 score path를 타게 함)
   let todayMemory: Array<{
@@ -246,20 +262,6 @@ async function MemberTodayView({
   });
   void composedExperience;
   // Secondary resurface candidate — shown below hero when scripture is dominant.
-  const secondaryCandidate =
-    contentKey === "scripture" && lifecycle === "returning" && todayMemory[0]
-      ? todayMemory[0]
-      : null;
-  const secondaryDaysAgo = secondaryCandidate?.entryDate
-    ? elapsedDaysKst(now, secondaryCandidate.entryDate)
-    : 0;
-  const secondaryReason = secondaryCandidate
-    ? (buildResurfaceReason({
-        sourceType: secondaryCandidate.sourceType,
-        elapsedDays: secondaryDaysAgo,
-      }) ?? null)
-    : null;
-
   if (contentKey === "prompt") {
     const question = await selectPrompt(dateKey);
     cardContent = { kind: "prompt" as const, display: question };
@@ -354,40 +356,14 @@ async function MemberTodayView({
         initialEntryId={existingCheckin?.entryId ?? null}
         writeHref={writeHref}
       />
-      {/* 2. 보조 회상 — Scripture-first: memory는 hero가 아닌 보조 카드로 (screen 08) */}
-      {secondaryCandidate ? (
-        <section className="mt-6 rounded-2xl border border-border bg-card p-5">
-          <h2 className="text-label-sm font-medium text-text-muted">
-            {secondaryDaysAgo}일 전의 나
-          </h2>
-          <p className="mt-2 text-body-md font-semibold text-foreground">
-            {secondaryCandidate.display}
-          </p>
-          {secondaryCandidate.excerpt ? (
-            <p className="mt-1 text-body-sm leading-relaxed text-text-muted">
-              {secondaryCandidate.excerpt}
-            </p>
-          ) : null}
-          {secondaryReason ? (
-            <p className="mt-2 text-caption text-text-muted">{secondaryReason}</p>
-          ) : null}
-          <Link
-            href={`/entries/${secondaryCandidate.entryId ?? secondaryCandidate.sourceId}/edit`}
-            className="cta-secondary mt-3 inline-flex min-h-11 items-center px-4 py-2"
-          >
-            다시 읽기
-          </Link>
-        </section>
-      ) : null}
-
-      {/* 3. 보조 행동 — 열린 결단 하나 */}
+      {/* 2. 보조 행동 — 열린 결단 하나 */}
       {primaryAction ? (
         <div className="mt-6">
           <OpenActionCard item={primaryAction} />
         </div>
       ) : null}
 
-      {/* 4. 조용한 목록 — 최근 기록 */}
+      {/* 3. 조용한 목록 — 최근 기록 */}
       {recentEntries.length > 0 ? (
         <section className="mt-8">
           <h2 className="text-label-sm font-medium text-text-muted">최근 기록</h2>

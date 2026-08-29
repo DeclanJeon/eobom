@@ -6,6 +6,7 @@ import { listEntries } from "@/lib/entries";
 import { excerpt, formatDateKo } from "@/lib/utils";
 
 export const metadata = { title: "기록" };
+export const dynamic = "force-dynamic";
 
 export default async function EntriesPage({
   searchParams,

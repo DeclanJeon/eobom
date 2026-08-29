@@ -21,6 +21,7 @@ model User {
   personalSlug              String    @unique @default(cuid())
   aiProcessingConsent       Boolean   @default(false)
   communityEnabled          Boolean   @default(false)
+  companionConsent          Boolean   @default(false)
   pastTodayEnabled          Boolean   @default(true)
   seatClaimedAt             DateTime?
   backupPromptDismissedAt   DateTime?
@@ -59,6 +60,12 @@ model User {
   moments         Moment[]
   pastEncounters  PastEncounter[]
   shareLinks      EntryShareLink[]
+  companionProfile           CompanionProfile?
+  companionMatchRuns         CompanionMatchRun[]
+  companionCandidates        CompanionCandidate[]     @relation("RequesterCandidates")
+  companionMatchedCandidates CompanionCandidate[]     @relation("MatchedUserCandidates")
+  companionBlocksGiven       CompanionBlock[]         @relation("BlockerBlocks")
+  companionBlocksReceived    CompanionBlock[]         @relation("BlockedBlocks")
 
   @@index([personalSlug])
 }
@@ -845,4 +852,141 @@ model StoryRagEvidence {
 
   @@index([matchId])
   @@index([entryId])
+}
+
+// ─── Companion (G003: safe first companion foundation) ────────────────────────
+// 사용자 간 동반자 연결을 위한 프로필과 후보 생성.
+// 프로필은 opt-in 전용이며 기본값은 비활성/비공개.
+
+model CompanionProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  enabled         Boolean  @default(false)
+  acceptsRequests Boolean  @default(false)
+  scopeKey        String   @default("private")
+  role            String?
+  topicTags       String   @default("[]")
+  helpModes       String   @default("[]")
+  intro           String?
+  availability    String?
+  consentVersion  String?
+  disabledAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([enabled, acceptsRequests])
+}
+
+model CompanionCandidate {
+  id                 String   @id @default(cuid())
+  requesterId        String
+  matchedUserId      String
+  reasonSummary      String?
+  signalLabels       String   @default("[]")
+  supportingEntryIds String   @default("[]")
+  modelVersion       String?
+  expiresAt          DateTime?
+  status             String   @default("candidate") // candidate | snoozed | rejected | pending_counterparty | withdrawn | expired | connected
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  requester   User @relation("RequesterCandidates", fields: [requesterId], references: [id], onDelete: Cascade)
+  matchedUser User @relation("MatchedUserCandidates", fields: [matchedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, matchedUserId])
+  @@index([requesterId])
+  @@index([matchedUserId])
+  @@index([requesterId, status])
+}
+
+model CompanionMatchRun {
+  id             String   @id @default(cuid())
+  requesterId    String
+  scopeKey       String
+  status         String   @default("running") // running | succeeded | no_match | retryable | blocked
+  generator      String
+  consentVersion String?
+  retryCount     Int      @default(0)
+  expiresAt      DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  requester User @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([requesterId, createdAt])
+  @@index([requesterId, status])
+}
+
+model CompanionBlock {
+  id            String   @id @default(cuid())
+  blockerUserId String
+  blockedUserId String
+  createdAt     DateTime @default(now())
+
+  blocker User @relation("BlockerBlocks", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedBlocks", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerUserId, blockedUserId])
+  @@index([blockerUserId])
+}
+
+model CompanionDecision {
+  id          String   @id @default(cuid())
+  candidateId String
+  userId      String
+  decision    String   // accepted | rejected | snoozed | withdrawn
+  reasonCode  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([candidateId, userId])
+  @@index([userId, decision])
+}
+
+model CompanionConnection {
+  id                    String   @id @default(cuid())
+  candidateId          String   @unique
+  pairKey              String   @unique
+  requesterId           String
+  counterpartyId        String
+  status                String   @default("connected") // connected | ended | blocked
+  requesterAcceptedAt   DateTime
+  counterpartyAcceptedAt DateTime
+  endedAt               DateTime?
+  endedBy               String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([requesterId, status])
+  @@index([counterpartyId, status])
+}
+
+model CompanionSafetyEvent {
+  id            String   @id @default(cuid())
+  actorUserId   String
+  targetUserId  String
+  connectionId  String?
+  type          String   // block | report | end
+  reason        String?
+  moderationStatus String @default("open") // open | reviewed | actioned
+  moderatedAt  DateTime?
+  moderatedBy  String?
+  createdAt     DateTime @default(now())
+
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+}
+
+model CompanionMessage {
+  id           String   @id @default(cuid())
+  connectionId String
+  senderUserId String
+  body         String
+  moderationStatus String @default("clear") // clear | flagged | reviewed
+  createdAt    DateTime @default(now())
+  deliveredAt  DateTime?
+
+  @@index([connectionId, createdAt])
 }

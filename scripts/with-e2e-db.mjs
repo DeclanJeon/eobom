@@ -4,8 +4,11 @@ import { join } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 
 const dir = mkdtempSync(join(tmpdir(), "e2e-"));
-const dbPath = join(dir, "e2e.db");
+const dbPath = join(process.cwd(), ".e2e.db");
+try { rmSync(dbPath, { force: true }); } catch {}
 const dbUrl = `file:${dbPath}`;
+const envPath = join(process.cwd(), ".e2e-database-url");
+try { await import("node:fs/promises").then((fs) => fs.writeFile(envPath, dbUrl, "utf8")); } catch {}
 process.env.DATABASE_URL = dbUrl;
 process.env.DATABASE_URL_TEST = dbUrl;
 
@@ -43,6 +46,7 @@ const child = spawn("bun", ["run", "dev"], {
 });
 child.on("exit", (code) => {
   try { rmSync(dir, { recursive: true, force: true }); } catch {}
+  try { rmSync(envPath, { force: true }); } catch {}
   process.exit(code ?? 0);
 });
 process.on("SIGTERM", () => {

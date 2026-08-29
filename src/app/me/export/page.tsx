@@ -4,6 +4,7 @@ import { ImportForm } from "@/components/import-form";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "데이터 이동" };
+export const dynamic = "force-dynamic";
 
 export default async function ExportPage() {
   await requireUser();

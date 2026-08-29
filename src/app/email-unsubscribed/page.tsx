@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "알림 구독 해지 완료" };
+export const dynamic = "force-dynamic";
 
 export default function EmailUnsubscribedPage() {
   return (

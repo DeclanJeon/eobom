@@ -41,7 +41,7 @@ export async function GET(
     matcherVersion: run.matcherVersion,
     createdAt: run.createdAt.toISOString(),
     completedAt: run.completedAt?.toISOString(),
-    matches: run.matches.map((m) => ({
+    matches: run.matches?.map((m) => ({
       id: m.id,
       card: {
         id: m.card.id,
@@ -56,6 +56,6 @@ export async function GET(
       narrativeBridge: m.narrativeBridge,
       matchedThemes: parseJsonArray(m.matchThemes),
       matchedEmotions: parseJsonArray(m.matchEmotions),
-    })),
+    })) ?? [],
   });
 }

@@ -16,6 +16,7 @@ import {
 } from "@/lib/story-mirror/visualization-fingerprint";
 
 export const metadata = { title: "돌아보기 · 시각화" };
+export const dynamic = "force-dynamic";
 
 export default async function VisualizePage() {
   const user = await requireUser();

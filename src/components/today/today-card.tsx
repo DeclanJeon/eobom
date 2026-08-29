@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CHECKIN_REACTIONS, type CheckinReaction } from "@/lib/checkin";
-import { TINY_ACTION_CATALOG } from "@/lib/tiny-action";
 import type { ChapterBackground } from "@/lib/bible/chapter-background";
 import type { BibleReference } from "@/lib/bible/types";
 import { ScriptureDetailModal } from "./scripture-detail-modal";
+import { ReactionModal } from "./reaction-modal";
 export type TodayCardContent =
   | {
       kind: "scripture";
@@ -18,6 +18,12 @@ export type TodayCardContent =
       sourceLabel?: string;
       /** 설계 05§6+§13 — 행동 context 근거 문구 */
       reason?: string;
+      pastContext?: {
+        label: string;
+        display: string;
+        excerpt?: string;
+        scriptureRefs?: string[];
+      } | null;
       background?: string;
       story?: { title: string; body: string[]; closing: string } | null;
     }
@@ -83,10 +89,9 @@ export function TodayCard({
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const impressionSent = useRef(false);
-  // 설계 05§11 — still_hold(아직 비슷해요) 선택 후에만 tiny action을 제안한다(opt-in).
-  const [tinyActionOffered, setTinyActionOffered] = useState(false);
-  const [tinyActionDone, setTinyActionDone] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [scriptureModalOpen, setScriptureModalOpen] = useState(false);
+  const [reactionModalOpen, setReactionModalOpen] = useState(false);
+  const [selectedReactionLabel, setSelectedReactionLabel] = useState("");
 
 
   useEffect(() => {
@@ -124,41 +129,27 @@ export function TodayCard({
       if (data.checkin.entryId) setSavedEntryId(data.checkin.entryId);
       setFlash("마음에 남겼어요");
       setTimeout(() => setFlash(""), 1600);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
+      return false;
     } finally {
       setSaving(false);
     }
   }
 
-  function choose(code: CheckinReaction) {
+  async function choose(code: CheckinReaction) {
     // 같은 반응 재선택 = 해제
     const next = reaction === code ? null : code;
+    const didSave = await save({ reaction: next });
+    if (!didSave) return;
     setReaction(next);
-    if (next === "still_hold" && content.kind === "memory") {
-      setTinyActionOffered(true);
+    if (next) {
+      setSelectedReactionLabel(CHECKIN_REACTIONS.find((item) => item.code === next)?.label ?? "마음에 남은 말씀");
+      setReactionModalOpen(true);
+    } else {
+      setSelectedReactionLabel("");
     }
-    void save({ reaction: next });
-  }
-
-  async function chooseTinyAction(catalogId: string) {
-    const entryId = savedEntryId ?? (content.kind === "memory" ? content.entryId : null);
-    setTinyActionDone(true);
-    try {
-      await fetch("/api/actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ catalogId, sourceEntryId: entryId ?? undefined }),
-      });
-    } catch {
-      /* 제안 실패는 흐름을 깨지 않는다 — 다음 follow-up에서 자연 재노출 */
-    }
-  }
-
-  function saveOneLine() {
-    const trimmed = oneLine.trim();
-    if (!trimmed) return;
-    void save({ oneLine: trimmed });
   }
 
   const isMemory = content.kind === "memory";
@@ -220,18 +211,41 @@ export function TodayCard({
                 {content.text}
               </p>
             ) : null}
+            {content.pastContext ? (
+              <div className="mt-5 rounded-xl border border-border/50 bg-card/40 px-4 py-3">
+                <p className="text-label-xs text-text-muted">{content.pastContext.label}</p>
+                <p className="mt-1 font-journal text-body-md leading-relaxed text-primary">
+                  {content.pastContext.display}
+                </p>
+                {content.pastContext.excerpt ? (
+                  <p className="mt-1 text-body-sm leading-relaxed text-text-muted">
+                    {content.pastContext.excerpt}
+                  </p>
+                ) : null}
+                {content.pastContext.scriptureRefs?.length ? (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-label-xs text-leaf">
+                      그때 함께 읽은 말씀 보기
+                    </summary>
+                    <p className="mt-2 text-label-xs text-text-muted">
+                      {content.pastContext.scriptureRefs.join(" · ")}
+                    </p>
+                  </details>
+                ) : null}
+              </div>
+            ) : null}
             {/* 03§10 progressive disclosure — single CTA: verse only in hero, rest behind Dialog */}
             {content.chapterBg || content.reason || content.ref || content.background || content.story ? (
               <>
                 <button
                   type="button"
-                  onClick={() => setModalOpen(true)}
+                  onClick={() => setScriptureModalOpen(true)}
                   className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-white px-5 py-2 text-label-sm font-medium text-primary shadow-sm transition-all duration-300 ease-out hover:scale-[1.02] hover:border-leaf/40 hover:shadow-md active:scale-[0.98]"
                 >
                   말씀 더 보기
                   <span aria-hidden className="text-[11px]">→</span>
                 </button>
-                <ScriptureDetailModal open={modalOpen} onOpenChange={setModalOpen} content={content} cardKey={cardKey} />
+                <ScriptureDetailModal open={scriptureModalOpen} onOpenChange={setScriptureModalOpen} content={content} cardKey={cardKey} />
               </>
             ) : null}
           </>
@@ -288,67 +302,6 @@ export function TodayCard({
         </div>
       ) : null}
 
-      {/* Tiny Action 제안 — still_hold 선택 후에만 (설계 05§11, opt-in) */}
-      {isMemory && tinyActionOffered && !tinyActionDone && reaction === "still_hold" ? (
-        <div className="mt-5 rounded-xl border border-clay/30 bg-card/40 px-4 py-4">
-          <p className="text-label-md font-medium text-primary">이번 주 하나만 해본다면?</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {TINY_ACTION_CATALOG.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => void chooseTinyAction(item.id)}
-                className="min-h-11 rounded-full border border-border bg-white px-4 py-2 text-label-sm text-primary transition hover:border-accent-gold/40"
-              >
-                {item.label}
-              </button>
-            ))}
-            <Link
-              href={writeHref}
-              className="inline-flex min-h-11 items-center rounded-full border border-border bg-white px-4 py-2 text-label-sm text-primary transition hover:border-accent-gold/40"
-            >
-              직접 적기
-            </Link>
-            <button
-              type="button"
-              onClick={() => setTinyActionDone(true)}
-              className="min-h-11 rounded-full px-3 py-2 text-label-sm text-text-muted"
-            >
-              지금은 괜찮아요
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {showResponses ? (
-        <div className="mt-4 max-w-xl">
-          <label htmlFor={`one-line-${cardKey}`} className="sr-only">
-            왜 마음에 남았나요? (선택)
-          </label>
-          <div className="flex gap-2">
-            <input
-              id={`one-line-${cardKey}`}
-              value={oneLine}
-              onChange={(e) => setOneLine(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveOneLine();
-              }}
-              placeholder="왜 마음에 남았나요? (선택)"
-              maxLength={500}
-              className="min-h-11 flex-1 rounded-xl border border-border bg-white/80 px-4 py-2 text-body-md text-primary placeholder:text-text-muted focus:border-leaf focus:outline-none"
-            />
-            <button
-              type="button"
-              disabled={saving || !oneLine.trim()}
-              onClick={saveOneLine}
-              className="cta-secondary min-h-11 px-4 py-2 text-label-sm"
-            >
-              남기기
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {showResponses ? (
         <div className="mt-4 flex items-center gap-3">
           <Link
@@ -359,6 +312,26 @@ export function TodayCard({
           </Link>
           {flash ? <span className="text-label-sm text-accent-gold-ink">{flash}</span> : null}
         </div>
+      ) : null}
+      {showResponses ? (
+        <ReactionModal
+          open={reactionModalOpen}
+          reactionLabel={selectedReactionLabel}
+          note={oneLine}
+          saving={saving}
+          error={error}
+          onOpenChange={setReactionModalOpen}
+          onNoteChange={setOneLine}
+          onSave={async () => {
+            if (!oneLine.trim()) return;
+            const didSave = await save({ oneLine: oneLine.trim() });
+            if (didSave) setReactionModalOpen(false);
+          }}
+          onNext={() => {
+            setReactionModalOpen(false);
+            window.location.assign(`/today?next=${Date.now()}`);
+          }}
+        />
       ) : null}
       {error ? (
         <p className="mt-2 text-label-sm text-destructive" role="alert">

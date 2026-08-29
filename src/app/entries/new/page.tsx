@@ -1,8 +1,9 @@
 import { AppShell } from "@/components/app-shell";
-import { EntryForm } from "@/components/entry-form";
+import { EntryFormClient } from "@/components/entry-form-client";
 import { requireUser } from "@/lib/session";
 
 export const metadata = { title: "기록하기" };
+export const dynamic = "force-dynamic";
 
 export default async function NewEntryPage({
   searchParams,
@@ -14,7 +15,7 @@ export default async function NewEntryPage({
   return (
     <AppShell bare>
       <div className="mx-auto max-w-2xl">
-        <EntryForm seedScripture={scripture} />
+        <EntryFormClient seedScripture={scripture} />
       </div>
     </AppShell>
   );

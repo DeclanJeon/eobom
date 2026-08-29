@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { excerpt } from "@/lib/utils";
 
 export const metadata = { title: "기도 제목" };
+export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, string> = {
   continuing: "계속 기도 중",

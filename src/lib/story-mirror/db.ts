@@ -233,14 +233,14 @@ export async function getRagRunById(userId: string, runId: string) {
     id: run.id,
     createdAt: run.createdAt,
     summary: run.summary,
-    connections: run.matches.map((m) => ({
+    connections: run.matches?.map((m) => ({
       chunkId: m.chunkId,
       title: m.chunk.title,
       workTitle: m.chunk.work.title,
       locator: m.chunk.locator,
       connection: m.connection ?? "",
       differentPerspective: m.differentPerspective,
-    })),
+    })) ?? [],
   };
 }
 

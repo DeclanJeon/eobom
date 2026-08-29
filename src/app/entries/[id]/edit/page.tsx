@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Breadcrumb } from "@/components/ui-blocks";
-import { EntryForm } from "@/components/entry-form";
+import { EntryFormClient } from "@/components/entry-form-client";
 import { requireUser } from "@/lib/session";
 import { getEntry } from "@/lib/entries";
 
 export const metadata = { title: "기록 수정" };
+export const dynamic = "force-dynamic";
 
 export default async function EditEntryPage({
   params,
@@ -21,7 +22,7 @@ export default async function EditEntryPage({
     <AppShell bare>
       <Breadcrumb href="/entries" label="기록" current="수정" className="mb-4" />
       <div className="mx-auto max-w-2xl">
-        <EntryForm
+        <EntryFormClient
           entryId={entry.id}
           initial={{
             entryDate: new Date(entry.entryDate).toISOString().slice(0, 10),

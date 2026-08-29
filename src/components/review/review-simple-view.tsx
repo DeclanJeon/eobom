@@ -326,6 +326,12 @@ function MeetSection({
                 </ul>
               </CollapseDisclosure>
             ) : null}
+            <Link
+              href="/together/companions?from=review"
+              className="mt-5 inline-flex min-h-11 items-center text-label-sm text-leaf hover:text-primary"
+            >
+              필요할 때 동행 찾아보기 →
+            </Link>
           </SurfaceCard>
         ) : null}
 

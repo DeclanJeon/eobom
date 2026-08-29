@@ -23,6 +23,7 @@ function parseReview(report: { structuredOutput: string }): StructuredReview | n
 }
 
 export const metadata = { title: "돌아보기" };
+export const dynamic = "force-dynamic";
 
 export default async function LookbackPage() {
   const user = await requireUser();

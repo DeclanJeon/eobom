@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { getUserPreferenceFlags } from "@/lib/user-preferences";
 
 export const metadata = { title: "회고 만들기" };
+export const dynamic = "force-dynamic";
 
 export default async function NewReviewPage() {
   const user = await requireUser();

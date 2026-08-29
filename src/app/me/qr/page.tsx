@@ -5,6 +5,7 @@ import { appUrl } from "@/lib/utils";
 import QRCode from "qrcode";
 
 export const metadata = { title: "내 QR" };
+export const dynamic = "force-dynamic";
 
 export default async function QrPage() {
   const user = await requireUser();

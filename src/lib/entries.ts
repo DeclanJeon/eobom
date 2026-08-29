@@ -22,14 +22,14 @@ function buildEntryMatchExpr(normalized: string): string {
   return terms.map((t) => `"${t.replace(/"/g, "")}"`).join(" OR ");
 }
 
-export async function ensureEntryFts5(): Promise<void> {
-  if (entryFtsEnsured) return;
+export async function ensureEntryFts5(targetDb: typeof db = db): Promise<void> {
+  if (targetDb === db && entryFtsEnsured) return;
   try {
-    const existing = await db.$queryRaw<Array<{ name: string }>>`
+    const existing = await targetDb.$queryRaw<Array<{ name: string }>>`
       SELECT name FROM sqlite_master WHERE type='table' AND name='ReflectionEntryFts'
     `;
     if (existing.length > 0) {
-      entryFtsEnsured = true;
+      if (targetDb === db) entryFtsEnsured = true;
       return;
     }
   } catch {
@@ -66,7 +66,7 @@ export async function ensureEntryFts5(): Promise<void> {
     AND id NOT IN (SELECT entryId FROM ReflectionEntryFts);
   `;
   const tryExec = async (sql: string) => {
-    await (db as unknown as { $executeRawUnsafe: (s: string) => Promise<unknown> }).$executeRawUnsafe(sql);
+    await (targetDb as unknown as { $executeRawUnsafe: (s: string) => Promise<unknown> }).$executeRawUnsafe(sql);
   };
   try {
     await tryExec(createSql);
@@ -77,7 +77,7 @@ export async function ensureEntryFts5(): Promise<void> {
     try { await tryExec(t); } catch {}
   }
   try { await tryExec(backfill); } catch {}
-  entryFtsEnsured = true;
+  if (targetDb === db) entryFtsEnsured = true;
 }
 
 export async function searchEntriesFts(

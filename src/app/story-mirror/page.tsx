@@ -22,6 +22,7 @@ import {
 } from "@/lib/story-mirror/db";
 
 export const metadata = { title: "돌아보기 · 이야기" };
+export const dynamic = "force-dynamic";
 
 export default async function StoryMirrorPage() {
   const user = await requireUser();

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3100",
-    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs .next/standalone/data/reference && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/ && if [ -d data/reference/bible-guide ]; then cp -r data/reference/bible-guide .next/standalone/data/reference/; fi && for db in data/reference/*.sqlite; do if [ -f \"$db\" ]; then cp \"$db\" .next/standalone/data/reference/; fi; done && rm -f .next/standalone/data/reference/*.sqlite-wal .next/standalone/data/reference/*.sqlite-shm .next/standalone/data/reference/crossref-commentary-work.jsonl",
+    "build": "NODE_ENV=production prisma generate && NODE_ENV=production next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/db .next/standalone/docs .next/standalone/data/reference && cp -r prisma .next/standalone/ && cp -r docs/dev-notes .next/standalone/docs/ && if [ -d data/reference/bible-guide ]; then cp -r data/reference/bible-guide .next/standalone/data/reference/; fi && for db in data/reference/*.sqlite; do if [ -f \"$db\" ]; then cp \"$db\" .next/standalone/data/reference/; fi; done && rm -f .next/standalone/data/reference/*.sqlite-wal .next/standalone/data/reference/*.sqlite-shm .next/standalone/data/reference/crossref-commentary-work.jsonl",
     "start": "HOSTNAME=0.0.0.0 PORT=3100 NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
     "db:push": "prisma db push",

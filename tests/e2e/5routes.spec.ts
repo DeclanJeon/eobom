@@ -11,7 +11,17 @@ const isBunTestRunner = !!((process.versions as unknown as Record<string, string
 // E2E 5routes — /today, /lookback, /lookback/[id], /story-mirror/reflect, /story-mirror, /me/prayers, /api/health, gutendex smoke
 // runs against bun dev -p 3100 with real DB
 
-const DB_URL = process.env.DATABASE_URL ?? `file:${path.join(process.cwd(), "db", "eobom.db")}`;
+let sharedDbUrl: string | undefined;
+try {
+  sharedDbUrl = fs.readFileSync(path.join(process.cwd(), ".e2e-database-url"), "utf8").trim();
+} catch {}
+const DB_URL =
+  sharedDbUrl ??
+  process.env.DATABASE_URL_E2E ??
+  `file:${path.join(process.cwd(), ".e2e.db")}`;
+if (!DB_URL && !isBunTestRunner) {
+  throw new Error("E2E DATABASE_URL is not configured; refusing to use the development database.");
+}
 function getPrisma(): PrismaClient {
   return new PrismaClient({ datasourceUrl: DB_URL } as unknown as ConstructorParameters<typeof PrismaClient>[0]);
 }
@@ -412,7 +422,7 @@ if (!isBunTestRunner) {
       expect(fts.length).toBe(1);
       const entryFts = (await fresh.$queryRawUnsafe(`SELECT name FROM sqlite_master WHERE type='table' AND name='ReflectionEntryFts'`)) as Array<{ name: string }>;
       if (entryFts.length === 0) {
-        await ensureEntryFts5();
+        await ensureEntryFts5(fresh as typeof import("../../src/lib/db").db);
         const after = (await fresh.$queryRawUnsafe(`SELECT name FROM sqlite_master WHERE type='table' AND name='ReflectionEntryFts'`)) as Array<{ name: string }>;
         expect(after.length).toBe(1);
       }

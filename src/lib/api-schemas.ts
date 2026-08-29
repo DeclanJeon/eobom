@@ -106,6 +106,38 @@ export const claimIntentSchema = z.object({
   slug: z.string().min(1),
 });
 
+export const companionProfilePatchSchema = z.object({
+  companionConsent: z.boolean().optional(),
+  enabled: z.boolean().optional(),
+  acceptsRequests: z.boolean().optional(),
+  scopeKey: z.enum(["private", "same_group", "curated"]).optional(),
+  role: z.enum(["peer", "mentor", "prayer_partner"]).optional(),
+  topicTags: z.array(z.string().min(1).max(40)).max(12).optional(),
+  helpModes: z.array(z.string().min(1).max(40)).max(6).optional(),
+  intro: z.string().max(300).nullable().optional(),
+  availability: z.string().max(100).nullable().optional(),
+});
+
+export const companionMatchRequestSchema = z.object({
+  scopeKey: z.enum(["private"]).optional(),
+});
+
+export const companionDecisionSchema = z.object({
+  decision: z.enum(["accepted", "rejected", "snoozed", "withdrawn"]),
+  reasonCode: z.string().max(64).optional(),
+});
+
+export const companionSafetySchema = z.object({
+  targetUserId: z.string().min(1),
+  connectionId: z.string().min(1).optional(),
+  type: z.enum(["block", "report", "end"]),
+  reason: z.string().max(500).optional(),
+});
+
+export const companionMessageSchema = z.object({
+  body: z.string().trim().min(1).max(300),
+});
+
 function firstIssueMessage(error: z.ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "입력 값이 올바르지 않습니다.";

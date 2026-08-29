@@ -14,6 +14,7 @@ export const metadata: Metadata = {
       "흩어진 묵상을 이어, 어제의 믿음이 오늘의 방향이 되게 합니다.",
   },
 };
+export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
   const user = await getOptionalUser();

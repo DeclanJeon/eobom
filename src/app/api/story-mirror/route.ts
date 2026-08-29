@@ -24,7 +24,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    matches: run.matches.map((m) => ({
+    matches: run.matches?.map((m) => ({
       id: m.id,
       card: {
         id: m.card.id,
@@ -47,7 +47,7 @@ export async function GET() {
         relevance: e.relevance,
       })),
       createdAt: m.createdAt.toISOString(),
-    })),
+    })) ?? [],
     lastRefreshedAt: run.completedAt?.toISOString() ?? run.createdAt.toISOString(),
     hasRun: true,
     corpusVersion: run.corpusVersion,

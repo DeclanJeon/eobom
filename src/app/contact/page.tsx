@@ -3,6 +3,7 @@ import { ContactForm } from "@/components/contact-form";
 import { getOptionalUser } from "@/lib/session";
 
 export const metadata = { title: "문의" };
+export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
   const user = await getOptionalUser();

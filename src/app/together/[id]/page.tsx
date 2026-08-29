@@ -9,6 +9,7 @@ import { db } from "@/lib/db";
 import { formatDateKo, parseJsonArray } from "@/lib/utils";
 
 export const metadata = { title: "공유 묵상" };
+export const dynamic = "force-dynamic";
 
 export default async function TogetherDetailPage({
   params,

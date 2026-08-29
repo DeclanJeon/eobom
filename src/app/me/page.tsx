@@ -8,6 +8,7 @@ import { appUrl } from "@/lib/utils";
 import { appVersionLabel } from "@/lib/version";
 
 export const metadata = { title: "내 정보" };
+export const dynamic = "force-dynamic";
 
 export default async function MePage() {
   const user = await requireUser();

@@ -12,7 +12,7 @@ import { parseJsonArray } from "@/lib/utils";
 export async function StoryMirrorHomeCard({ userId, storyMirrorEnabled, latestRagRunSummary, latestRagRunCount }: { userId: string; storyMirrorEnabled: boolean; latestRagRunSummary?: string | null; latestRagRunCount?: number }) {
   if (!storyMirrorEnabled) return null;
   const run = await getLatestRun(userId);
-  const hasMatches = Boolean(run && run.matches.length > 0);
+  const hasMatches = Boolean(run?.matches?.length);
   const hasRag = Boolean(latestRagRunSummary);
   if (!hasMatches && !hasRag) return null;
 
